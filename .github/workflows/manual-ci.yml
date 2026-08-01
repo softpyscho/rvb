@@ -17,9 +17,10 @@ concurrency:
   group: ci
   cancel-in-progress: false
 
-# Added permissions block to resolve the contents: write error
+# Updated permissions block to resolve both contents and actions write errors
 permissions:
   contents: write
+  actions: write
 
 jobs:
   build_manual:
