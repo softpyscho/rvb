@@ -120,18 +120,7 @@
     "uptodown-dlurl": "https://xodo-docs.en.uptodown.com/android",
     "apkpure-dlurl": "https://apkpure.com/xodo-pdf-reader/com.xodo.pdf.reader"
   },
-  "amazon-india-morphe": {
-    "enabled": true,
-    "app-name": "Amazon-India",
-    "rv-brand": "morphe",
-    "arch": "arm64-v8a",
-    "version": "auto",
-    "patches-source": "rushiranpise/morphe-patches",
-    "apkmirror-dlurl": "https://www.apkmirror.com/apk/amazon-mobile-llc/amazon-india-shop-pay",
-    "uptodown-dlurl": "https://amazon-india.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/amazon-india-shop-pay/in.amazon.mShop.android.shopping"
-  },
-  "amazon-prime-video-morphe": {
+    "amazon-prime-video-morphe": {
     "enabled": true,
     "app-name": "Amazon-Prime-Video",
     "rv-brand": "morphe",
