@@ -17,6 +17,10 @@ concurrency:
   group: ci
   cancel-in-progress: false
 
+# Added permissions block to resolve the contents: write error
+permissions:
+  contents: write
+
 jobs:
   build_manual:
     uses: ./.github/workflows/build.yml
