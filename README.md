@@ -411,7 +411,7 @@ Patches: [hoo-dles/patches-1.39.0.mpp](https://github.com/hoo-dles/morphe-patche
 
 <blockquote>
 
-[Release 2026-07-23](https://github.com/nullcpy/rvb/releases/tag/260085)<br>
+[Release 2026-08-01](https://github.com/softpyscho/rvb/releases/tag/260001)<br>
 Patches: [rushiranpise/patches-1.15.1.mpp](https://github.com/rushiranpise/morphe-patches/releases/tag/v1.15.1)
 - GmsCore support (MicroG)
 - Spoof WARP+ Unlimited UI
@@ -1779,8 +1779,9 @@ Patches: [Raudrobot/patches-6.1.0.rvp](https://github.com/Raudrobot/revanced-pat
   
 <blockquote>
 
-[Release 2026-07-30](https://github.com/nullcpy/rvb/releases/tag/260120)<br>
-Patches: [MorpheApp/patches-1.38.0-dev.3.mpp](https://github.com/MorpheApp/morphe-patches/releases/tag/v1.38.0-dev.3)
+[Release 2026-08-01](https://github.com/softpyscho/rvb/releases/tag/260001)<br>
+Patches: [MorpheApp/patches-1.38.0.mpp](https://github.com/MorpheApp/morphe-patches/releases/tag/v1.38.0)
+- Custom branding name for Reddit
 - Custom font
 - Disable modern home
 - Disable screenshot popup
@@ -2235,7 +2236,7 @@ Patches: [Raudrobot/patches-6.1.0.rvp](https://github.com/Raudrobot/revanced-pat
   
 <blockquote>
 
-[Release 2026-07-07](https://github.com/nullcpy/rvb/releases/tag/260017)<br>
+[Release 2026-08-01](https://github.com/softpyscho/rvb/releases/tag/260001)<br>
 Patches: [Paresh-Maheshwari/patches-1.19.0.mpp](https://gitlab.com/Paresh-Maheshwari/paresh-patches/-/releases/v1.19.0)
 - TickTick Premium
 </blockquote>
@@ -2842,14 +2843,12 @@ Patches: [Raudrobot/patches-6.1.0.rvp](https://github.com/Raudrobot/revanced-pat
 #### [Morphe (hoo-dles)](https://github.com/hoo-dles/morphe-patches)
 
 <details>
-<summary id="xodo-morphe">&emsp;<a href="https://nullcpy.github.io/"><img src="https://img.shields.io/badge/version-v10.13.0-gray?labelColor=fafcfe&logo=android&logoColor=orange&style=flat"></summary>
+<summary id="xodo-morphe">&emsp;<a href="https://nullcpy.github.io/"><img src="https://img.shields.io/badge/version-v10.15.0-gray?labelColor=fafcfe&logo=android&logoColor=orange&style=flat"></summary>
 
 <blockquote>
 
-[Release 2026-04-24](https://github.com/nullcpy/rvb/releases/tag/150)<br>
-Patches: [hoo-dles/patches-1.27.0.mpp](https://github.com/hoo-dles/morphe-patches/releases/tag/v1.27.0)
-
-- Disable signature check
+[Release 2026-08-01](https://github.com/softpyscho/rvb/releases/tag/260001)<br>
+Patches: [hoo-dles/patches-1.39.0.mpp](https://github.com/hoo-dles/morphe-patches/releases/tag/v1.39.0)
 - Enable Pro
 </blockquote>
 </details>
