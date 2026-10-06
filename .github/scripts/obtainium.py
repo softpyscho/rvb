@@ -42,7 +42,7 @@ REDIRECT_BASE = "https://apps.obtainium.imranr.dev/redirect?r="
 
 def slug(value):
     """The engine's resolve_slug (scripts/utils.sh): lowercase, runs of non-alphanumerics
-    become one '-', no leading/trailing '-'. test_release_notes.sh runs both over the seed
+    become one '-', no leading/trailing '-'. test_release_notes.sh runs both over the configured apps
     config and fails on any difference, so the two cannot drift silently."""
     return re.sub(r"^-+|-+$", "", re.sub(r"[^a-z0-9]+", "-", (value or "").lower()))
 
@@ -370,7 +370,7 @@ def render_apps_section(specs, repo, data=None):
 
 def load_manifest_data(paths):
     """Per app (keyed by file prefix): the version and applied patches of its newest published
-    file, from the `website` branch's archive manifests (archive/stable.json, archive/beta.json)."""
+    file, from the archive manifests (state/archive/stable.json, state/archive/beta.json)."""
     best = {}
     for path in paths:
         try:

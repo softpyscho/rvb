@@ -10,14 +10,14 @@
         ▼                                              │
  ┌──────────────────────────────────────┐              ▼
  │ nullcpy/rvb  (this repo)             │      ┌──────────────────┐
- │  main     code, workflows, docs      │      │  nullcpy/apks    │
- │  data     configs/ + state/          │      │  shared APK cache│
- │  website  manifests/ + archive/      │      │  + usage stats   │
- │  update   module update pointers     │      └──────────────────┘
+ │  main     code, workflows, docs,     │      │  nullcpy/apks    │
+ │           configs/ + state/ (incl.   │      │  shared APK cache│
+ │           manifests/ + archive/)     │      │  + usage stats   │
+ │  update   module pointers (if any)   │      └──────────────────┘
  │  Releases numbered + stable + beta   │
  └──────────────────────────────────────┘
         │            ▲        │
-        │            │        │ clone --branch website (manifest input)
+        │            │        │ clone state/ of main (manifest input)
         │            │        ▼
         │            │   ┌────────────────────────────────────────┐
         │            │   │ nullcpy/nullcpy.github.io              │
@@ -30,7 +30,7 @@
 ```
 
 Four moving parts: **this repo** builds and publishes, the **`apks` repo** is a
-shared download cache, the **`website` branch** is the build-metadata store, and
+shared download cache, **`state/manifests/` + `state/archive/`** on `main` are the build-metadata store, and
 **`nullcpy.github.io`** folds that store into the `data.json` the site renders.
 
 ## Repositories
@@ -46,15 +46,19 @@ the seam between them → [website-contract.md](website-contract.md).
 
 ## Branches of this repo
 
-`main` is **pure code**. Everything generated lives elsewhere, so a checkout of
-`main` is always reviewable and never churns:
+`main` is the one long-lived branch ([decisions/0008](decisions/0008-one-branch.md)). Code, config
+and recorded state sit in separate directories with separate writers:
 
-| Branch | Contains | Sole writer | Read by |
+| On `main` | Contains | Sole writer | Read by |
 |---|---|---|---|
-| `main` | Engine, workflows, scripts, `module/` template, `bin/`, docs | Maintainer (PRs) | every job, checked out first |
-| `data` | `configs/` (human TOMLs + generated `stable_build.json`/`beta_build.json`), `state/` (watcher JSONs) | watcher (`commit_data_branch.sh`) for `*.json`; maintainer (`push_data_configs.sh`) for `*.toml` | watcher and build jobs, via `fetch_data_branch.sh` |
-| `website` | `manifests/<tag>.json` per build + cumulative `archive/{stable,beta}.json` | `merge_archive_branch.sh` (build), `cleanup_website_branch.sh` (prune) | the site's `rebuild_catalog.py` |
-| `update` | `changelogs/<code>.md` + `<channel>/<module-id>.json` pointers | `build_update_changelog.sh`, `cleanup_update_branch.sh` | KernelSU / Magisk module updaters, at phone-check time |
+| engine, workflows, scripts, `module/`, `bin/`, docs | code | maintainer | every job |
+| `configs/patches/*.toml`, `configs/config.manual.toml` | the app configuration | maintainer | watcher, builds |
+| `configs/{stable,beta}_build.json`, `state/*.json` | generated pool configs, watcher memory | watcher (`commit_to_main.sh`) | watcher, builds |
+| `state/manifests/<tag>.json`, `state/archive/{stable,beta}.json` | build metadata | `merge_archive_manifest.sh` (build), `cleanup_manifests.sh` (prune) | `obtainium.py`; a catalogue site, if any |
+
+Only one other branch can ever exist: `update` (`changelogs/<code>.md` + `<channel>/<module-id>.json`
+pointers, written by `build_update_changelog.sh` and pruned by `cleanup_update_branch.sh`), created by
+the first build that makes a module zip — read by KernelSU / Magisk updaters at phone-check time.
 
 Details, recovery procedures and the wire formats: [storage-and-branches.md](storage-and-branches.md).
 
@@ -74,8 +78,9 @@ Two classes, and the distinction is load-bearing:
   **owner-written**: the archive upload step names no metadata at all, so CI
   touches files only → [decisions/0001-release-metadata-ownership.md](decisions/0001-release-metadata-ownership.md).
 
-Per-build `build.json` is **no longer a release asset**; the `website` branch is
-the only manifest store (completed 2026-09-25).
+Per-build `build.json` is **no longer a release asset**; `state/manifests/` and
+`state/archive/` on `main` are the only manifest store (completed 2026-09-25; moved from a
+`website` branch to `main` on 2026-10-06).
 
 ## Patched and mirrored apps
 
@@ -101,7 +106,7 @@ versioning:
 - Keywords are resolved at build time against `state/patch_sources.json` — the
   watcher's record of each source's current release per channel — rather than
   being stamped into the config, so a build is consistent with the state snapshot
-  it was generated from (`configs/` and `state/` always come from the same `data`
+  it was generated from (`configs/` and `state/` always come from the same `main`
   commit).
 
 Channel decides three downstream things: which generated config is built
@@ -115,7 +120,7 @@ independent update channel.
 (GitHub's scheduler is best-effort and drops missed ticks — see
 [CI pipelines](ci-pipelines.md)), concurrency group `ci`:
 
-1. `fetch_data_branch.sh` materialises `configs/` + `state/` from `data`.
+1. Checkout `main`: `configs/` + `state/` come with it.
 2. `compile_patch_configs.py` regenerates the two pool configs from the TOMLs.
 3. `sync_patch_sources.py` lists every patch source's releases → writes
    `state/patch_sources.json` (per-channel tag + date + `blocked` flag) and
@@ -125,16 +130,15 @@ independent update channel.
 5. `ci_trigger_flags.sh` is the single owner of "is there any work left";
    `ci_check_app_patches.py` checks whether new patches cover known app versions;
    `ci_generate_configs.sh` rewrites the pool configs for the apps that changed.
-6. `commit_data_branch.sh` pushes **only** `*.json` under `configs/` + `state/`
-   back to `data`. TOMLs are excluded by design — they publish through
-   `push_data_configs.sh`.
+6. `commit_to_main.sh` commits the generated `configs/*_build.json` + `state/*.json` onto
+   `main` — named files only, so a hand-edited TOML can never ride along.
 7. Outputs `trigger_stable` / `trigger_beta` gate the two build calls: beta
    first, then stable (`needs: build_beta`, and only if the watcher succeeded).
 
 **Build** — `build.yml`, once per pool, concurrency group `build`, with a
 Cloudflare-bypass sidecar service on `:8000`:
 
-1. Checkout `main` (full history, submodules) → `fetch_data_branch.sh` →
+1. Checkout `main` (full history, submodules) →
    `build_resolve_context.sh` maps the config file to `ARCHIVE_TAG`,
    `IS_PRERELEASE`, Telegram thread and title suffix.
 2. Install Bouncy Castle only if a BKS-needing Xposed module is in the config;
@@ -154,11 +158,11 @@ Cloudflare-bypass sidecar service on `:8000`:
    this build's changelog to `update`.
 8. `build_exclude_from_archive.sh` drops opted-out apps from `build/`, then the
    **archive** upload runs — assets only, no metadata named.
-9. `merge_archive_branch.sh` merges this build's manifest into `website`
-   (`manifests/<tag>.json` + cumulative `archive/<channel>.json`), live-filtered
+9. `merge_archive_manifest.sh` merges this build's manifest into `main`
+   (`state/manifests/<tag>.json` + cumulative `state/archive/<channel>.json`), live-filtered
    against the archive release's actual files.
 10. `update_readme.sh` refreshes the README's apps section on `main` (versions and applied patches
-    from the manifests just merged) — the one thing CI ever writes to `main`.
+    from the manifests just merged) — the one generated file CI writes to `main`'s code.
 11. Telegram notification for the build.
 
 **Cleanup** — `cleanup.yml`, called after a successful build:
@@ -166,7 +170,7 @@ Cloudflare-bypass sidecar service on `:8000`:
 1. `ophub/delete-releases-workflows` deletes old releases/tags, keeping the
    newest 98 and anything matching `stable`/`beta`.
 2. `cleanup-archive-assets.py` prunes archive assets to 2 versions per app+arch.
-3. `cleanup_update_branch.sh` and `cleanup_website_branch.sh` drop pointers and
+3. `cleanup_update_branch.sh` and `cleanup_manifests.sh` drop pointers and
    manifests whose releases are gone.
 4. A `catalog-updated` `repository_dispatch` pings the website repo, which
    re-folds `data.json` and redeploys Pages. A missed dispatch is not lost: the
@@ -179,22 +183,22 @@ only fires on `failure()`.
 
 | Question | Authoritative source |
 |---|---|
-| Which apps exist, with which patches, on which channel | `data:configs/patches/*.toml` |
+| Which apps exist, with which patches, on which channel | `configs/patches/*.toml` |
 | Which pool an app lands in | that TOML's `patches-version`, resolved by `build.sh` |
-| What version a patch source is on | `data:state/patch_sources.json` (watcher-written) |
-| Which app versions are current in the stores | scraped live; `data:state/app_versions.json` only tracks what a CLI cannot report |
-| What went into a build | `website:manifests/<tag>.json` |
+| What version a patch source is on | `state/patch_sources.json` (watcher-written) |
+| Which app versions are current in the stores | scraped live; `state/app_versions.json` only tracks what a CLI cannot report |
+| What went into a build | `state/manifests/<tag>.json` |
 | What is downloadable right now | the GitHub Releases API (existence, size, download counts) |
 | What the website shows | `nullcpy.github.io:data.json`, derived — never hand-edited except to fix a bad fold |
 | What module id polls for updates | `updateJson` baked into `module.prop`, mirroring `update_json_path()` |
 
 ## Failure policy, and why it is asymmetric
 
-- **Destructive or silent-wrong-data paths fail loudly.** A missing `data`
-  branch, a failed `git fetch` of `website`, or an archive merge that keeps fewer
+- **Destructive or silent-wrong-data paths fail loudly.** An unreadable
+  `origin/main` when merging the archive manifest, or an archive merge that keeps fewer
   entries than the sanity gate computes are hard failures. The 2026-09-24
   archive collapse happened because a download failure silently started from an
-  empty base; the branch redesign made that path unrepresentable.
+  empty base; reading the previous state from git made that path unrepresentable.
 - **Per-app and notification paths fail soft.** One broken app must not lose the
   other 60: `build_rv` failures log and continue, `continue-on-error: true` covers
   the archive upload and Telegram, `update_usage_tracker.py` is `|| true`.
@@ -211,9 +215,9 @@ only fires on `failure()`.
   [decisions/0006](decisions/0006-filename-parsing-is-imported-not-mirrored.md).
 - **Wire formats that are already in the wild.** `updateJson` paths baked into
   installed modules, `module.prop` shape, `data.json` schema keys, and the
-  `manifests/`+`archive/` layout. Renaming any of them orphans existing clients.
-- **`configs/` and `state/` on `main` are ignored working copies.** They are
-  materialised, not committed; `fetch_data_branch.sh` overwrites them.
+  `state/manifests/`+`state/archive/` layout (formerly the `website` branch's `manifests/`+`archive/`). Renaming any of them orphans existing clients.
+- **`configs/` and `state/` are tracked and CI commits to them.** `git pull` before you edit
+  `configs/`; hand-edit only the TOMLs.
 - **Everything downstream of `merge_build_info`** assumes `build.json` keys match
   what the engine wrote for each table build — the manifest, the release notes
   and the site all read the same record.

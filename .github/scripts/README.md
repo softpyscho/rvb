@@ -3,8 +3,8 @@
 Every build produces a `build.json` manifest — a schema-v1, filename-keyed
 description of the APKs/ZIPs in that build (app name, version, arch, applied
 patches, `originBuild`, ...). Manifests live in exactly one shared place:
-the **`website` branch** of this repo — a per-build copy plus the cumulative
-archive manifests that the website catalog rebuild consumes. Release pages
+`state/` on `main` — `state/manifests/<tag>.json` (a per-build copy) plus the cumulative
+`state/archive/<channel>.json` manifests that the website catalog rebuild consumes. Release pages
 carry only the files themselves. These scripts implement and repair that
 pipeline.
 
@@ -15,11 +15,11 @@ builder (utils.sh)                build.yml
  build.json ──► build_make_manifest.py ──► temp/manifest/build.json
                         │                          │
                         ▼                          ▼ (after archive upload)
-            temp/manifest/*.json        merge_archive_branch.sh
-            (not uploaded anymore)       │ commits manifests/<tag>.json
-                                         │ + merges archive/<channel>.json
-                                         ▼   (union, live-filter, push)
-                        website branch: archive/{stable,beta}.json
+            temp/manifest/*.json        merge_archive_manifest.sh
+            (not uploaded anymore)       │ writes state/manifests/<tag>.json
+                                         │ + merges state/archive/<channel>.json
+                                         ▼   (union, live-filter, commit_to_main.sh)
+                        main: state/archive/{stable,beta}.json
 ```
 
 ## Per-build pipeline (runs in CI)
@@ -55,15 +55,17 @@ first build* until a build has published. Pool routing comes from
 
 ### `update_readme.sh`
 Refreshes the README's apps section on `main` after a build: runs `obtainium.py --readme` against
-`main`'s own copy of the README with the `website` branch's archive manifests, and commits the
+`main`'s own copy of the README with `state/archive/*.json` from the same tip, and commits the
 result (`README.md` only) with plumbing on `main`'s tip, retrying on a race. Exits 0 with no commit when
 nothing changed, and fails loudly when the generation does - the workflow step is `continue-on-error`.
 Covered by `.github/traces/test_update_readme.sh`.
 
-### `seed_data_branch.sh`
-One-time bootstrap of a fork's `data` and `website` branches from `.github/seed/`. Plumbing only,
-refuses to touch a branch that exists or a remote it cannot query. See
-[docs/fork-setup.md](../../docs/fork-setup.md).
+### `commit_to_main.sh`
+The one writer CI uses for everything it stores on `main` (generated pool configs, watcher state,
+build manifests): `commit_to_main.sh "<message>" <path>…`. Plumbing only — a temporary index on
+`origin/main`'s tip, named files only (present → added/updated, gone from the worktree → removed),
+`[skip ci]`, retry on a race, loud failure. Covered by `.github/traces/test_commit_to_main.sh`.
+See [decisions/0008](../../docs/decisions/0008-one-branch.md).
 
 ### `build_upload_release.sh`
 Unified uploader (native `gh`, per-file retry, `--clobber`). Used for the
@@ -87,24 +89,22 @@ reach `release edit`/`create`, that CI's archive shape makes no metadata call at
 all even with `RELEASE_TARGET` set, that an empty body file counts as unnamed,
 and that a bogus `IS_PRERELEASE` is rejected without touching `gh`; Git Bash).
 
-### `merge_archive_branch.sh`
-Merges the current build's manifest into the `website` branch: writes
-`manifests/<tag>.json` and updates the cumulative `archive/<channel>.json`
+### `merge_archive_manifest.sh`
+Merges the current build's manifest into `main`: writes
+`state/manifests/<tag>.json` and updates the cumulative `state/archive/<channel>.json`
 (union, live-filter against the release's APK/ZIP assets, sanity gate) and
-pushes. Run **after** the archive file upload so the live-asset filter sees the
+commits both with `commit_to_main.sh`. Run **after** the archive file upload so the live-asset filter sees the
 new files. Env: `ARCHIVE_TAG` (`stable`|`beta`), `BUILD_TAG` (this release's
 tag), `GITHUB_REPOSITORY`.
 
-The branch design removes the 2026-09-24 incident class by construction: the
-previous cumulative manifest is a checked-out file, not a `gh release
+Keeping the manifests in git removes the 2026-09-24 incident class by construction: the
+previous cumulative manifest is read from `origin/main`, not from a `gh release
 download` that can fail into an empty base — a broken `git fetch` fails the
 job loudly instead. Remaining guards: the sanity gate recomputes the expected
-minimum (`|union(old, new) ∩ live assets|`) and refuses to push a merge that
-kept fewer entries; push retries rebase against concurrent branch updates.
+minimum (`|union(old, new) ∩ live assets|`) and refuses to commit a merge that
+kept fewer entries; commit retries re-apply on the new tip of `main`.
 
-Regression tests: `temp/test_merge_archive_branch.sh` (stubbed `gh`, local
-bare `origin`; run from Git Bash — `temp/` is gitignored, keep a copy
-alongside the other local tests).
+Regression tests: `.github/traces/test_manifest_scripts.sh` (stubbed `gh`, local bare `origin`).
 
 ## Archive maintenance
 
@@ -113,20 +113,20 @@ Prunes old assets from the archive releases (size caps). The merge script's
 live-asset filter automatically drops manifest entries whose files were
 pruned, so the cumulative manifest tracks what is actually downloadable.
 
-### `cleanup_website_branch.sh`
-Runs in `cleanup.yml` after release deletion: removes `manifests/<tag>.json`
-from the `website` branch when the numbered release no longer exists (same
-pattern as `cleanup_update_branch.sh` does for changelogs). `archive/*.json`
+### `cleanup_manifests.sh`
+Runs in `cleanup.yml` after release deletion: removes `state/manifests/<tag>.json`
+from `main` (via `commit_to_main.sh`) when the numbered release no longer exists (same
+pattern as `cleanup_update_branch.sh` does for changelogs). `state/archive/*.json`
 entries for pruned files drop out at the next build merge (live filter).
 
-### `seed_website_branch.py`
+### `rebuild_manifests_from_releases.py`
 Downloads every live release's `build.json` **asset** and lays out the full
-`website` branch content (`manifests/*.json` + `archive/*.json`). Historical
-role: seeded the branch at migration time (2026-09-25). Since per-build
-manifests stopped being uploaded as release assets, the branch is the sole
-store — recovery order is now: ① branch git history
-(`git log -p archive/stable.json`, `git show <rev>:archive/stable.json`,
-force-push to undo), ② the repair tools below rebuilding from the surviving
+manifest tree (`manifests/*.json` + `archive/*.json`, to be copied under `state/`). Historical
+role: seeded the manifest store at migration time (2026-09-25). Since per-build
+manifests stopped being uploaded as release assets, `state/` is the sole
+store — recovery order is now: ① git history
+(`git log -p state/archive/stable.json`, `git show <rev>:state/archive/stable.json`,
+commit the old copy back), ② the repair tools below rebuilding from the surviving
 window of legacy release assets + a healthy website `data.json`, ③ this
 script (only while legacy assets still exist).
 
@@ -154,8 +154,8 @@ python3 .github/scripts/repair_archive_manifest.py --archive stable \
         --data-json /tmp/data_prewipe.json                                   # writes output file
 ```
 
-The repaired file is then committed to the `website` branch as
-`archive/<channel>.json` (the `--apply` flag still uploads a release asset,
+The repaired file is then committed as
+`state/archive/<channel>.json` (the `--apply` flag still uploads a release asset,
 which the pipeline no longer reads), then trigger the website's
 `rebuild-catalog.yml` (workflow_dispatch) so `data.json` re-folds from it.
 Since the branch keeps full history, the first recovery step for a degraded

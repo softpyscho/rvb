@@ -1,0 +1,110 @@
+{
+  "Alarmy": {
+    "keys": [
+      "Alarmy"
+    ],
+    "version": "26.36.0"
+  },
+  "Amazon-Prime-Video": {
+    "keys": [
+      "Amazon-Prime-Video"
+    ],
+    "version": "3.0.475"
+  },
+  "Battery-Guru": {
+    "keys": [
+      "Battery-Guru"
+    ],
+    "version": "2.5.0.8"
+  },
+  "Bitget": {
+    "keys": [
+      "Bitget"
+    ],
+    "version": "2.94.2"
+  },
+  "Duck-Detector": {
+    "keys": [
+      "Duck-Detector"
+    ],
+    "version": "nightly"
+  },
+  "Greenify": {
+    "keys": [
+      "Greenify"
+    ],
+    "version": "5.1.1"
+  },
+  "Instagram": {
+    "keys": [
+      "Instagram"
+    ],
+    "version": "451.0.0.0.53"
+  },
+  "Mix-Archive": {
+    "keys": [
+      "Mix-Archive"
+    ],
+    "version": "3.24"
+  },
+  "Mixplorer": {
+    "keys": [
+      "Mixplorer"
+    ],
+    "version": "6.71.15-API29"
+  },
+  "Reddit": {
+    "keys": [
+      "Reddit"
+    ],
+    "version": "2026.40.0"
+  },
+  "RedotPay": {
+    "keys": [
+      "RedotPay"
+    ],
+    "version": "3.14.3"
+  },
+  "Splitwise": {
+    "keys": [
+      "Splitwise"
+    ],
+    "version": "26.8.3"
+  },
+  "Stremio": {
+    "keys": [
+      "Stremio"
+    ],
+    "version": "2.4.0"
+  },
+  "TickTick": {
+    "keys": [
+      "TickTick"
+    ],
+    "version": "8.2.2.0"
+  },
+  "Truecaller": {
+    "keys": [
+      "Truecaller"
+    ],
+    "version": "15.28.7"
+  },
+  "Twitter": {
+    "keys": [
+      "Twitter"
+    ],
+    "version": "12.31.0-prod.01"
+  },
+  "WARP": {
+    "keys": [
+      "WARP"
+    ],
+    "version": "6.38.9"
+  },
+  "Xodo": {
+    "keys": [
+      "Xodo"
+    ],
+    "version": "11.3.0"
+  }
+}

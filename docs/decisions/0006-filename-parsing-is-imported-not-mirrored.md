@@ -21,7 +21,7 @@ manifest architecture exists precisely to eliminate silent-parse-disagreement as
 failure class.
 
 The clone the rebuild job already performs made the duplication unnecessary: the
-website fetches rvb's `website` branch to read manifests, so rvb's code is one small
+website fetches rvb's manifests to read them (from `state/` on `main`; formerly the `website` branch), so rvb's code is one small
 checkout away.
 
 ## Decision

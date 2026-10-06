@@ -1,0 +1,28 @@
+# Hand-built config for Manual CI (workflow_dispatch -> "configs/config.manual.toml").
+# It never touches the stable/beta pools, so it is the place to try apps end to end, or to
+# re-run ones the watcher cannot retrigger. Edit, publish with
+#   git commit -am "chore(config): ..." && git push
+# and run Manual CI.
+#
+# Currently: the two stable-pool apps whose first run failed (a Cloudflare-blocked store for
+# Truecaller; Duck Detector's release asset name, since fixed in the engine).
+brand = "Morphe"
+arch = "arm64-v8a"
+
+[Truecaller]
+patches-source = "Paresh-Maheshwari/paresh-patches"
+patches-source-host = "gitlab"
+pkg-name = "com.truecaller"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/true-software-scandinavia-ab/truecaller-caller-id-block/"
+uptodown-dlurl = "https://truecaller.en.uptodown.com/android"
+
+[Duck-Detector]
+mirror = true
+brand = "Mirror"
+app-name = "Duck Detector"
+pkg-name = "Duck.Detector"
+keep-filename = true
+version = "nightly"
+arch = "all"
+github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly"

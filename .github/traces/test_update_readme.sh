@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Regression test for update_readme.sh: the CI step that refreshes the README app table on main.
-# Offline: a local bare origin with a `main` (README with the markers) and a `website` branch
-# (archive manifest); the real obtainium.py generates the section.
+# Offline: a local bare origin whose `main` carries the README (with the markers), the app config
+# and the archive manifest (state/archive/); the real obtainium.py generates the section.
 set -u
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WORK=$(mktemp -d)
@@ -24,17 +24,14 @@ arch = "arm64-v8a"
 pkg-name = "com.reddit.frontpage"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit"
 TOML
-# main: a README with prose around the markers, which must survive untouched
+# main: a README with prose around the markers (which must survive untouched), plus the archive
+# manifest the last build left
 printf '# Title\n\nintro text\n\n<!-- APPS_START -->\nold table\n<!-- APPS_END -->\n\noutro text\n' > README.md
-git add README.md; git commit -qm init; git push -q origin main 2>&1 | quiet
-# website: the archive manifest the last build left
-git checkout -q --orphan website; git rm -rfq . 2>/dev/null; mkdir archive
-cat > archive/stable.json <<'JSON'
+mkdir -p state/archive
+cat > state/archive/stable.json <<'JSON'
 {"schema":1,"kind":"archive","files":{"reddit-morphe-v2026.39.0-arm64-v8a.apk":{"name":"reddit-morphe","fileType":"APK","version":"2026.39.0","appliedPatches":["Hide ads","App icon"],"publishedAt":"2026-10-06T07:21:01Z"}}}
 JSON
-git add archive; git commit -qm manifest; git push -q origin website 2>&1 | quiet
-git checkout -q main
-git rm -q --cached -r . >/dev/null 2>&1; git reset -q
+git add README.md configs state; git commit -qm init; git push -q origin main 2>&1 | quiet
 
 run() { GITHUB_REPOSITORY=o/rvb BUILD_TAG=260042 bash "$REPO_ROOT/.github/scripts/update_readme.sh" 2>&1 | quiet; }
 tip() { git -C "$WORK/origin.git" rev-parse main; }
@@ -63,7 +60,8 @@ grep -q "already up to date" <<<"$out" || fail "should say it is current: $out"
 cat > "$WORK/new.json" <<'JSON'
 {"schema":1,"kind":"archive","files":{"reddit-morphe-v2026.40.0-arm64-v8a.apk":{"name":"reddit-morphe","fileType":"APK","version":"2026.40.0","appliedPatches":["Hide ads"],"publishedAt":"2026-10-07T07:00:00Z"},"reddit-morphe-v2026.39.0-arm64-v8a.apk":{"name":"reddit-morphe","fileType":"APK","version":"2026.39.0","appliedPatches":["Hide ads","App icon"],"publishedAt":"2026-10-06T07:21:01Z"}}}
 JSON
-git checkout -q website; cp "$WORK/new.json" archive/stable.json; git commit -qam newer; git push -q origin website 2>&1 | quiet; git checkout -q main
+git pull -q --ff-only origin main 2>&1 | quiet; cp "$WORK/new.json" state/archive/stable.json; git commit -qam newer; git push -q origin main 2>&1 | quiet
+after=$(tip)
 out=$(run)
 [ "$(tip)" != "$after" ] || fail "a new version must produce a commit: $out"
 git -C "$WORK/origin.git" show main:README.md | grep -q "version-v2026.40.0-" || fail "the newest published version should win"

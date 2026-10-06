@@ -32,12 +32,13 @@ document.
 | # | Decision | Affects |
 |---|---|---|
 | [0001](0001-release-metadata-ownership.md) | Release metadata is owned by whoever names it | release uploads, archive releases |
-| [0002](0002-manifests-live-on-a-branch.md) | Build manifests live on a branch, not on releases | `website` branch, archive merge, catalogue rebuild |
+| [0002](0002-manifests-live-on-a-branch.md) | Build manifests live on a branch, not on releases | manifest store (now `state/` on `main`, see 0008), archive merge, catalogue rebuild |
 | [0003](0003-blocked-patch-sources-are-skipped.md) | A blocked patch source is skipped, never re-queried | watcher state, `get_prebuilts` |
 | [0004](0004-no-download-prewarm-pass.md) | No download prewarm pass; fetching stays inside each build | build pool, download flock, `RVB_DL_MAX_TIME` |
 | [0005](0005-tuning-knobs-live-in-the-workflow.md) | Build tuning knobs live in the workflow's env block | `PARALLEL_JOBS`, `UPLOAD_CONCURRENCY`, no config keys |
 | [0006](0006-filename-parsing-is-imported-not-mirrored.md) | Filename parsing is imported across the repo boundary, never mirrored | `naming.py`, the site's catalogue rebuild |
 | [0007](0007-requested-arch-is-a-hard-requirement.md) | A requested build arch is a hard requirement; no mislabeled artifacts | `build_rv` download gate, download-link index, published arch names |
+| [0008](0008-one-branch.md) | One branch: config, state and manifests live on `main` | `configs/`, `state/`, `commit_to_main.sh` |
 
 Candidates still unwritten, because the reasoning currently lives only in commit
 messages: pinning a patch source's `patches-version` to a tag vs resolving the

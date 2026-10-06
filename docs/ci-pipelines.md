@@ -11,7 +11,7 @@ GitHub's limits; notify reports failures.
 | [cleanup.yml](../.github/workflows/cleanup.yml) | Cleanup | `workflow_call`, `workflow_dispatch` | `clean` |
 | [manual-ci.yml](../.github/workflows/manual-ci.yml) | Manual CI | `workflow_dispatch` (config choice + optional `remove_apks`) | `ci` |
 | [notify.yml](../.github/workflows/notify.yml) | Notify | `workflow_call`, on `failure()` of the caller | — |
-| [trace-verify.yml](../.github/workflows/trace-verify.yml) | Trace Verify | `push` touching `scripts/build.sh`, `scripts/utils.sh`, `.github/traces/**`, the release-notes / Obtainium / manifest scripts, `.github/seed/**`, or the generated `README.md` / `OBTAINIUM.md` / `obtainium-apps.json` | `trace-verify` |
+| [trace-verify.yml](../.github/workflows/trace-verify.yml) | Trace Verify | `push` touching `scripts/build.sh`, `scripts/utils.sh`, `.github/traces/**`, the release-notes / Obtainium / manifest scripts, `configs/patches/**`, or the generated `README.md` / `OBTAINIUM.md` / `obtainium-apps.json` | `trace-verify` |
 
 Nothing here runs on `push` to `main` except Trace Verify: a push changes
 behaviour for the *next* scheduled run, it does not start a build.
@@ -35,7 +35,6 @@ step's output is the next step's input:
 
 | Step | Script | What it decides |
 |---|---|---|
-| Fetch configs & state | `fetch_data_branch.sh` | hard-fails if `data` is missing — no silent fallback to stale state |
 | Compile Base Configs | `compile_patch_configs.py` | every app's pool membership from `configs/patches/*.toml` |
 | Sync Patch Sources | `sync_patch_sources.py` | discovers all `(patches-source, host)` pairs, lists releases on GitHub/GitLab/Codeberg, rewrites `state/patch_sources.json`, prunes sources no config uses, emits `TRIGGER_STABLE`/`TRIGGER_BETA`/`TRIGGER_BLOCKED` and writes `changed_sources.json` |
 | Fetch App Versions | `ci_fetch_app_versions.sh` | scrapes current store versions (honours `"_check_only_listed"` in `state/app_versions.json`) |
@@ -45,7 +44,7 @@ step's output is the next step's input:
 | Generate configs (JSON) | `ci_generate_configs.sh` | only when `ANYTHING_CHANGED`: writes the pool config each channel will build |
 | Resolve effective triggers | `ci_resolve_triggers.sh` | per-channel `TRIGGER_*` **after** generation, and downgrades a trigger to 0 when the resulting pool has no enabled apps |
 | Notify telegram | `ci_notify_telegram.sh` | raw vs effective triggers, so a suppressed trigger is visible |
-| Commit updated state | `commit_data_branch.sh` | pushes **only** `*.json` under `configs/` + `state/` to `data` |
+| Commit updated state | `commit_to_main.sh` | commits **only** the named `configs/*_build.json` + `state/*.json` onto `main` (plumbing, `[skip ci]`) |
 
 Two design rules worth preserving:
 
@@ -82,8 +81,8 @@ forge answers again. The deliberate fail-open inside that check is recorded in
 
 - `build_beta` runs first; `build_stable` `needs` it and additionally requires the
   watcher to have succeeded and beta not to have been cancelled. The single
-  `build` concurrency group therefore serialises every manifest merge against the
-  `website` branch — two builders never merge at once.
+  `build` concurrency group therefore serialises every manifest merge against
+  `state/` on `main` — two builders never merge at once.
 - `trigger_cleanup` runs on `always()` if either build succeeded.
 - `ci_trigger_flags.sh` writes outputs with explicit `if` blocks rather than
   `[ … ] || [ … ] && var=` lists on purpose: under `set -e` a short-circuit list
@@ -101,8 +100,8 @@ repo variables, so they are visible in PRs, survive forks, and carry git history
 Step order, with the reason each is where it is:
 
 1. Java 21 (Temurin) → checkout `main` with `fetch-depth: 0` and submodules (full
-   history is needed to enumerate existing tags and to commit to other branches) →
-   `fetch_data_branch.sh`.
+   history is needed to enumerate existing tags). `configs/` and `state/` come with the
+   checkout — they are tracked on `main`.
 2. `build_resolve_context.sh` maps the config file to `ARCHIVE_TAG`,
    `IS_PRERELEASE`, `TITLE_SUFFIX` and the Telegram thread — the single owner of
    "which channel is this run".
@@ -136,13 +135,15 @@ Step order, with the reason each is where it is:
 14. **Upload to release (Archive)**: `continue-on-error: true`, assets only. It
     names no metadata at all, which is deliberate —
     [decisions/0001-release-metadata-ownership.md](decisions/0001-release-metadata-ownership.md).
-15. `merge_archive_branch.sh` merges this build's manifest into the `website`
-    branch. Must run **after** the archive upload so its live-asset filter sees the
-    new files. Why manifests live on a branch at all:
-    [decisions/0002](decisions/0002-manifests-live-on-a-branch.md).
+15. `merge_archive_manifest.sh` merges this build's manifest into `state/manifests/` and
+    `state/archive/`, reading the previous archive from `origin/main`'s tip and committing both
+    files with `commit_to_main.sh`. Must run **after** the archive upload so its live-asset filter
+    sees the new files. Why manifests are files in git and not release assets:
+    [decisions/0002](decisions/0002-manifests-live-on-a-branch.md); why on `main`:
+    [decisions/0008](decisions/0008-one-branch.md).
 16. `update_readme.sh` refreshes the README's apps section on `main`: versions and applied
-    patches from the `website` branch's archive manifests, the app list from the materialised
-    config, committed as one `README.md`-only commit built with plumbing on `main`'s own tip
+    patches from `state/archive/*.json`, the app list from `configs/patches/`, both read from
+    `main`'s tip, committed as one `README.md`-only commit built with plumbing on `main`'s own tip
     (`[skip ci]`). `continue-on-error`: it is presentation and must never cost a build its
     release; an unreadable generation fails the step loudly rather than reading as "unchanged".
 17. `build_notify_telegram.sh` posts the release to the channel's thread.
@@ -157,7 +158,7 @@ Step order, with the reason each is where it is:
 3. `cleanup_update_branch.sh` drops update pointers and changelogs whose release is
    gone — and does nothing, successfully, when the `update` branch does not exist (an
    apk-only repository never builds a module, which is what creates it; an unreachable
-   remote is still an error); `cleanup_website_branch.sh` drops `manifests/<tag>.json`
+   remote is still an error); `cleanup_manifests.sh` drops `state/manifests/<tag>.json`
    for deleted releases.
 4. A `catalog-updated` `repository_dispatch` to `vars.WEBSITE_REPO` (skipped when it
    is unset), authenticated with

@@ -13,7 +13,10 @@ on:
       - ".github/scripts/update_readme.sh"
       - ".github/scripts/patchers.py"
       - ".github/scripts/build_make_manifest.py"
-      - ".github/seed/**"
+      - "configs/patches/**"
+      - ".github/scripts/commit_to_main.sh"
+      - ".github/scripts/merge_archive_manifest.sh"
+      - ".github/scripts/cleanup_manifests.sh"
       - "README.md"
       - "OBTAINIUM.md"
       - "obtainium-apps.json"
@@ -46,3 +49,5 @@ jobs:
           bash .github/traces/test_github_versions.sh
           bash .github/traces/test_cleanup_update_branch.sh
           bash .github/traces/test_update_readme.sh
+          bash .github/traces/test_commit_to_main.sh
+          bash .github/traces/test_manifest_scripts.sh

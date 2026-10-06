@@ -40,10 +40,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/cleanup_update_branch.sh
 
-      - name: Cleanup Website Branch Manifests
+      - name: Cleanup Build Manifests
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: bash .github/scripts/cleanup_website_branch.sh
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .github/scripts/cleanup_manifests.sh
 
       # Only when a site repository is named: a fork has no catalogue to rebuild, and the
       # upstream's must never receive its dispatches.

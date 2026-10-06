@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""(Re)build the content of the `website` manifest branch from live release assets.
+"""(Re)build the manifest tree (`state/manifests/`, `state/archive/`) from live release assets.
 
 Downloads every release's build.json asset of the rvb repo and lays them out in
-the branch structure consumed by the website catalog rebuild:
+the layout consumed by the website catalog rebuild (copy it under `state/`):
 
   <out>/archive/stable.json     cumulative stable manifest (as published)
   <out>/archive/beta.json       cumulative beta manifest (as published)
   <out>/manifests/<tag>.json    per-numbered-release manifest
 
-Used once to seed the branch and available afterwards to reconstruct it from
-scratch if the branch ever needs to be rebuilt from release assets.
+Used once to seed the store and available afterwards to reconstruct it from
+scratch if it ever needs to be rebuilt from release assets.
 
 Usage:
-  python3 .github/scripts/seed_website_branch.py --out temp/website-branch
+  python3 .github/scripts/rebuild_manifests_from_releases.py --out temp/manifest-tree
 Env:
   RVB_REPO (default nullcpy/rvb)
 """
@@ -37,7 +37,7 @@ def main():
     ap.add_argument(
         "--repo", default=os.environ.get("RVB_REPO", "nullcpy/rvb"))
     ap.add_argument("--out", required=True,
-                    help="output directory for branch content")
+                    help="output directory for the manifest tree")
     args = ap.parse_args()
 
     out = Path(args.out)

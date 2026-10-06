@@ -330,29 +330,26 @@ You do **not** need separate files for stable and beta:
   - **File-Level Defaults**: Setting `patches-version = "both"` (or `"beta"`) at the top applies that channel to all apps in the file unless individually overridden.
   - **Filename Inference**: A filename with `.beta.toml` automatically defaults all apps in that file to beta. Renaming to `*.toml` defaults to stable unless `patches-version = "both"` is set. (A legacy `.dev.toml` spelling is no longer recognized — a source named like `devanced.toml` would otherwise be mistaken for one.)
   - **Concrete Version Pins**: A version number instead of a channel (e.g. `patches-version = "v4.8.3"`) pins that exact release — one app when written in an app block, every app in the file when written at the top level. The generated pool config carries it verbatim and nothing rewrites it.
-  - **Channel Resolution**: `"stable"` and `"beta"` are the only channel keywords, and they stay as keywords in the generated config; the build resolves each source's keyword against `state/patch_sources.json`, the watcher's record of that source's current release per channel. One source of truth instead of a stamped copy that can go stale, and a build run is consistent with the state it was generated from because `configs/` and `state/` come from the same `data` commit. A source with no release recorded on that channel falls back to listing the releases live. Any other word is treated as a release tag, so a mistyped channel fails on the release lookup rather than building the wrong thing.
+  - **Channel Resolution**: `"stable"` and `"beta"` are the only channel keywords, and they stay as keywords in the generated config; the build resolves each source's keyword against `state/patch_sources.json`, the watcher's record of that source's current release per channel. One source of truth instead of a stamped copy that can go stale, and a build run is consistent with the state it was generated from because `configs/` and `state/` come from the same `main` commit. A source with no release recorded on that channel falls back to listing the releases live. Any other word is treated as a release tag, so a mistyped channel fails on the release lookup rather than building the wrong thing.
   - **Blocked Sources**: when the forge answers `404` (deleted or renamed), `451` (legal takedown) or `403` (private or access refused), the watcher marks that source `blocked` and freezes its last known tags. A build then **skips every app using it** - keyword or pinned version alike - instead of querying the releases endpoint, because neither a retry nor a live listing can recover a repository that is gone. The app is logged as "Could not get prebuilts" and the run moves on; it comes back on its own once the source is reachable again.
   - **Disabling an App**: Set `enabled = false` to disable an app across all pools.
 
 ## Automated Patch Sources State Tracking
 
-> **Where configs and state live:** main is **pure code** — everything under
-> `configs/` and `state/` is **not tracked there**. The canonical copies live on
-> the dedicated **`data`** branch:
+> **Where configs and state live:** all on `main`, tracked like code.
 >
-> - `configs/config.manual.toml`, `configs/patches/*.toml` — **yours**: edit the
->   local (ignored) copies, then publish with
->   `bash .github/scripts/push_data_configs.sh "<message>"`.
+> - `configs/config.manual.toml`, `configs/patches/*.toml` — **yours**: edit and
+>   commit them normally.
 > - `configs/stable_build.json`, `configs/beta_build.json` — generated pool
->   configs, written by the watcher only.
+>   configs, written by the watcher only (`commit_to_main.sh`).
 > - `state/*.json` (`patch_sources`, `app_versions`, `patch_file_hashes`) —
->   machine state, written by the watcher only (`commit_data_branch.sh`).
+>   machine state, written by the watcher only.
+> - `state/manifests/`, `state/archive/` — build manifests, written by each build.
 >
-> Every CI job materializes them via `fetch_data_branch.sh` right after
-> checkout; do the same locally after cloning (it also refreshes your TOML
-> copies from the branch — push your edits **before** fetching, fetch
-> overwrites). Never hand-commit JSONs; to force a state change, edit the
-> local file and let the watcher pick it up, or commit directly to `data`.
+> CI commits those generated files to `main` between your edits, so `git pull`
+> before you edit. Never hand-edit the JSON; to force a state change, delete the
+> entry and let the watcher rebuild it. Why one branch:
+> [docs/decisions/0008](docs/decisions/0008-one-branch.md).
 
 Patch sources and their release versions in `state/patch_sources.json` are **100% automated**:
 - The CI automatically scans all `.toml` files, discovers every active `patches-source` repository and host (`github`, `gitlab` or `codeberg`), and checks for new stable and beta releases.
@@ -370,7 +367,7 @@ The CI workflow automatically detects when a new version of an app is released o
 2. **Comparison**: It checks the newly fetched versions against the currently stored versions in `state/app_versions.json`.
 3. **Triggering**: If a new version is detected, the app is added to a temporary `active_apps.json` list, and the CI is triggered to build it.
 ### Tracking File
-App versions are permanently tracked in `state/app_versions.json` (on the `data` branch, see above).
+App versions are permanently tracked in `state/app_versions.json` (on `main`, see above).
 You can manually update this file if you need to force a specific version state, but the CI will automatically manage it during scheduled runs.
 
 **Selective Checking:** If you only want the CI to check specific apps (instead of all enabled apps in your config), you can add `"_check_only_listed": true` to the top level of `app_versions.json`. When this is true, the script will only check for updates for the apps that already exist as keys in the file, saving time and resources.
@@ -379,7 +376,7 @@ You can manually update this file if you need to force a specific version state,
 
 Maintenance and cleanup workflows keep GitHub Releases and changelogs pruned. The
 website catalog (`data.json` on `nullcpy.github.io`) is **derived, not edited**: every
-build's metadata lives in a `build.json` manifest on the repo's `website` branch and
+build's metadata lives in a `build.json` manifest under `state/` on the repo's `main` and
 the website repo regenerates its catalog from scratch by folding those manifests
 against the live releases API.
 
@@ -389,16 +386,15 @@ against the live releases API.
   `appliedPatches`. Schema documented in `.github/scripts/build_make_manifest.py`.
 - **Numbered releases**: the builder generates one manifest per build
   (`build_make_manifest.py` → `temp/manifest/build.json`); it is committed to the
-  `website` branch as `manifests/<tag>.json`, not uploaded as a release asset.
+  repository as `state/manifests/<tag>.json`, not uploaded as a release asset.
 - **Archive releases (`stable`/`beta`)**: after each archive file upload,
-  `merge_archive_branch.sh` checks out the repo's `website` branch, unions the
-  new build's entries with the cumulative `archive/<channel>.json` there (same
-  filename = file replaced = metadata replaced), drops entries whose file no
-  longer exists in the release, commits `manifests/<tag>.json` alongside, and
-  pushes. The archive therefore carries cumulative metadata for every file it
+  `merge_archive_manifest.sh` reads the cumulative `state/archive/<channel>.json`
+  from `main`, unions the new build's entries with it (same filename = file
+  replaced = metadata replaced), drops entries whose file no longer exists in
+  the release, and commits it with `state/manifests/<tag>.json` alongside. The archive therefore carries cumulative metadata for every file it
   contains, even after the originating numbered release is deleted — and the
-  branch history makes any manifest loss recoverable via `git log -p` /
-  `git show <rev>:archive/stable.json`.
+  git history makes any manifest loss recoverable via `git log -p` /
+  `git show <rev>:state/archive/stable.json`.
 - **Backfill**: `.github/scripts/backfill_manifests.py` (run with `--apply`) can
   regenerate manifests on all live releases from a healthy `data.json` (one-time
   migration tool; dry run by default).
@@ -406,7 +402,7 @@ against the live releases API.
 ### Website Rebuild (nullcpy.github.io repo)
 `.github/workflows/rebuild-catalog.yml` runs on `repository_dispatch
 (catalog-updated)` — sent fire-and-forget by `build.yml` and `cleanup.yml` — plus a
-scheduled safety net. It checks out the `website` branch of this repo for the
+scheduled safety net. It sparse-clones `state/` of this repo's `main` for the
 manifests (plus fetches live releases for existence, sizes, and download
 counts), regenerates `data.json` (schema v2) from scratch, and pushes only on
 material change. Deletions are automatic: a release or asset that no longer
@@ -418,7 +414,7 @@ Releases without a manifest get minimal filename-derived fallback entries.
 ### Automated Routine Cleanup (`cleanup.yml`)
 - **Numbered Releases**: Retains the latest 98 numbered releases via `ophub/delete-releases-workflows`. Keeping 98 *is* the catalog's history window — deleted releases vanish from the website, which is correct since their files are gone.
 - **Archive Releases**: Retains rolling `stable` and `beta` releases, keeping up to 2 versions per asset group via `cleanup-archive-assets.py`. Pruned assets drop out of the catalog automatically at the next rebuild.
-- **Website Branch**: `cleanup_website_branch.sh` deletes `manifests/<tag>.json` for numbered releases that no longer exist (same pattern as the update branch's changelog pruning).
+- **Manifests**: `cleanup_manifests.sh` deletes `state/manifests/<tag>.json` for numbered releases that no longer exist (same pattern as the update branch's changelog pruning).
 - Ends with a fire-and-forget `catalog-updated` dispatch so the website reflects deletions promptly.
 
 ### Full Clean Slate / Rebuilding from Scratch

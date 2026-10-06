@@ -10,7 +10,7 @@ notices, search engine, Obtainium flow) are documented by its own guide:
 
 | Channel | Direction | Format | Stability |
 |---|---|---|---|
-| `website` branch of rvb | rvb → site | `manifests/<tag>.json`, `archive/{stable,beta}.json`, schema v1 | **the contract**; the site clones this branch shallowly |
+| `state/manifests/`, `state/archive/` on rvb's `main` | rvb → site | `<tag>.json`, `{stable,beta}.json`, schema v1 | **the contract**; the site sparse-clones these two directories (they were the `website` branch's `manifests/` and `archive/` until 2026-10-06, [decisions/0008](decisions/0008-one-branch.md) — a site still cloning that branch must be repointed) |
 | GitHub Releases API | site → GitHub | asset existence, size, `downloadCount`, browser download URLs | queried live, never cached in git |
 | `catalog-updated` dispatch | rvb → site | `repository_dispatch` event type | name only; a lost dispatch is recovered by schedule |
 | `update` branch pointers | phone → rvb | `module.prop` `updateJson` URL + JSON | baked into installed modules |
@@ -19,15 +19,15 @@ notices, search engine, Obtainium flow) are documented by its own guide:
 
 **rvb never writes into the site repository,** and the site never writes into rvb.
 The only file either side edits in the other's name is `data.json`, which the site
-regenerates from rvb's branch.
+regenerates from rvb's manifests.
 
 ## The pipeline across the seam
 
 ```
 rvb: merge_build_info → build.json → build_make_manifest.py → temp/manifest/build.json
                                                             ↓ (after archive upload)
-rvb:  website branch  manifests/<tag>.json  +  archive/<channel>.json
-                                                            ↓ git clone --branch website
+rvb:  main: state/manifests/<tag>.json  +  state/archive/<channel>.json
+                                                            ↓ sparse clone of main (state/)
 site: rebuild-catalog.yml → rebuild_catalog.py → data.json (schema v2) → deploy-pages.yml
                                                             ↑
 site: also on cron "23 */6 * * *"  (convergence for lost dispatches)
@@ -116,9 +116,9 @@ Both sides can lose an input, so both refuse to publish a collapse:
 | Guard | Where | Fires when |
 |---|---|---|
 | `MIN_RATIO` (default `0.6`) | site `rebuild_catalog.py` | the new catalogue retains fewer than 60% of the previous apps/builds → abort (`FORCE=1` overrides) |
-| fetch failure = job failure | rvb `merge_archive_branch.sh`, `fetch_data_branch.sh` | the previous branch state could not be read — no "start from empty" path exists |
-| merge sanity gate | rvb `merge_archive_branch.sh` | the merged archive manifest kept fewer entries than `|union(old,new) ∩ live|` |
-| push retry with rebase | both manifest/branch writers | a concurrent branch update; a genuine conflict defers to the next run rather than forcing |
+| fetch failure = job failure | rvb `merge_archive_manifest.sh`, `commit_to_main.sh` | the previous state on `main` could not be read — no "start from empty" path exists |
+| merge sanity gate | rvb `merge_archive_manifest.sh` | the merged archive manifest kept fewer entries than `|union(old,new) ∩ live|` |
+| push retry on the new tip | both manifest writers | a concurrent update of the same files; a genuine conflict defers to the next run rather than forcing |
 
 The 2026-09-24 archive collapse is the reason the first two exist: a transient
 download failure fell back to an empty base and the cumulative manifest restarted
@@ -138,7 +138,7 @@ expressed — the full account is
 3. **Bump `schema`** in the manifest envelope for a breaking change, and make the
    consumer reject an unknown major version loudly instead of half-reading it.
 4. **Verify both ends before pushing.** Locally:
-   `python3 .github/scripts/rebuild_catalog.py --repo nullcpy/rvb --manifest-dir <clone-of-website-branch> --out /tmp/data.json.new --existing data.json`
+   `python3 .github/scripts/rebuild_catalog.py --repo nullcpy/rvb --manifest-dir <clone-of-rvb>/state/manifests --out /tmp/data.json.new --existing data.json`
    then diff `/tmp/data.json.new` against `data.json` ignoring `updated_at` —
    exactly what the workflow's report step does. On GitHub: run
    `rebuild-catalog.yml` with `dry_run: true`.

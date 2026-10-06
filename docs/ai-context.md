@@ -9,26 +9,28 @@ line is either a rule you must obey or a fact you cannot infer from a single fil
 `nullcpy/rvb` automatically builds patched Android APKs and Magisk/KernelSU
 modules (ReVanced-family, Morphe, and others) whenever an upstream **patch source**
 or an upstream **app** releases something new, publishes the files to GitHub
-Releases, records build metadata on a Git branch, and feeds a static download site
+Releases, records build metadata in the repository (`state/`), and feeds a static download site
 (`nullcpy.github.io`). Detail: [architecture.md](architecture.md).
 
 ## Hard rules
 
-1. **`main` is pure code.** `configs/` and `state/` are gitignored materialisations
-   of the `data` branch. Never commit them, never `git add -A`, never assume an
-   edit to a local TOML has been saved anywhere.
-2. Publishing human config is a separate action:
-   `bash .github/scripts/push_data_configs.sh "<msg>"` (TOML only, plumbing index).
-   CI's writer (`commit_data_branch.sh`) commits **only** `*.json` under
-   `configs/`/`state/`. Neither can delete a file — renames need explicit removal.
-3. **`fetch_data_branch.sh` overwrites local `configs/` + `state/`.** Publish first.
+1. **`main` is the only long-lived branch.** Code, config (`configs/`) and recorded
+   state (`state/`) all live on it. `temp/`, `build/`, `build.json`, `build.md` are
+   scratch and gitignored — never commit them, never `git add -A` blindly.
+2. CI writes to `main` only through `.github/scripts/commit_to_main.sh "<msg>" <path>…`
+   (plumbing: temp index on origin/main's tip, named files only, `[skip ci]`; a path
+   missing from the worktree but present on main is removed). The generated
+   `*.json` under `configs/`/`state/`, the build manifests and the README apps section
+   are the only things it ever writes.
+3. **`git pull` before editing `configs/` or `state/`** — CI commits between your edits.
+   Hand-edit only `configs/**.toml`; the JSON there and all of `state/` is machine-written.
 4. **A field nobody named is not yours to write.** Defaults that assert a value
    (`${X:-false}`, `-n ""`, a synthesised title) are bugs in this codebase, not
    conveniences — see [decisions/0001](decisions/0001-release-metadata-ownership.md).
    Fail loudly on an unrecognised value instead of guessing.
 5. **Wire formats are frozen.** Asset filename grammar; `module.prop` `updateJson`
    path (`<channel>/<id>.json` on the `update` branch); manifest schema keys;
-   `data.json` schema keys; branch names `data`/`website`/`update`. Changing one
+   `data.json` schema keys; the `update` branch name (module pointers). Changing one
    orphans installed software or the site's catalogue. Add a key, age it out, or
    bump a schema version — never reinterpret in place.
 6. **`.github/scripts/naming.py` is the single implementation of filename and
@@ -42,7 +44,7 @@ Releases, records build metadata on a Git branch, and feeds a static download si
 8. Patcher argv is assembled as strings and evaluated later. Quoting happens in
    exactly one place (`join_args`). Do not add a second quoting site.
 9. **Fail loud where data could be silently lost** (branch fetch, manifest merge,
-   archive sanity gate, `data` branch missing). **Fail soft where one app must not
+   archive sanity gate, `origin/main` unreadable). **Fail soft where one app must not
    stop sixty** (per-app build, archive upload `continue-on-error`, Telegram, usage
    tracker). Adding a new `|| true` to a metadata path is a regression.
 10. Commits: Conventional Commits (`fix(ci):`, `refactor(build):`, `feat(config):`,
@@ -71,10 +73,11 @@ Releases, records build metadata on a Git branch, and feeds a static download si
 | `.github/workflows/trace-verify.yml` | offline regression gate on engine pushes |
 | `.github/scripts/` | CI-side tooling; the [index](../.github/scripts/README.md) describes each script's contract |
 | `.github/traces/` | fixtures + `curl`/`java` stubs + golden argv files; the engine's safety net |
-| `configs/patches/*.toml` *(on `data`)* | the actual app configuration — one file per patch-source family |
-| `state/*.json` *(on `data`)* | watcher memory: patch source tags/blocked flags, app versions, bundle hashes |
+| `configs/patches/*.toml` | the actual app configuration — one file per patch-source family |
+| `state/*.json` | watcher memory: patch source tags/blocked flags, app versions, bundle hashes |
+| `state/manifests/`, `state/archive/` | build metadata: one manifest per numbered release + the cumulative `stable`/`beta` archive manifests (schema v1) |
 | `module/` | Magisk/KernelSU module template (scripted `module.prop`, `config`, `service.sh`, `action.sh`, bundled binaries) |
-| `.github/seed/` | starting content for a fork's `data` and `website` branches, pushed once by `seed_data_branch.sh`; the seed TOMLs are the app list that `README.md`, `OBTAINIUM.md` and `obtainium-apps.json` are generated from (`obtainium.py`) |
+| `README.md` apps section, `OBTAINIUM.md`, `obtainium-apps.json` | generated from `configs/patches/*.toml` (+ `state/archive/`) by `obtainium.py`; the README section is refreshed by CI after each build |
 | `bin/` | vendored tools: `aapt2`, `htmlq`, `toml/tq` (per-arch), `apksigner.jar`, `dexlib2.jar`, `paccer.jar` |
 | `temp/`, `build/`, `build.json`, `build.md` | scratch + outputs; all gitignored |
 | `CONFIG.md` | the authoritative TOML key reference |
@@ -83,10 +86,8 @@ Releases, records build metadata on a Git branch, and feeds a static download si
 
 | Branch | Holds | Written by |
 |---|---|---|
-| `main` | code + docs | humans, PRs |
-| `data` | `configs/` TOMLs + generated pool JSON, `state/` JSONs | humans (TOML), watcher (JSON) |
-| `website` | `manifests/<tag>.json`, `archive/{stable,beta}.json` (schema v1) | build job, after the archive upload |
-| `update` | `<channel>/<module-id>.json` pointers, `changelogs/<code>.md` | build job, when modules were built |
+| `main` | code + docs, `configs/` (TOMLs + generated pool JSON), `state/` (watcher JSONs, `manifests/<tag>.json`, `archive/{stable,beta}.json`) | humans (code, TOML); CI via `commit_to_main.sh` (JSON, manifests, README table) |
+| `update` | `<channel>/<module-id>.json` pointers, `changelogs/<code>.md` | build job, only when modules were built (never in an APK-only fork) |
 
 Releases: numbered (`260141`) = immutable per-build; `stable`/`beta` = rolling
 archives whose metadata CI never touches. External: `nullcpy/apks` = shared
@@ -116,7 +117,7 @@ source and the arch goes unbuilt if none supplies it
 | The archive upload step passes no title/notes/prerelease | CI does not own release prose → [decisions/0001](decisions/0001-release-metadata-ownership.md) |
 | `--clobber` is unconditional on asset upload | retried runs must be idempotent; absence is not expressible for a file list |
 | `continue-on-error: true` on the archive upload, `|| true` on Telegram/usage tracker | one failed upload must not lose the other 60 apps' release |
-| `merge_archive_branch.sh` has no "start from empty" fallback; fetch failure kills the job | the 2026-09-24 archive collapse |
+| `merge_archive_manifest.sh` has no "start from empty" fallback; fetch failure kills the job | the 2026-09-24 archive collapse |
 | `get_prebuilts` is called outside `$( )` | it writes `__PREBUILTS_CACHE__`; a subshell discards it |
 | `declare -gA JOB_…=()` has explicit empty initialisers | bash 5.3 treats a bare `declare -gA` as unset under `set -u` |
 | `dos2unix scripts/utils.sh` before sourcing in CI | defensive against Windows-authored checkouts |
@@ -151,16 +152,13 @@ source and the arch goes unbuilt if none supplies it
 ## Commands
 
 ```bash
-bash .github/scripts/fetch_data_branch.sh            # materialise configs/ + state/
 bash .github/traces/trace_runner.sh verify           # offline engine regression gate
 bash .github/traces/trace_runner.sh capture          # re-record goldens after intent change
 bash scripts/build.sh configs/config.manual.toml     # real build (network + java + jq)
 bash scripts/build.sh clean                          # reset temp/ build/ build.md
-bash .github/scripts/push_data_configs.sh "feat(config): …"   # publish TOML edits
-bash .github/scripts/seed_data_branch.sh             # fork bootstrap: creates data + website once
 python3 .github/traces/test_release_notes.py         # release notes, Obtainium links, generated docs in sync
 bash .github/traces/test_mirror.sh                   # mirrored-app engine path
-python3 .github/scripts/obtainium.py --configs .github/seed/data/configs/patches --repo softpyscho/rvb \
+python3 .github/scripts/obtainium.py --configs configs/patches --repo softpyscho/rvb \
         --page OBTAINIUM.md --json obtainium-apps.json --readme README.md   # regenerate the app table and Obtainium files
 gh run list --repo nullcpy/rvb                       # what ran and how
 ```
@@ -174,5 +172,4 @@ the build run from it. **channel** — `stable` | `beta`, the only two keywords.
 multi-APK container (`.xapk`/`.apkm`/`.apks`). **manifest** — a schema-v1,
 filename-keyed JSON of what a build produced. **pointer** — a module's
 `<channel>/<id>.json` update record. **archive release** — the rolling `stable` /
-`beta` release. **materialise** — copy a branch's files into the ignored working
-tree. **golden** — a recorded expected argv trace under `.github/traces/goldens/`.
+`beta` release. **golden** — a recorded expected argv trace under `.github/traces/goldens/`.

@@ -1,6 +1,7 @@
 # 0002 — Build manifests live on a branch, not on releases
 
-**Status:** accepted (2026-09-25)
+**Status:** accepted (2026-09-25); the branch placement is superseded by [0008](0008-one-branch.md) —
+the manifests now live under `state/` on `main`, the decision to keep them out of release assets stands
 **Affects:** `website` branch, `.github/scripts/merge_archive_branch.sh`,
 `build.yml` upload order, the site's `rebuild_catalog.py --manifest-dir`
 

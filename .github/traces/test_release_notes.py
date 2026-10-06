@@ -4,7 +4,7 @@
     python3 .github/traces/test_release_notes.py
 
 Covers .github/scripts/{generate_release_notes,obtainium,build_make_manifest}.py, the Telegram
-relay of the release body, and the seed configuration they are generated from. No network.
+relay of the release body, and the app configuration (configs/patches) they are generated from. No network.
 As everywhere in this repo, an absence assertion is paired with a control that shows the same
 harness producing the thing in the other case.
 """
@@ -21,7 +21,7 @@ from urllib.parse import unquote, urlparse
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / ".github" / "scripts"
-SEED_PATCHES = ROOT / ".github" / "seed" / "data" / "configs" / "patches"
+CONFIG_PATCHES = ROOT / "configs" / "patches"
 REPO = "softpyscho/rvb"
 sys.path.insert(0, str(SCRIPTS))
 
@@ -91,7 +91,7 @@ class Obtainium(unittest.TestCase):
 
     def test_each_filter_selects_only_its_own_app(self):
         """One repository holds every app, so the filter is the whole identification."""
-        specs = obtainium.specs_from_configs(str(SEED_PATCHES))
+        specs = obtainium.specs_from_configs(str(CONFIG_PATCHES))
         # add the classic collision: a name that is a prefix of another app's name
         extra = [dict(specs[0], key="WA", prefix="whatsapp", arch="arm64-v8a", mirror=True, keep_filename=False),
                  dict(specs[0], key="WAB", prefix="whatsapp-business", arch="arm64-v8a", mirror=True, keep_filename=False)]
@@ -129,7 +129,7 @@ class Obtainium(unittest.TestCase):
         self.assertIsNotNone(flt.match("Duck.Detector-2026.10.07-aaaaaaaaaaaa.apk"), "the link must keep working next build")
 
     def test_beta_pool_apps_include_prereleases(self):
-        specs = {s["key"]: s for s in obtainium.specs_from_configs(str(SEED_PATCHES))}
+        specs = {s["key"]: s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
         self.assertTrue(specs["Instagram"]["prerelease"])
         self.assertTrue(specs["Battery-Guru"]["prerelease"])
         self.assertFalse(specs["Reddit"]["prerelease"])  # control
@@ -138,7 +138,7 @@ class Obtainium(unittest.TestCase):
             self.assertEqual(st["includePrereleases"], specs[key]["prerelease"], key)
 
     def test_disabled_apps_are_not_offered(self):
-        keys = {s["key"] for s in obtainium.specs_from_configs(str(SEED_PATCHES))}
+        keys = {s["key"] for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
         self.assertNotIn("WhatsApp", keys)
         self.assertNotIn("WhatsApp-Business", keys)
         self.assertIn("Bitget", keys)  # control: enabled mirror apps are
@@ -272,7 +272,7 @@ class MirrorManifest(unittest.TestCase):
 class AppsSection(unittest.TestCase):
     """The README's apps section: the apkforge layout, filled from the build manifests."""
 
-    SPECS = {s["key"]: s for s in obtainium.specs_from_configs(str(SEED_PATCHES))}
+    SPECS = {s["key"]: s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
 
     def manifest(self, files):
         return {"schema": 1, "kind": "archive", "files": files}
@@ -367,9 +367,9 @@ class AppsSection(unittest.TestCase):
 
 
 class SeedConfig(unittest.TestCase):
-    def test_every_seed_app_is_buildable_on_paper(self):
+    def test_every_configured_app_is_buildable_on_paper(self):
         import compile_patch_configs
-        stable, beta = compile_patch_configs.compile_configs(str(SEED_PATCHES))  # exits on a duplicate app key
+        stable, beta = compile_patch_configs.compile_configs(str(CONFIG_PATCHES))  # exits on a duplicate app key
         self.assertEqual(len(stable) + len(beta), 18)
         patch_keys = ("patches-source", "cli-source", "included-patches", "excluded-patches", "exclusive-patches",
                       "inclusive-patches", "patcher-args", "patched-pkg-name", "include-stock")
@@ -387,8 +387,8 @@ class SeedConfig(unittest.TestCase):
         self.assertEqual(set(beta), {"Instagram", "Battery-Guru"})
         self.assertEqual(stable["Reddit"]["included-patches"], "'Custom branding name for Reddit'")
 
-    def test_generated_documents_are_in_sync_with_the_seed(self):
-        specs = obtainium.specs_from_configs(str(SEED_PATCHES))
+    def test_generated_documents_are_in_sync_with_the_config(self):
+        specs = obtainium.specs_from_configs(str(CONFIG_PATCHES))
         expected_json = json.dumps(obtainium.import_document(specs, REPO), indent=2, ensure_ascii=False) + "\n"
         self.assertEqual((ROOT / "obtainium-apps.json").read_text(encoding="utf-8"), expected_json,
                          "obtainium-apps.json is stale: run .github/scripts/obtainium.py (see OBTAINIUM.md footer)")

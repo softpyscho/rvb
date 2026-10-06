@@ -46,9 +46,6 @@ jobs:
       - name: Setup Python dependencies
         run: pip install --no-cache-dir curl_cffi || true
 
-      - name: Fetch configs & state (data branch)
-        run: bash .github/scripts/fetch_data_branch.sh
-
       - name: Compile Base Configs (JSON)
         run: bash .github/scripts/ci_compile_base_configs.sh
 
@@ -119,10 +116,13 @@ jobs:
 
       - name: Commit updated patch sources and configs
         if: ${{ steps.flags.outputs.ANYTHING_CHANGED == '1' }}
-        # Commits state/*.json + configs/*_build.json to the `data` branch
-        # (plumbing-only, keeps main's history human-only; TOMLs are excluded
-        # and go through push_data_configs.sh). Counterpart: fetch_data_branch.sh.
-        run: bash .github/scripts/commit_data_branch.sh
+        # Commits state/*.json + configs/*_build.json onto main (plumbing only: the
+        # checkout is never switched). Only these generated files are named, so the
+        # hand-edited TOMLs can never ride along.
+        run: |
+          bash .github/scripts/commit_to_main.sh \
+            "chore: update generated patch sources, app versions and configs" \
+            configs/*_build.json state/*.json
 
   build_beta:
     needs: check_patch

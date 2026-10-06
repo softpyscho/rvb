@@ -254,12 +254,10 @@ flowchart LR
 This repository is a fork of [nullcpy/rvb](https://github.com/nullcpy/rvb) tuned for a small, personal app list. To run your own copy:
 
 ```bash
-bash .github/scripts/seed_data_branch.sh      # one-time: creates the `data` and `website` branches
-# then: Actions → CI → Run workflow
+# fork it, then: Actions → CI → Run workflow   (no setup branches: everything lives on `main`)
 ```
 
-Add or change apps by editing one TOML file per patch source and publishing it with
-`push_data_configs.sh`. Step by step, with every setting: [**docs/fork-setup.md**](docs/fork-setup.md).
+Add or change apps by editing one TOML file per patch source under `configs/patches/` and committing it. Step by step, with every setting: [**docs/fork-setup.md**](docs/fork-setup.md).
 
 ---
 

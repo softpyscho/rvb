@@ -77,5 +77,5 @@ building.**
 ## Verification
 
 The trace harness exercises the skip with a snapshot in reach (blocked keyword and
-pinned-version variants); `state/patch_sources.json` on the `data` branch is the
+pinned-version variants); `state/patch_sources.json` is the
 fixture that mirrors reality. See `.github/traces/README.md`.

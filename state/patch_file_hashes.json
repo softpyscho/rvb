@@ -1,0 +1,58 @@
+{
+  "arandomhooman/hoomans-morphe-patches": {
+    "beta": {
+      "com.paget96.batteryguru": "7ebd99930e8b33cb4891ab894b5156ab",
+      "shared": "419b00daa7dd52bf4dfb8d8d2f279b24"
+    },
+    "stable": {}
+  },
+  "crimera/piko": {
+    "beta": {
+      "com.instagram.android": "5490effee679aeddb0f5f58e8530d3bc",
+      "shared": "af8e6b25a156bf0a8dd0cc8a238f9f09"
+    },
+    "stable": {
+      "com.twitter.android": "f503d93628dc092e6780f615fef2f6e2",
+      "shared": "b6714c5dbdf40c5dc2eb2bfd60c3667e"
+    }
+  },
+  "hoo-dles/morphe-patches": {
+    "beta": {},
+    "stable": {
+      "com.amazon.avod.thirdpartyclient": "43bd6d883c973d420207178826caf064",
+      "com.xodo.pdf.reader": "7da9c0a933cb7a61342a51e6889e693c",
+      "shared": "7e4de8308e1104b536d7f1c67d397f86"
+    }
+  },
+  "morpheapp/morphe-patches": {
+    "beta": {},
+    "stable": {
+      "com.reddit.frontpage": "dda517f2661f179e7c32abaf08a5feb0",
+      "shared": "6b3283a4343d72c188e45942f3192a76"
+    }
+  },
+  "paresh-maheshwari/paresh-patches": {
+    "beta": {},
+    "stable": {
+      "com.ticktick.task": "6e1cf519d16cdc86dea964188a7c9d70",
+      "com.truecaller": "1cadfabcdc2586ef950e4b8edb6620ee",
+      "shared": "5b84fc998e5bc59f64763778f064cd4f"
+    }
+  },
+  "rabilrbl/fluffy-patches": {
+    "beta": {},
+    "stable": {
+      "droom.sleepIfUCan": "8ad64ed6e6516cdb5b57652876027c2c",
+      "shared": "e259e0a5264b2f5ac5af9c1e83b5dfa0"
+    }
+  },
+  "rushiranpise/morphe-patches": {
+    "beta": {},
+    "stable": {
+      "com.Splitwise.SplitwiseMobile": "c05c4d8e096d3fd2fffec0e1e9f8b339",
+      "com.cloudflare.onedotonedotonedotone": "e482dea53e48b8e01b9ab4617f2a22a1",
+      "com.oasisfeng.greenify": "7abbc5edbec58fef0830e944c8d4bca0",
+      "shared": "b337cf3aa24d7635804a8e2fa9435a93"
+    }
+  }
+}

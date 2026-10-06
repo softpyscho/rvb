@@ -1,28 +1,24 @@
 # Running your own fork
 
 The builder is written to run as one maintainer's repository with a few satellites (a
-stock-APK cache, a download site, a Telegram channel). A fork needs none of the satellites;
-it does need two branches to exist before the first workflow can run, because the pipeline
-**hard-fails** on a missing `data` or `website` branch instead of starting from empty
-([ai-context rule 7](ai-context.md)).
+stock-APK cache, a download site, a Telegram channel). A fork needs none of the satellites, and
+needs no setup branches either: `main` carries the code, your app list (`configs/`) and the
+pipeline's records (`state/`). Fork, adjust settings, run.
 
-## 1. Seed the branches once
+## 1. Fork and edit
 
 ```bash
 git clone https://github.com/<you>/rvb && cd rvb
-bash .github/scripts/seed_data_branch.sh            # creates origin/data and origin/website
+$EDITOR configs/patches/*.toml          # your app list; keys in CONFIG.md
+git commit -am "feat(config): my apps" && git push
 ```
 
-- `data` gets `configs/` (the per-source TOMLs from [`.github/seed/data`](../.github/seed/data),
-  a `config.manual.toml` for Manual CI, empty generated pool configs) and empty `state/*.json`.
-- `website` gets a README only; the first build writes `manifests/` and `archive/` into it.
-- `update` is created by the first build that produces a module and needs no seeding.
-- The script refuses to touch a branch that already exists, and refuses when the remote cannot
-  be queried. `SEED_DRY_RUN=1` prints the tree it would push.
-
-After this the branches are the source of truth and the seed directory is just history. Edit
-apps with `fetch_data_branch.sh` → edit `configs/patches/*.toml` →
-`push_data_configs.sh "<message>"` ([contributing.md](contributing.md)).
+- `configs/patches/*.toml` is the app list; `configs/config.manual.toml` is what Manual CI builds.
+- `configs/*_build.json` and `state/` are machine-written; the first watcher run fills them in.
+- `update` is the only other branch that can ever appear: the first build that produces a module
+  zip creates it, and an APK-only fork never does.
+- CI commits to `main` too (generated JSON, build manifests, the README app table), so `git pull`
+  before you edit — see [storage-and-branches.md](storage-and-branches.md).
 
 ## 2. Settings
 

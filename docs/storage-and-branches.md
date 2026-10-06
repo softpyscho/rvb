@@ -1,69 +1,56 @@
 # Storage and branches
 
 Where every artifact lives, who is allowed to write it, and how to get it back.
-The governing rule: **`main` is pure code.** Anything machine-regenerated and
-single-writer lives on another branch, so `main`'s history stays human.
+The governing rule: **`main` is the one long-lived branch.** Code, your config and what the
+pipeline records all live on it, in separate directories with separate writers. (Until
+2026-10-06 the config and state lived on `data` and `website` branches to keep `main`'s history
+human-only; for a single-maintainer fork that cost more than it bought — see
+[decisions/0008](decisions/0008-one-branch.md).)
 
-> A fresh fork has no `data` or `website` branch and the pipeline refuses to start without them.
-> `bash .github/scripts/seed_data_branch.sh` creates both once, from [`.github/seed/`](../.github/seed)
-> (see [fork-setup.md](fork-setup.md)); it never overwrites an existing branch.
+## Where things live
 
-## Branch map
-
-| Branch | Contents | Sole writer(s) | Readers |
+| Path on `main` | Contents | Sole writer(s) | Readers |
 |---|---|---|---|
-| `main` | engine, workflows, scripts, `module/`, `bin/`, `docs/`, `CONFIG.md` | maintainer, via PRs | every CI job (checked out first) |
-| `data` | `configs/` (human TOMLs + generated pool JSON), `state/` (watcher JSONs) | `commit_data_branch.sh` (CI, `*.json`), `push_data_configs.sh` (maintainer, `*.toml`) | watcher + build jobs through `fetch_data_branch.sh` |
-| `website` | `manifests/<tag>.json`, `archive/{stable,beta}.json` | `merge_archive_branch.sh`; pruned by `cleanup_website_branch.sh` | the site's `rebuild_catalog.py` |
-| `update` | `changelogs/<code>.md`, `<channel>/<module-id>.json` | `build_update_changelog.sh`; pruned by `cleanup_update_branch.sh` | KernelSU / Magisk module updaters on phones |
+| engine, workflows, scripts, `module/`, `bin/`, `docs/`, `CONFIG.md` | code | maintainer | every CI job |
+| `configs/patches/*.toml`, `configs/config.manual.toml` | **your app configuration** | maintainer (a normal commit) | watcher, builds, `obtainium.py` |
+| `configs/{stable,beta}_build.json` | generated pool configs | watcher, via `commit_to_main.sh` | builds |
+| `state/{patch_sources,app_versions,patch_file_hashes}.json` | watcher memory | watcher, via `commit_to_main.sh` | watcher, builds |
+| `state/manifests/<tag>.json`, `state/archive/{stable,beta}.json` | build metadata | `merge_archive_manifest.sh`; pruned by `cleanup_manifests.sh` | `obtainium.py` (README table); a download site, if one exists |
+| `README.md` apps section | generated table | `update_readme.sh`, via plumbing | readers |
 
-GitHub Releases are storage too, and they are **not** mirrors of branches:
-releases hold files, branches hold the metadata that describes the files.
+The one other branch that can ever exist is `update` (`changelogs/<code>.md`,
+`<channel>/<module-id>.json`, written by `build_update_changelog.sh`, pruned by
+`cleanup_update_branch.sh`). It holds Magisk/KernelSU module pointers and is created by the first
+build that produces a module zip — an APK-only fork never has one.
 
-Each non-code branch carries its own `README.md` at its tip, written for whoever
-lands on it (`git show origin/data:README.md`, `origin/website:README.md`,
-`origin/update:README.md`). Those files are the per-branch contracts and the
-sections below link back to them; keep the two in step when a path changes, and
-treat the branch copy as the one a contributor reading the branch will see first.
+GitHub Releases are storage too, and they are **not** mirrors of the repository:
+releases hold files, `state/` holds the metadata that describes the files.
 
-## `data`
+## How CI writes to `main`
 
-```
-configs/
-  config.manual.toml          hand-built config for Manual CI
-  patches/<author>.toml       one file per patch source family (the real config)
-  stable_build.json           generated: the stable pool for the next build
-  beta_build.json             generated: the beta pool
-state/
-  patch_sources.json          per source: host, repo, stable tag+date, beta tag+date, blocked
-  app_versions.json           app: {keys: […], version}; "_check_only_listed": true
-  patch_file_hashes.json      source → channel → package → bundle content hash
-```
+Every CI write goes through `.github/scripts/commit_to_main.sh "<message>" <path>…`:
 
-- Both directories are ignored on `main` ([.gitignore](../.gitignore)) and exist
-  locally only as materialisations. Never `git add` them.
-- **`fetch_data_branch.sh` overwrites local `configs/` and `state/`.** Publish
-  hand-edited TOMLs *before* fetching, or lose them:
-  `bash .github/scripts/push_data_configs.sh "<message>"` — plumbing temp-index
-  commit of `configs/**/*.toml` only, using your git identity.
-- Writer boundaries are enforced by glob, not convention: the CI committer commits
-  only `*.json` directly under those two directories, so it can never sweep a
-  half-edited TOML into history — and equally, it cannot delete one. A *renamed*
-  TOML must therefore be removed on `data` explicitly, or the old name lingers.
-- `state/` is regenerable: the watcher rebuilds it from the forges. `configs/`
-  TOMLs are the sole copy of human intent — they are the thing worth backing up.
-- Recovery: `temp/seed_data_branch.sh` reseeds the branch from a maintainer clone's
-  working copies. All jobs hard-fail when `data` is missing rather than falling
-  back to empty state.
-- `git switch data` for an occasional hand-edit is legitimate, but the ignored
-  local copies get clobbered on switch — re-run `fetch_data_branch.sh` afterwards.
+- **Named files only.** A path in the worktree is added or updated; one missing from the worktree
+  but present on `main` is removed; one in neither is ignored. A half-edited TOML or scratch file
+  can never ride along, because nothing is ever `git add -A`'d.
+- **Plumbing.** A temporary index on `origin/main`'s tip, `commit-tree`, a direct ref push — the
+  runner's checkout, index and worktree are never switched or dirtied.
+- **A human push in between is built upon, not overwritten.** On a rejected push the script
+  re-fetches and re-applies *only the named files* on the new tip (the worktree's copy of those
+  files wins); after 3 attempts it fails the step loudly.
+- Commits end `[skip ci]` and are authored by `github-actions[bot]`. A push made with
+  `GITHUB_TOKEN` starts no workflow anyway; the marker keeps it true if that ever changes.
 
-## `website`
+For you: `git pull` before editing `configs/` — CI commits to `main` between your edits — and
+hand-edit only `configs/**.toml`. The JSON in `configs/` and everything in `state/` is
+machine-written. `state/` is regenerable (the watcher rebuilds it from the forges); the TOMLs are
+the sole copy of your intent, which is what `git` is for.
 
-Per-build manifests plus two cumulative archives. This branch replaced release
-assets as the manifest store on **2026-09-25**: numbered releases no longer carry
-a `build.json`, so branch history is the only metadata history. The move and the
-failure it eliminated are recorded in
+## Manifests (`state/manifests/`, `state/archive/`)
+
+Per-build manifests plus two cumulative archives. They replaced release assets as the manifest
+store on **2026-09-25**: numbered releases no longer carry a `build.json`, so git history is the
+only metadata history. The move and the failure it eliminated are recorded in
 [decisions/0002](decisions/0002-manifests-live-on-a-branch.md).
 
 Schema v1 envelope (produced by `build_make_manifest.py`):
@@ -94,24 +81,24 @@ file ([decisions/0007](decisions/0007-requested-arch-is-a-hard-requirement.md)).
 An archive envelope restamps `meta` as `{build: <channel>, channel: <channel>,
 publishedAt: <merge time>}` while keeping the surviving file entries.
 
-Merge semantics for `archive/<channel>.json` (`merge_archive_branch.sh`):
+Merge semantics for `state/archive/<channel>.json` (`merge_archive_manifest.sh`):
 
-1. Fetch and check out `website`; copy the current cumulative file. A fetch
+1. Fetch `origin/main` and read the current cumulative file from its tip. A fetch
    failure **fails the job** — there is deliberately no "start from empty" path,
    which is what eliminated the 2026-09-24 collapse where a failed asset download
    silently restarted the cumulative manifest.
 2. Union old + new — **new entries win on a filename collision** — then drop every
    entry whose file no longer exists on the archive release (live filter, read from
-   the Releases API). Existence is the releases' business; history is the branch's.
+   the Releases API). Existence is the releases' business; history is git's.
 3. Sanity gate: recompute `|union(old,new) ∩ live|` and refuse to push if the
    result kept fewer entries than that.
-4. Push with retries, rebasing over concurrent updates (the `build` concurrency
-   group is what makes "concurrent" rare).
+4. Commit the two files with `commit_to_main.sh` (retries over concurrent updates; the
+   `build` concurrency group is what makes "concurrent" rare).
 
-Recovery order for a damaged `archive/*.json`: **branch history first**
-(`git log -p archive/stable.json`, `git show <rev>:archive/stable.json`, force-push
-to undo), then `repair_archive_manifest.py` (dry-run by default), and only while
-legacy release assets still exist does `seed_website_branch.py` make sense.
+Recovery order for a damaged `state/archive/*.json`: **git history first**
+(`git log -p state/archive/stable.json`, `git show <rev>:state/archive/stable.json`, then commit
+the old copy back), then `repair_archive_manifest.py` (dry-run by default), and only while
+legacy release assets still exist does `rebuild_manifests_from_releases.py` make sense.
 
 ## `update`
 
@@ -146,7 +133,7 @@ URL and would 404, which is a forced re-flash for the user.
 | Contents | this build's APKs + module zips | cumulative, pruned to 2 versions per app+arch |
 | Title/body | generated per build | **owner-written**; CI names no metadata |
 | Pre-release flag | `--prerelease` on beta runs | set once by hand (`beta` only) |
-| `build.json` | no (moved to the `website` branch) | no |
+| `build.json` | no (moved to `state/manifests/`) | no |
 
 Asset filename grammar — the contract every consumer parses:
 

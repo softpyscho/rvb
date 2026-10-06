@@ -1,53 +1,47 @@
 #!/bin/bash
 set -euo pipefail
 
-# Merge this build's manifest into the `website` branch:
-#   manifests/<tag>.json       (per-build copy, appended every run)
-#   archive/<channel>.json     (cumulative, union + live-filter like the old
-#                               release-asset merge, but the previous state is
-#                               a checked-out file — no gh download that can
-#                               silently fail into an empty base)
+# Merge this build's manifest into the repository (committed to main):
+#   state/manifests/<tag>.json     (per-build copy, appended every run)
+#   state/archive/<channel>.json   (cumulative: union + live-filter against the archive release;
+#                                   the previous state is read from origin/main, so there is no
+#                                   download that can silently fail into an empty base)
 #
 # Run AFTER the archive file upload so the live-asset filter sees new files.
 # Env: ARCHIVE_TAG (stable|beta), BUILD_TAG (release tag of this build),
 #      GITHUB_REPOSITORY; git credentials from the workflow's checkout token.
 # Reads: temp/manifest/build.json (from build_make_manifest.py)
 #
-# Concurrency: build.yml holds a single "build" concurrency group, so two
-# builders never merge against the branch at the same time.
+# Concurrency: build.yml holds a single "build" concurrency group, so two builders never merge
+# against the files at the same time; commit_to_main.sh is the only writer.
 
 ARCHIVE_TAG="${ARCHIVE_TAG:?ARCHIVE_TAG not set}"
 BUILD_TAG="${BUILD_TAG:?BUILD_TAG not set}"
 REPO="${GITHUB_REPOSITORY:?GITHUB_REPOSITORY not set}"
-BRANCH="website"
+SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BRANCH="${COMMIT_BRANCH:-main}"
 NEW_MANIFEST="temp/manifest/build.json"
 OLD_MANIFEST="temp/manifest/archive-old.json"
 LIVE_LIST="temp/manifest/archive-live-assets.txt"
+OUT_ARCHIVE="state/archive/$ARCHIVE_TAG.json"
+OUT_BUILD="state/manifests/$BUILD_TAG.json"
 
 if [ ! -f "$NEW_MANIFEST" ]; then
   echo "No $NEW_MANIFEST present — skipping archive manifest merge."
   exit 0
 fi
 
-ORIG_REF=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
-cleanup() {
-  git checkout "$ORIG_REF" 2>/dev/null || git checkout main 2>/dev/null || true
-}
-trap cleanup EXIT
+# 1. Previous state, from the tip of main. A fetch failure is fatal by design: there is no
+#    "start fresh from empty" path, the job must fail loudly rather than restart the
+#    cumulative manifest. Only a manifest that was never written starts one.
+git fetch -q origin "$BRANCH"
+mkdir -p state/manifests state/archive temp/manifest
+cp "$NEW_MANIFEST" "$OUT_BUILD"
 
-# 1. Previous branch state. A fetch failure is fatal by design: unlike the old
-#    asset download there is no "start fresh from empty" path, the job must
-#    fail loudly rather than restart the cumulative manifest.
-git fetch origin "$BRANCH"
-git checkout -q -B "$BRANCH" "origin/$BRANCH"
-
-mkdir -p manifests archive
-cp "$NEW_MANIFEST" "manifests/$BUILD_TAG.json"
-
-if [ -f "archive/$ARCHIVE_TAG.json" ]; then
-  cp "archive/$ARCHIVE_TAG.json" "$OLD_MANIFEST"
+if git cat-file -e "origin/$BRANCH:$OUT_ARCHIVE" 2>/dev/null; then
+  git show "origin/$BRANCH:$OUT_ARCHIVE" > "$OLD_MANIFEST"
 else
-  echo "No archive/$ARCHIVE_TAG.json on $BRANCH yet — starting a fresh cumulative manifest."
+  echo "No $OUT_ARCHIVE on $BRANCH yet — starting a fresh cumulative manifest."
   echo 'null' > "$OLD_MANIFEST"
 fi
 
@@ -67,9 +61,9 @@ jq -s --slurpfile live temp/manifest/archive-live.json \
        kind: "archive",
        meta: {build: $tag, channel: $tag, publishedAt: $now},
        files: ($merged | with_entries(select(.key as $k | $live[0] | index($k))))}
-  ' "$OLD_MANIFEST" "$NEW_MANIFEST" > "archive/$ARCHIVE_TAG.json"
+  ' "$OLD_MANIFEST" "$NEW_MANIFEST" > "$OUT_ARCHIVE"
 
-ENTRIES=$(jq '.files | length' "archive/$ARCHIVE_TAG.json")
+ENTRIES=$(jq '.files | length' "$OUT_ARCHIVE")
 # Sanity gate: every old/new entry whose file still lives on the release must
 # have survived the merge. A shortfall means something upstream went wrong —
 # refuse to publish instead of silently shrinking the archive manifest.
@@ -84,26 +78,5 @@ fi
 LIVE_COUNT=$(grep -c . "$LIVE_LIST" || true)
 echo "Merged archive manifest for $ARCHIVE_TAG: $ENTRIES entries ($LIVE_COUNT live assets, $EXPECTED expected minimum)."
 
-# 4. Commit and push; between attempts integrate any concurrent branch update
-#    (paths are disjoint from cleanup's, so plain rebase is safe).
-git config user.name "github-actions[bot]"
-git config user.email "github-actions[bot]@users.noreply.github.com"
-git add "manifests/$BUILD_TAG.json" "archive/$ARCHIVE_TAG.json"
-git commit -q -m "chore: update $ARCHIVE_TAG manifest for build $BUILD_TAG [skip ci]"
-
-ATTEMPT=1
-until git push -q origin "$BRANCH"; do
-  ATTEMPT=$((ATTEMPT + 1))
-  if [ "$ATTEMPT" -gt 3 ]; then
-    echo "::error::Failed to push $BRANCH after 3 attempts" >&2
-    exit 1
-  fi
-  echo "Push attempt $((ATTEMPT - 1)) failed, rebasing and retrying in 15s..." >&2
-  if ! git pull --rebase -q origin "$BRANCH"; then
-    git rebase --abort || true
-    echo "::error::Conflicting $BRANCH history — leaving merge committed locally; next build will reconverge" >&2
-    exit 1
-  fi
-  sleep 15
-done
-echo "Website branch updated: manifests/$BUILD_TAG.json + archive/$ARCHIVE_TAG.json."
+# 4. Commit just these two files onto main.
+bash "$SCRIPTS/commit_to_main.sh" "chore: update $ARCHIVE_TAG manifest for build $BUILD_TAG" "$OUT_BUILD" "$OUT_ARCHIVE"

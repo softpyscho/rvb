@@ -57,8 +57,8 @@ read -r -d '' POOL_PROGRAM <<'JQ' || true
       # via _patch_source_state_tag in utils.sh). Writing the tag here froze a copy
       # of "current stable" into configs/*_build.json, so two artifacts had to stay
       # in agreement about what the channel meant. Reproducibility inside one build
-      # run is unaffected: the job materializes configs/ and state/ from one
-      # data-branch commit, so every app in it resolves from the same snapshot.
+      # run is unaffected: the job checks out configs/ and state/ from one
+      # main commit, so every app in it resolves from the same snapshot.
       # $tags is still read below, for the beta date gate.
 
       (if $channel != "beta" then true else

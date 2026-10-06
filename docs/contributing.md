@@ -5,14 +5,14 @@ in this project comes from the first one, and it needs no code.
 
 | I want to… | Touch | How |
 |---|---|---|
-| add an app, enable/disable a patch, change a variant or channel | a TOML on the `data` branch | [below](#changing-app-configurations-the-common-case) |
+| add an app, enable/disable a patch, change a variant or channel | a TOML under `configs/patches/` | [below](#changing-app-configurations-the-common-case) |
 | fix a build failure, scraper, uploader, workflow | `main` | [below](#changing-code) |
 | report something | nothing | [issue templates](../.github/ISSUE_TEMPLATE) (yes, website issues are filed here too), or the Telegram group |
 | patch a patch problem | nothing here | the patch author's repository — this builder only assembles what they publish |
 
 ## Changing app configurations (the common case)
 
-Config lives on the **`data`** branch under `configs/patches/*.toml`, one file per
+Config lives in `configs/patches/*.toml` on `main`, one file per
 patch-source family, with file-level defaults above the first `[table]`.
 Every key is documented in [CONFIG.md](../CONFIG.md); read that rather than
 copying a neighbour's guess. The rules that people get wrong:
@@ -29,20 +29,20 @@ copying a neighbour's guess. The rules that people get wrong:
   hard error.
 - `enabled = false` disables an app in every pool. Deleting a config block instead
   leaves the generated pool entry until the watcher regenerates, and a *renamed*
-  file must be removed from `data` explicitly — the TOML publisher cannot delete.
+  file is a plain `git rm` — CI never deletes your TOMLs.
 
 ### Publish it
 
 ```bash
-bash .github/scripts/fetch_data_branch.sh            # materialise configs/ + state/
-# edit configs/patches/<family>.toml in the working tree (these paths are ignored on main)
-bash .github/scripts/push_data_configs.sh "feat(config): add Pinterest builds"
+git pull                                             # CI commits generated JSON to main between your edits
+# edit configs/patches/<family>.toml
+git commit -am "feat(config): add Pinterest builds" && git push
 ```
 
-`fetch_data_branch.sh` **overwrites** local `configs/`, so publish before you
-fetch, not after. For a one-off hand edit you may also `git switch data`, commit,
-push, `git switch main` — then re-run the fetch, because switching clobbers the
-ignored local copies.
+Hand-edit only the TOMLs: the `*.json` under `configs/` and everything under `state/` is
+written by CI. Regenerate the README/Obtainium documents after adding or removing an app:
+`python3 .github/scripts/obtainium.py --repo <owner>/<repo> --page OBTAINIUM.md --json obtainium-apps.json --readme README.md`
+(`test_release_notes.py` fails while they are stale).
 
 Your change takes effect on the next watcher run (every 4 hours): the pool configs
 are regenerated from your TOML and the affected app gets built. To verify
@@ -55,7 +55,7 @@ immediately instead of waiting, run **Manual CI** (`workflow_dispatch`) against
 
 ```bash
 git clone <this repo> && cd rvb
-bash .github/scripts/fetch_data_branch.sh    # you cannot build or test without this
+git pull    # configs/ and state/ are tracked on main
 ```
 
 Requirements: bash 4+ (the project's tests are written against bash 5.x under Git
@@ -83,11 +83,12 @@ describing it. `bash scripts/build.sh clean` resets.
 | Patcher/tool decisions in the engine | `bash .github/traces/trace_runner.sh verify` | offline; stubbed `curl`/`java` + fixtures; runs on push to `build.sh`/`utils.sh`. After an *intentional* argv change: `… capture`, read the diff, commit the goldens |
 | Cache / bundle helpers | `bash .github/traces/test_cache_helpers.sh`, `bash .github/traces/test_bundle_helpers.sh` | same job |
 | Mirrored apps (`mirror_rv`, `mirror`/`keep-filename` parsing) | `bash .github/traces/test_mirror.sh` | same job; fake downloads and a stub `aapt2`, every rejection paired with an accepting control |
+| CI's writer to `main` (`commit_to_main.sh`); manifest merge and prune | `bash .github/traces/test_commit_to_main.sh`, `bash .github/traces/test_manifest_scripts.sh` | same job; local bare origin, stub `gh`; includes a human push landing mid-run and loud failures |
 | How a `github` source reports versions (tag vs release-per-package asset names) | `bash .github/traces/test_github_versions.sh` | same job |
-| The CI refresh of the README app table (`update_readme.sh`) | `bash .github/traces/test_update_readme.sh` | same job; local bare origin with `main` and `website` |
+| The CI refresh of the README app table (`update_readme.sh`) | `bash .github/traces/test_update_readme.sh` | same job; local bare origin whose `main` carries the config and `state/archive/` |
 | Cleanup of the `update` branch (absent branch, dead pointers) | `bash .github/traces/test_cleanup_update_branch.sh` | same job; local bare origin and a stub `gh` |
 | Which apps the watcher version-checks, BKS need | `bash .github/traces/test_ci_app_versions.sh` | same job; offline, a stub `utils.sh` and compiled-pool fixtures |
-| Release notes, Obtainium links, manifest of mirrored files, seed config | `python3 .github/traces/test_release_notes.py` | same job; also fails when `README.md` / `OBTAINIUM.md` / `obtainium-apps.json` are stale against the seed (regenerate with `.github/scripts/obtainium.py`) |
+| Release notes, Obtainium links, manifest of mirrored files, app config | `python3 .github/traces/test_release_notes.py` | same job; also fails when `README.md` / `OBTAINIUM.md` / `obtainium-apps.json` are stale against `configs/patches` (regenerate with `.github/scripts/obtainium.py`) |
 | A CI shell script | a stubbed-binary harness under `temp/` | convention below |
 | Website-facing formats | `rebuild-catalog.yml` with `dry_run: true` | see [website-contract.md](website-contract.md) |
 
@@ -132,10 +133,10 @@ about which flags actually reached the tool. Two lessons baked into the habit:
 - Multi-line messages go through a file (`git commit -F temp/_commit_msg.txt`) so
   the shell cannot mangle quoting; the body explains *why*, since the diff already
   shows *what*.
-- Never `git add -A`. `configs/`, `state/`, `temp/`, `build/`, `build.json`,
-  `build.md` and the watcher's working files are ignored on `main` for a reason,
-  and a stray `git add` of them either fails silently or commits materialised data
-  into code history.
+- Never `git add -A` blindly. `temp/`, `build/`, `build.json`, `build.md` and the
+  watcher's working files are gitignored; `configs/` and `state/` are tracked, but only the
+  TOMLs are yours to edit — the JSON there is CI's, and committing a stale local copy of it
+  would overwrite the watcher's state.
 - Do not merge or push on someone's behalf without being asked; a push to `main`
   changes the next scheduled run, and nothing runs on push except Trace Verify.
 
@@ -159,8 +160,8 @@ about which flags actually reached the tool. Two lessons baked into the habit:
 gh run list --repo nullcpy/rvb                     # recent CI / Build / Cleanup runs
 gh run view <id> --log-failed                      # the failing step, filtered
 gh api repos/nullcpy/rvb/releases/tags/stable -q '.assets[].name'   # what is downloadable now
-git fetch origin website && git show FETCH_HEAD:archive/stable.json | jq '.files | length'
+jq '.files | length' state/archive/stable.json
 ```
 
-`state/`, the pool configs and the `website`/`update` branches are all readable
+`state/` (including the build manifests), the pool configs and the `update` branch are all readable
 without any privileged access, which is what makes a bug report actionable.

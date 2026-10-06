@@ -13,12 +13,7 @@ build.json
 module/maintainer.txt
 config.stable.json
 config.beta.json
-# Configs & state are NOT tracked on main (pure-code branch): the canonical
-# copies live on the `data` branch — human TOMLs via push_data_configs.sh,
-# generated JSONs via commit_data_branch.sh. Locally they are materialized by
-# .github/scripts/fetch_data_branch.sh and must never be committed here.
-/configs/
-/state/
+# Configs and state ARE tracked on main (see state/README.md). Only transient pool scratch is ignored:
 active*.json
 tags_*.json
 changed_sources.json

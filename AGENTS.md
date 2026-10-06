@@ -4,20 +4,22 @@ Working in `nullcpy/rvb`. Read [docs/ai-context.md](docs/ai-context.md) before
 making a change — it is the full brief. The rules below are the ones that cause
 damage when broken.
 
-1. **`main` is pure code.** `configs/` and `state/` are gitignored materialisations
-   of the `data` branch; `temp/`, `build/`, `build.json`, `build.md` are scratch.
-   Never `git add -A`, never commit those paths. (CI's only write to `main` is the
-   README apps section, between its `APPS_START`/`APPS_END` markers.)
-2. **Human config is published, not committed:**
-   `bash .github/scripts/push_data_configs.sh "<msg>"`. `fetch_data_branch.sh`
-   **overwrites** local `configs/` — publish before fetching or lose edits.
+1. **`main` is the only long-lived branch.** It holds the code, your config
+   (`configs/`) and what the pipeline records (`state/`: watcher JSONs, build
+   manifests). `temp/`, `build/`, `build.json`, `build.md` are scratch and gitignored —
+   never commit them, never `git add -A` blindly. CI writes to `main` only through
+   `.github/scripts/commit_to_main.sh`, naming each file (the generated JSONs, the build
+   manifests, the README apps section between `APPS_START`/`APPS_END`); commits end `[skip ci]`.
+2. **`git pull` before you edit `configs/` or `state/`.** CI commits to `main` between your
+   edits; hand-edit only `configs/**.toml` — the `*.json` there and everything under `state/`
+   is machine-written and never edited by hand.
 3. **A field nobody named is not yours to write.** A default that asserts a value
    (`${X:-false}`, `-n ""`, an invented title) is a bug here, not a convenience.
    Reject an unrecognised value loudly instead of guessing
    ([docs/decisions/0001](docs/decisions/0001-release-metadata-ownership.md)).
 4. **Wire formats are frozen:** asset filename grammar, `module.prop` `updateJson`
-   paths on the `update` branch, manifest schema keys, `data.json` keys, branch
-   names. Add a key or bump a version; never reinterpret an existing one.
+   paths on the `update` branch, manifest schema keys, `data.json` keys, the
+   `update` branch name. Add a key or bump a version; never reinterpret an existing one.
 5. **`.github/scripts/naming.py` is the only implementation of filename/architecture
    parsing.** The website's `rebuild_catalog.py` imports it through a sparse clone of
    `main` (`RVB_NAMING_DIR`) — do not add a copy there, and do not move the file's
@@ -27,7 +29,7 @@ damage when broken.
    not run will abort a step before `$GITHUB_OUTPUT` is written — use `if` blocks;
    never call a cache-writing function from inside `$( )`; patch-name quoting
    happens only in `join_args`.
-7. **Fail loud** on branch reads, manifest merges and archive sanity (no "start
+7. **Fail loud** on reads from `main`, manifest merges and archive sanity (no "start
    from empty" fallbacks). **Fail soft** per app, per notification. Adding `|| true`
    to a metadata path is a regression.
 8. **Verify before claiming done:**
