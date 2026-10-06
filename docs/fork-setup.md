@@ -40,8 +40,9 @@ else's repository.
 Dispatch **CI**. With empty state every source and every app counts as changed, so the first
 watcher run builds the whole configured list: the stable pool as numbered releases plus the
 rolling `stable` archive, the beta pool (pre-releases) plus `beta`. Builds are sequential
-(`PARALLEL_JOBS: "1"`), so expect a long first run; later runs only rebuild what moved. To try one
-app end to end first, edit `configs/config.manual.toml` and dispatch **Manual CI**.
+(`PARALLEL_JOBS: "1"`), so expect a long first run; later runs only rebuild what moved. To rebuild every
+app on demand, dispatch **Build** or **Manual CI** with `config_file: all`. To try one app end to
+end first, edit `configs/config.manual.toml` and dispatch **Manual CI** with that file.
 
 Two things the first run will not do, by design: the **beta** pool builds an app only when one of its
 sources has a pre-release newer than its latest stable release (otherwise the stable pool already

@@ -4,11 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       config_file:
-        description: "Select the config file to use"
+        description: "Config to build: 'all' = every app (stable pool, then beta pool), or one file"
         required: true
         type: choice
-        default: "configs/config.manual.toml"
+        default: "all"
         options:
+          - "all"
           - "configs/config.manual.toml"
           - "configs/beta_build.json"
           - "configs/stable_build.json"

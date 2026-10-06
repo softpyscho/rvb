@@ -13,11 +13,12 @@ on:
   workflow_dispatch:
     inputs:
       config_file:
-        description: "Select the config file to use"
+        description: "Config to build: 'all' = every app (stable pool, then beta pool), or one file"
         required: true
         type: choice
-        default: "configs/config.manual.toml"
+        default: "all"
         options:
+          - "all"
           - "configs/config.manual.toml"
           - "configs/beta_build.json"
           - "configs/stable_build.json"
@@ -32,7 +33,36 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Which config files this run builds: 'all' expands to the stable and the beta pool (an empty
+  # pool is left out); anything else is built as named. The pools are separate builds - each has
+  # its own release tag, channel and archive - so 'all' is a matrix over them, one at a time.
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      configs: ${{ steps.plan.outputs.configs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Plan
+        id: plan
+        env:
+          CONFIG_FILE: ${{ inputs.config_file }}
+        run: bash .github/scripts/build_plan_configs.sh
+
   build:
+    needs: plan
+    strategy:
+      # one pool at a time (manifests, the version counter and the archive are serial by design),
+      # and a failed pool must not stop the other from building
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        config_file: ${{ fromJSON(needs.plan.outputs.configs) }}
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -71,7 +101,7 @@ jobs:
         env:
           TG_THREAD_STABLE: ${{ vars.TG_THREAD_STABLE }}
           TG_THREAD_BETA: ${{ vars.TG_THREAD_BETA }}
-        run: bash .github/scripts/build_resolve_context.sh "${{ inputs.config_file }}"
+        run: bash .github/scripts/build_resolve_context.sh "${{ matrix.config_file }}"
 
       - name: Install Bouncy Castle for BKS Keystore
         run: |
