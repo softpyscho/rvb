@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-06T15:13:09Z"
+    "publishedAt": "2026-10-06T18:50:38Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -28,8 +28,8 @@
       "appliedPatches": [
         "Unlock Premium"
       ],
-      "originBuild": "260008",
-      "publishedAt": "2026-10-06T14:45:23Z"
+      "originBuild": "260013",
+      "publishedAt": "2026-10-06T18:50:10Z"
     },
     "amazon-prime-video-morphe-v3.0.470.1047-arm64-v8a.apk": {
       "name": "amazon-prime-video-morphe",
@@ -96,8 +96,8 @@
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260008",
-      "publishedAt": "2026-10-06T14:45:23Z"
+      "originBuild": "260013",
+      "publishedAt": "2026-10-06T18:50:10Z"
     },
     "mix-archive-v3.24-arm64-v8a.apk": {
       "name": "mix-archive",
@@ -132,8 +132,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260008",
-      "publishedAt": "2026-10-06T14:45:23Z"
+      "originBuild": "260013",
+      "publishedAt": "2026-10-06T18:50:10Z"
     },
     "reddit-morphe-v2026.39.0-arm64-v8a.apk": {
       "name": "reddit-morphe",
@@ -379,8 +379,8 @@
         "Disable Analytics / Telemetry",
         "Spoof WARP+ Unlimited UI"
       ],
-      "originBuild": "260008",
-      "publishedAt": "2026-10-06T14:45:23Z"
+      "originBuild": "260013",
+      "publishedAt": "2026-10-06T18:50:10Z"
     },
     "xodo-morphe-v11.2.0-arm64-v8a.apk": {
       "name": "xodo-morphe",
@@ -403,8 +403,8 @@
       "appliedPatches": [
         "Enable Pro"
       ],
-      "originBuild": "260011",
-      "publishedAt": "2026-10-06T15:12:51Z"
+      "originBuild": "260013",
+      "publishedAt": "2026-10-06T18:50:10Z"
     },
     "Duck.Detector-2026.10.06-82566ffa96bb.apk": {
       "name": "duck-detector",
@@ -465,6 +465,24 @@
       ],
       "originBuild": "260011",
       "publishedAt": "2026-10-06T15:12:51Z"
+    },
+    "bitget-v2.94.4-arm64-v8a.apk": {
+      "name": "bitget",
+      "version": "2.94.4",
+      "appKey": "bitget",
+      "appName": "Bitget",
+      "arch": "arm64",
+      "fileType": "APK",
+      "brandKey": "mirror",
+      "brandName": "Mirror",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "com.bitget.exchange",
+      "patchSources": [],
+      "changelogs": [],
+      "appliedPatches": [],
+      "originBuild": "260013",
+      "publishedAt": "2026-10-06T18:50:10Z"
     }
   }
 }
