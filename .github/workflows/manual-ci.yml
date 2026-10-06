@@ -18,6 +18,13 @@ on:
         type: string
         default: ""
 
+# The reusable workflows called below ask for these themselves (branch and release writes,
+# workflow-run cleanup). A caller that grants nothing explicit fails at startup on a
+# repository whose default token is read-only, before any job runs.
+permissions:
+  contents: write
+  actions: write
+
 concurrency:
   group: ci
   cancel-in-progress: false
