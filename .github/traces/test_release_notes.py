@@ -31,11 +31,12 @@ import obtainium  # noqa: E402
 
 
 def decode_link(link):
-    """redirect link -> (deep link, entry dict, settings dict)"""
+    """redirect link -> (deep link, entry dict, settings dict). One percent-decode, as the
+    redirect page does: the deep link carries the app's JSON as is."""
     assert link.startswith(obtainium.REDIRECT_BASE), link[:80]
     deep = unquote(link[len(obtainium.REDIRECT_BASE):])
     assert deep.startswith("obtainium://app/"), deep[:60]
-    entry = json.loads(unquote(deep[len("obtainium://app/"):]))
+    entry = json.loads(deep[len("obtainium://app/"):])
     return deep, entry, json.loads(entry["additionalSettings"])
 
 
@@ -158,7 +159,7 @@ class ReleaseNotes(unittest.TestCase):
         self.assertIn("* **Duck Detector** `nightly`", md)  # no "v" in front of a word
         self.assertIn("2 patches applied", md)
         # every Obtainium link decodes to the right app and a filter matching its release file
-        links = re.findall(r"\[[^\]]+\]\((https://apps\.obtainium\.imranr\.dev/redirect\.html\?r=[^)]+)\)", md)
+        links = re.findall(r"\[[^\]]+\]\((https://apps\.obtainium\.imranr\.dev/redirect\?r=[^)]+)\)", md)
         self.assertEqual(len(links), 4)
         by_id = {}
         for link in links:
@@ -268,6 +269,103 @@ class MirrorManifest(unittest.TestCase):
         self.assertNotIn("Duck.Detector-nightly-all.apk", files)
 
 
+class AppsSection(unittest.TestCase):
+    """The README's apps section: the apkforge layout, filled from the build manifests."""
+
+    SPECS = {s["key"]: s for s in obtainium.specs_from_configs(str(SEED_PATCHES))}
+
+    def manifest(self, files):
+        return {"schema": 1, "kind": "archive", "files": files}
+
+    def load(self, *docs):
+        with tempfile.TemporaryDirectory() as d:
+            paths = []
+            for i, doc in enumerate(docs):
+                (Path(d) / f"{i}.json").write_text(json.dumps(doc))
+                paths.append(str(Path(d) / f"{i}.json"))
+            paths.append(str(Path(d) / "missing.json"))  # an absent manifest is skipped, not fatal
+            return obtainium.load_manifest_data(paths)
+
+    def test_manifest_data_takes_the_newest_apk_of_each_app(self):
+        data = self.load(self.manifest({
+            "reddit-morphe-v1-arm64-v8a.apk": {"name": "reddit-morphe", "fileType": "APK", "version": "1", "appliedPatches": ["A"], "publishedAt": "2026-01-01T00:00:00Z"},
+            "reddit-morphe-v2-arm64-v8a.apk": {"name": "reddit-morphe", "fileType": "APK", "version": "2", "appliedPatches": ["A", "B"], "publishedAt": "2026-02-01T00:00:00Z"},
+            "reddit-morphe-module-v9-arm64-v8a.zip": {"name": "reddit-morphe", "fileType": "Module", "version": "9", "appliedPatches": [], "publishedAt": "2027-01-01T00:00:00Z"},
+        }))
+        self.assertEqual(data["reddit-morphe"], {"version": "2", "applied": ["A", "B"]})  # not the older, not the module
+
+    def section(self, data=None, keys=None):
+        specs = [self.SPECS[k] for k in (keys or self.SPECS)]
+        return obtainium.render_apps_section(specs, REPO, data or {})
+
+    def test_layout_matches_the_reference(self):
+        md = self.section()
+        self.assertIn("| App | Arch | Version | APK Source | Patches | Obtainium |", md)
+        self.assertIn("|:---|:----:|:-------:|:----------:|:--------|:---------:|", md)
+        self.assertEqual(md.count('<div align="center">'), md.count("</div>"))
+        self.assertIn("> **Source:** [`Paresh-Maheshwari/paresh-patches`](https://gitlab.com/Paresh-Maheshwari/paresh-patches) (GitLab)", md)
+        self.assertIn("> **Source:** [`MorpheApp/morphe-patches`](https://github.com/MorpheApp/morphe-patches)\n", md)  # GitHub: no suffix
+        self.assertIn("> **Source:** Direct stock APK mirrors (Unpatched)", md)
+        heads = re.findall(r'### <img src="https://img\.shields\.io/badge/([^-]+)-4500FF', md)
+        self.assertEqual(heads[0], "Morpheapp%20%2F%20Morphe%20Patches", "MorpheApp's bundle first")
+        self.assertEqual(heads[-1], "Stock%20Mirrors%20%2F%20Unpatched%20APKs", "mirrors last")
+        self.assertEqual(heads[1:-1], sorted(heads[1:-1], key=str.lower), "the other sources A-Z")
+        self.assertNotIn("---\n\n---", md)
+        self.assertFalse(md.rstrip().endswith("---"), "no trailing separator")
+
+    def test_cells(self):
+        data = {"reddit-morphe": {"version": "2026.39.0", "applied": ["Hide ads", "App icon", "hide ads 2"]},
+                "twitter-morphe": {"version": "12.19.1-release.0", "applied": ["Only one"]},
+                "bitget": {"version": "2.94.3", "applied": []}}
+        md = self.section(data)
+        row = {k: next(l for l in md.splitlines() if l.startswith(f"| [![{self.SPECS[k]['display']}]")) for k in ("Reddit", "Twitter", "Truecaller", "Bitget", "Duck-Detector")}
+        # patched app with a build: version shield, sorted dropdown with a count, -O option shown
+        self.assertIn("version-v2026.39.0-FF4500", row["Reddit"])
+        self.assertIn("<summary><b>3 patches</b></summary><br>`App icon`<br>`Hide ads`<br>`hide ads 2`", row["Reddit"])
+        self.assertIn("⚙️ appName=Reddit", row["Reddit"])
+        self.assertIn("(https://play.google.com/store/apps/details?id=com.reddit.frontpage)", row["Reddit"])
+        # singular noun, and a dash in the version is escaped so it stays in the message
+        self.assertIn("<b>1 patch</b>", row["Twitter"])
+        self.assertIn("version-v12.19.1--release.0-000000", row["Twitter"])
+        # no build yet: what the config asks for, and an honest pending marker
+        self.assertIn("version-Auto-0080FF", row["Truecaller"])
+        self.assertIn("*(Pending first build)*", row["Truecaller"])
+        # stock mirror: no patches by definition; shares the table, not the patch dropdown
+        self.assertIn("*(None - Stock Mirror)*", row["Bitget"])
+        self.assertIn("version-v2.94.3-", row["Bitget"])
+        # a package id that cannot be a Play listing links to where the file comes from instead
+        self.assertNotIn("play.google.com", row["Duck-Detector"])
+        self.assertIn("(https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly)", row["Duck-Detector"])
+
+    def test_every_source_is_listed_in_the_engines_order(self):
+        md = self.section(keys=["Instagram"])
+        gh, mirror, uptodown = (md.index(x) for x in ("[GitHub](", "[APKMirror](", "[Uptodown]("))
+        self.assertTrue(gh < mirror < uptodown, "github before apkmirror before uptodown, as DL_SRCS tries them")
+
+    def test_pre_release_apps_say_so_until_a_build_names_the_version(self):
+        self.assertIn("version-Latest_%28pre--release%29", self.section(keys=["Instagram"]))
+        self.assertIn("version-v450.0-", self.section({"instagram-morphe": {"version": "450.0", "applied": ["x"]}}, keys=["Instagram"]))
+
+    def test_obtainium_link_is_the_full_app_object_in_the_working_format(self):
+        md = self.section(keys=["Reddit"])
+        link = re.search(r"\]\((https://apps\.obtainium\.imranr\.dev/redirect\?r=[^)]+)\)", md).group(1)
+        deep, entry, settings = decode_link(link)
+        self.assertTrue(deep.startswith("obtainium://app/{"), "the app's JSON goes in as is, encoded once overall")
+        self.assertEqual(set(entry), {"id", "url", "author", "name", "installedVersion", "latestVersion", "apkUrls", "otherAssetUrls",
+                                      "preferredApkIndex", "additionalSettings", "lastUpdateCheck", "pinned", "categories",
+                                      "releaseDate", "changeLog", "overrideSource", "allowIdChange", "pendingRepoRenameUrl"})
+        self.assertEqual((entry["id"], entry["url"]), ("com.reddit.frontpage", f"https://github.com/{REPO}"))
+        self.assertIs(settings["versionDetection"], False)
+        # parentheses are encoded so they cannot end a Markdown link early - tested on an entry that has
+        # some (an `all` arch filter and a name with a bracketed word), since Reddit's has none
+        paren = obtainium.redirect_link(obtainium.app_entry("com.x", "X (beta)", REPO, obtainium.apk_regex("x", "all")))
+        self.assertNotIn("(", paren.split("?r=", 1)[1])
+        self.assertNotIn(")", paren.split("?r=", 1)[1])
+        self.assertEqual(decode_link(paren)[1]["name"], "X (beta)", "and they decode back")
+        # control: the same entry with its object cut down is what we must not produce
+        self.assertNotEqual(set(entry), {"id", "url", "author", "name", "preferredApkIndex", "additionalSettings"})
+
+
 class SeedConfig(unittest.TestCase):
     def test_every_seed_app_is_buildable_on_paper(self):
         import compile_patch_configs
@@ -296,10 +394,20 @@ class SeedConfig(unittest.TestCase):
                          "obtainium-apps.json is stale: run .github/scripts/obtainium.py (see OBTAINIUM.md footer)")
         self.assertEqual((ROOT / "OBTAINIUM.md").read_text(encoding="utf-8"), obtainium.obtainium_page(specs, REPO),
                          "OBTAINIUM.md is stale")
+        # The README's apps section carries live build data (versions, applied patches) that CI
+        # refreshes, so it cannot be compared byte for byte with a data-less rendering. What must
+        # hold is that it lists exactly the configured apps, one group per source, one link each.
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertEqual(readme, obtainium.update_readme(readme, specs, REPO), "README app table is stale")
-        # control: the comparison can fail
-        self.assertNotEqual(readme, obtainium.update_readme(readme, specs[:1], REPO))
+        section = readme[readme.index(obtainium.README_START):readme.index(obtainium.README_END)]
+        for s in specs:
+            self.assertIn(f"![{s['display']}](https://img.shields.io/badge/", section, f"{s['display']} missing from the README")
+        self.assertEqual(section.count("![Add to Obtainium]"), len(specs), "one Obtainium badge per app")
+        for source in {s["source"] for s in specs if not s["mirror"]}:
+            self.assertIn(f"> **Source:** [`{source}`]", section, f"group for {source} missing")
+        self.assertIn("### <img src=\"https://img.shields.io/badge/Stock%20Mirrors", section)
+        # control: an app that is not configured is not there, and the comparison can fail
+        self.assertNotIn("![WhatsApp](", section)
+        self.assertNotEqual(section, obtainium.render_apps_section(specs[:1], REPO))
 
 
 if __name__ == "__main__":

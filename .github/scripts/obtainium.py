@@ -37,7 +37,7 @@ from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-REDIRECT_BASE = "https://apps.obtainium.imranr.dev/redirect.html?r="
+REDIRECT_BASE = "https://apps.obtainium.imranr.dev/redirect?r="
 
 
 def slug(value):
@@ -96,37 +96,57 @@ def additional_settings(apk_filter, prerelease):
         "invertAPKFilter": False,
         "autoApkFilterByArch": False,
         "appName": "",
+        "appAuthor": "",
         "shizukuPretendToBeGooglePlay": False,
         "allowInsecure": False,
         "exemptFromBackgroundUpdates": False,
         "skipUpdateNotifications": False,
         "about": "",
+        "refreshBeforeDownload": False,
     }
 
 
 def app_entry(package, name, repo, apk_filter, prerelease=False):
-    """One app in Obtainium's own export/deep-link shape. `additionalSettings` is a JSON
-    *string* inside the JSON, which is how Obtainium stores it."""
+    """One app as Obtainium's own export/deep link spells it.
+
+    The whole object is written, not just the fields that matter here: Obtainium reads an app
+    back with every one of these keys (latestVersion, apkUrls, pinned, ... are not optional on
+    import), and the shape below is the one a working deep link of a sibling project carries.
+    `additionalSettings` is a JSON *string* inside the JSON, which is how Obtainium stores it."""
     owner = repo.split("/")[0]
     return {
         "id": package,
         "url": f"https://github.com/{repo}",
         "author": owner,
         "name": name,
+        "installedVersion": "",
+        "latestVersion": "",
+        "apkUrls": "[]",
+        "otherAssetUrls": "[]",
         "preferredApkIndex": 0,
         "additionalSettings": json.dumps(additional_settings(apk_filter, prerelease), separators=(",", ":")),
+        "lastUpdateCheck": None,
+        "pinned": False,
+        "categories": [],
+        "releaseDate": None,
+        "changeLog": None,
+        "overrideSource": None,
+        "allowIdChange": False,
+        "pendingRepoRenameUrl": None,
     }
 
 
 def deep_link(entry):
-    """obtainium://app/<url-encoded JSON>. GitHub strips non-http(s) links from Markdown,
-    so a README or release body must use redirect_link instead."""
-    return "obtainium://app/" + quote(json.dumps(entry, separators=(",", ":")), safe="")
+    """obtainium://app/<the JSON, as is>. GitHub strips non-http(s) links from Markdown, so a
+    README or release body must use redirect_link instead."""
+    return "obtainium://app/" + json.dumps(entry, separators=(",", ":"))
 
 
 def redirect_link(entry):
-    """An https link that bounces into Obtainium (a page hosted by Obtainium's author)."""
-    return REDIRECT_BASE + quote(deep_link(entry), safe="")
+    """An https link that bounces into Obtainium (a page hosted by Obtainium's author). The
+    deep link is percent-encoded once, whole. Parentheses are encoded too (a filter like
+    `(all|universal)` would otherwise sit raw inside a Markdown link's own parentheses)."""
+    return REDIRECT_BASE + quote(deep_link(entry), safe="*")
 
 
 # ---------------------------------------------------------------------------------------
@@ -135,6 +155,18 @@ def redirect_link(entry):
 
 def _truthy(value):
     return value.lower() == "true" if isinstance(value, str) else bool(value)
+
+
+# The engine's download-source order (DL_SRCS in scripts/utils.sh) and how each is named.
+DL_ORDER = ("cache_repo", "direct", "github", "archive", "apkmirror", "uptodown", "apkpure", "apkcombo")
+DL_LABEL = {"cache_repo": "Cache", "direct": "Direct", "github": "GitHub", "archive": "Archive",
+            "apkmirror": "APKMirror", "uptodown": "Uptodown", "apkpure": "APKPure", "apkcombo": "APKCombo"}
+
+
+def _first_source(entry):
+    src = str(entry.get("patches-source") or "MorpheApp/morphe-patches")
+    first = (re.findall(r"'([^']*)'|\"([^\"]*)\"|(\S+)", src.strip()) or [("", "", "")])[0]
+    return first[0] or first[1] or first[2]
 
 
 def _first_source_owner(entry):
@@ -174,7 +206,11 @@ def spec_from_entry(key, entry, prerelease):
         "prefix": prefix,
         "color": str(entry.get("badge-color") or "").lstrip("#"),
         "icon": str(entry.get("badge-icon") or ""),
-        "source": "" if mirror else str(entry.get("patches-source") or "MorpheApp/morphe-patches").replace("'", "").replace('"', ""),
+        "version_mode": str(entry.get("version") or "auto"),
+        "source": "" if mirror else _first_source(entry),
+        "host": str(entry.get("patches-source-host") or "github").replace("'", "").replace('"', "").split()[0].lower(),
+        "urls": {k: str(entry[f"{k}-dlurl"]).rstrip("/") for k in DL_ORDER if entry.get(f"{k}-dlurl")},
+        "patcher_args": str(entry.get("patcher-args") or ""),
     }
 
 
@@ -206,22 +242,159 @@ def _shield_text(text):
     return quote(text.replace("-", "--").replace("_", "__").replace(" ", "_"), safe="_-")
 
 
+DEFAULT_BADGE_COLOR = "4500FF"
+DEFAULT_BADGE_ICON = "android"
+OBTAINIUM_BADGE = ("![Add to Obtainium](https://img.shields.io/badge/Add_to_Obtainium-8b5cf6"
+                   "?style=flat-square&logo=android&logoColor=white)")
+_PLAY_ID = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$")
+
+
+def obtainium_badge_link(spec, repo):
+    """The purple "Add to Obtainium" badge, linking to this app's redirect link."""
+    return f"[{OBTAINIUM_BADGE}]({redirect_link(entry_for_spec(spec, repo))})"
+
+
 def app_badge(spec):
-    """A colour-coded badge for the app, from its badge-color / badge-icon keys. An icon slug
-    shields.io does not know simply renders without a logo, so a guessed slug cannot break the
-    image (a hot-linked icon CDN would show a broken-image box)."""
-    color = spec["color"] if re.fullmatch(r"[0-9A-Fa-f]{6}", spec["color"] or "") else "555555"
-    logo = f"&logo={spec['icon']}&logoColor=white" if re.fullmatch(r"[a-z0-9]+", spec["icon"] or "") else ""
-    url = f"https://img.shields.io/badge/{_shield_text(spec['display'])}-{color}?style=for-the-badge{logo}"
-    return f"![{spec['display']}]({url})"
+    """The app's flat badge, in its own colour and logo, linking to its Play Store page - or,
+    for a package id that cannot be a Play listing (`Duck.Detector`), to where it is downloaded."""
+    name = spec["display"]
+    color = spec["color"] if re.fullmatch(r"[0-9A-Fa-f]{6}", spec["color"] or "") else DEFAULT_BADGE_COLOR
+    icon = quote(spec["icon"] or DEFAULT_BADGE_ICON, safe="")
+    url = (f"https://img.shields.io/badge/{quote(name.replace('-', '--'), safe='')}-{color}"
+           f"?style=flat-square&logo={icon}&logoColor=%23FFFFFF")
+    badge = f"![{name}]({url})"
+    if spec["package"] and _PLAY_ID.match(spec["package"]):
+        return f"[{badge}](https://play.google.com/store/apps/details?id={spec['package']})"
+    first = next(iter(spec["urls"].values()), "")
+    return f"[{badge}]({first})" if first else badge
+
+
+def apk_sources(spec):
+    """Where the stock APK comes from: every configured source, in the engine's own order."""
+    if not spec["urls"]:
+        return "N/A"
+    return "<br>".join(f"[{DL_LABEL.get(k, k.title())}]({u})" for k, u in spec["urls"].items())
+
+
+def version_label(spec, data):
+    """The version shield: the version last published when a manifest says so, else what the
+    config asks for (Auto / Latest / a pinned version)."""
+    color = spec["color"] if re.fullmatch(r"[0-9A-Fa-f]{6}", spec["color"] or "") else "3e9cfb"
+    known = (data.get(spec["prefix"]) or {}).get("version")
+    mode = spec["version_mode"]
+    if known:
+        label = known if known.startswith("v") or not known[:1].isdigit() else f"v{known}"
+    elif mode == "auto":
+        label = "Auto"
+    elif mode == "latest":
+        label = "Latest (pre-release)" if spec["prerelease"] else "Latest"
+    else:
+        label = mode if not mode[:1].isdigit() else f"v{mode}"
+    # _shield_text, not a bare quote(): a dash in the message ("v12.19.1-release.0") would
+    # otherwise split it into message and colour in shields.io's path syntax.
+    return f"![version](https://img.shields.io/badge/version-{_shield_text(label)}-{color}?logo=android&logoColor=white)"
+
+
+def patches_cell(spec, data):
+    """The Patches column: a dropdown of what the last build actually applied (from its manifest),
+    plus any -O option the config sets; `Pending` until a build has published."""
+    if spec["mirror"]:
+        return "*(None - Stock Mirror)*"
+    options = re.findall(r"-O(\w+)=(?:'([^']*)'|\"([^\"]*)\"|(\S+))", spec["patcher_args"])
+    options_str = ""
+    if options:
+        options_str = "<br>⚙️ " + ", ".join(f"{k}={a or b or c}" for k, a, b, c in options)
+    applied = (data.get(spec["prefix"]) or {}).get("applied")
+    if not applied:
+        return f"*(Pending first build)*{options_str}"
+    names = sorted(set(applied), key=str.lower)
+    noun = "patch" if len(names) == 1 else "patches"
+    listing = "<br>".join(f"`{n}`" for n in names)
+    return f"<details><summary><b>{len(names)} {noun}</b></summary><br>{listing}{options_str}</details>"
+
+
+def _source_badge_name(source):
+    parts = source.split("/")
+    if len(parts) > 1:
+        return f"{parts[0].replace('-', ' ').title()} / {parts[1].replace('-', ' ').title()}"
+    return parts[0].replace("-", " ").title()
+
+
+def _source_url(source, host):
+    return f"https://{'gitlab.com' if host == 'gitlab' else 'github.com'}/{source}"
+
+
+def _group_header(badge, logo, alt=None):
+    return (f'### <img src="https://img.shields.io/badge/{quote(badge, safe="")}-4500FF?style=for-the-badge'
+            f'&logo={logo}&logoColor=white" alt="{alt or badge}">')
+
+
+TABLE_HEAD = ["<div align=\"center\">", "", "| App | Arch | Version | APK Source | Patches | Obtainium |",
+              "|:---|:----:|:-------:|:----------:|:--------|:---------:|"]
+
+
+def _row(spec, repo, data):
+    return (f"| {app_badge(spec)} | `{spec['arch']}` | {version_label(spec, data)} | {apk_sources(spec)} "
+            f"| {patches_cell(spec, data)} | {obtainium_badge_link(spec, repo)} |")
+
+
+def render_apps_section(specs, repo, data=None):
+    """The apps section of the README: one group per patch source (in config order), then the
+    stock mirrors, each a centred table - App, Arch, Version, APK Source, Patches, Obtainium."""
+    data = data or {}
+    groups, mirrors = {}, []
+    for spec in specs:
+        if spec["mirror"]:
+            mirrors.append(spec)
+        else:
+            groups.setdefault((spec["source"], spec["host"]), []).append(spec)
+
+    blocks = []
+    # MorpheApp's own bundle first, the others A-Z (the config files are read in file-name order,
+    # which would otherwise decide what the reader sees first).
+    for (source, host), apps in sorted(groups.items(), key=lambda kv: (not kv[0][0].lower().startswith("morpheapp/"), kv[0][0].lower())):
+        where = " (GitLab)" if host == "gitlab" else ""
+        lines = [_group_header(_source_badge_name(source), "gitlab" if host == "gitlab" else "github"), "",
+                 f"> **Source:** [`{source}`]({_source_url(source, host)}){where}", "", *TABLE_HEAD]
+        lines += [_row(a, repo, data) for a in apps]
+        lines += ["", "</div>"]
+        blocks.append("\n".join(lines))
+    if mirrors:
+        lines = [_group_header("Stock Mirrors / Unpatched APKs", "android"), "",
+                 "> **Source:** Direct stock APK mirrors (Unpatched)", "", *TABLE_HEAD]
+        lines += [_row(m, repo, data) for m in mirrors]
+        lines += ["", "</div>"]
+        blocks.append("\n".join(lines))
+    return "\n\n---\n\n".join(blocks)
+
+
+def load_manifest_data(paths):
+    """Per app (keyed by file prefix): the version and applied patches of its newest published
+    file, from the `website` branch's archive manifests (archive/stable.json, archive/beta.json)."""
+    best = {}
+    for path in paths:
+        try:
+            with open(path, encoding="utf-8") as f:
+                files = (json.load(f) or {}).get("files") or {}
+        except (OSError, ValueError):
+            continue
+        for entry in files.values():
+            if entry.get("fileType") != "APK":
+                continue
+            key, stamp = entry.get("name") or "", entry.get("publishedAt") or ""
+            if key and (key not in best or stamp > best[key][0]):
+                best[key] = (stamp, {"version": entry.get("version") or "",
+                                     "applied": entry.get("appliedPatches") or []})
+    return {k: v for k, (_, v) in best.items()}
 
 
 def table_markdown(specs, repo):
+    """Compact table for OBTAINIUM.md: one row per app, no build data (that page is static)."""
     rows = ["| App | Package | Source | Channel | Obtainium |", "|:--|:--|:--|:--:|:--:|"]
     for s in sorted(specs, key=lambda s: s["display"].lower()):
         source = "📦 stock APK, unmodified" if s["mirror"] else f"🧩 `{s['source']}`"
         channel = "🧪 pre-release" if s["prerelease"] else "✅ stable"
-        link = f"[**➕ Add**]({redirect_link(entry_for_spec(s, repo))})" if s["package"] else "—"
+        link = obtainium_badge_link(s, repo) if s["package"] else "—"
         rows.append(f"| {app_badge(s)} | `{s['package']}` | {source} | {channel} | {link} |")
     return "\n".join(rows)
 
@@ -248,7 +421,7 @@ def obtainium_page(specs, repo):
         "## How it works",
         "",
         "1. Install [Obtainium](https://github.com/ImranR98/Obtainium/releases/latest).",
-        "2. Tap **➕ Add** next to an app below (open this page on the phone), then **Add** in Obtainium.",
+        "2. Tap the **Add to Obtainium** badge next to an app below (open this page on the phone), then **Add** in Obtainium.",
         "3. Obtainium installs the newest build of *that app only* and keeps it updated.",
         "",
         "Or add everything at once: Obtainium → **Import/Export** → **Import from file**, "
@@ -293,16 +466,18 @@ def obtainium_page(specs, repo):
     return "\n".join(lines)
 
 
-README_START = "<!-- apps:start -->"
-README_END = "<!-- apps:end -->"
+README_START = "<!-- APPS_START -->"
+README_END = "<!-- APPS_END -->"
 
 
-def update_readme(readme_text, specs, repo):
+def update_readme(readme_text, specs, repo, data=None):
+    """Replace the first START..END pair with the freshly rendered apps section. Only the first
+    pair: a later mention of the markers in prose must not be replaced by a second table."""
     if README_START not in readme_text or README_END not in readme_text:
         raise SystemExit(f"README is missing the {README_START} / {README_END} markers")
     head, rest = readme_text.split(README_START, 1)
     _, tail = rest.split(README_END, 1)
-    return f"{head}{README_START}\n{table_markdown(specs, repo)}\n{README_END}{tail}"
+    return f"{head}{README_START}\n\n{render_apps_section(specs, repo, data)}\n\n{README_END}{tail}"
 
 
 def main(argv=None):
@@ -311,7 +486,9 @@ def main(argv=None):
     ap.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY", ""), help="owner/repo that hosts the releases")
     ap.add_argument("--json", help="write the Obtainium import file here")
     ap.add_argument("--page", help="write OBTAINIUM.md here")
-    ap.add_argument("--readme", help="rewrite the app table between the markers in this README")
+    ap.add_argument("--readme", help="rewrite the apps section between the markers in this README")
+    ap.add_argument("--manifest", action="append", default=[], metavar="FILE",
+                    help="an archive manifest (archive/stable.json) to read versions and applied patches from; repeatable")
     args = ap.parse_args(argv)
     if not re.fullmatch(r"[\w.-]+/[\w.-]+", args.repo or ""):
         raise SystemExit("--repo owner/repo is required (or set GITHUB_REPOSITORY)")
@@ -329,7 +506,7 @@ def main(argv=None):
         with open(args.readme, encoding="utf-8") as f:
             text = f.read()
         with open(args.readme, "w", encoding="utf-8", newline="\n") as f:
-            f.write(update_readme(text, specs, args.repo))
+            f.write(update_readme(text, specs, args.repo, load_manifest_data(args.manifest)))
     print(f"{len(specs)} app(s): " + ", ".join(s["display"] for s in specs))
 
 
