@@ -33,6 +33,20 @@ LIVE_ASSETS=$(
   } | sort -u
 )
 
+# The update branch is created by the first build that produces a module zip. A repository that
+# builds APKs only never has one, and that is a state, not a failure: with nothing to prune
+# this exits successfully (the cleanup steps after it, and the catalogue dispatch, must still
+# run). Only a definite "absent" (ls-remote rc 2) counts; an unreachable remote stays an error.
+rc=0
+git ls-remote --exit-code --heads origin update >/dev/null 2>&1 || rc=$?
+if [ "$rc" = 2 ]; then
+  echo "No update branch on origin (no module has been built yet) - nothing to prune."
+  exit 0
+elif [ "$rc" != 0 ]; then
+  echo "::error::Could not query origin for the update branch (git ls-remote exit $rc)." >&2
+  exit "$rc"
+fi
+
 ORIG_REF=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || git rev-parse HEAD 2>/dev/null || echo "main")
 cleanup() {
   echo "--- Restoring original branch ($ORIG_REF) ---"

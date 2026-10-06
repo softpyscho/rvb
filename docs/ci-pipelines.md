@@ -150,10 +150,12 @@ Step order, with the reason each is where it is:
 2. `cleanup-archive-assets.py` prunes each archive to the **2 newest versions per
    app + architecture** (grouping by `<app>-<arch>.<ext>`, newest by `created_at`).
 3. `cleanup_update_branch.sh` drops update pointers and changelogs whose release is
-   gone; `cleanup_website_branch.sh` drops `manifests/<tag>.json` for deleted
-   releases.
-4. A `catalog-updated` `repository_dispatch` to `vars.WEBSITE_REPO`
-   (default `nullcpy/nullcpy.github.io`), authenticated with
+   gone — and does nothing, successfully, when the `update` branch does not exist (an
+   apk-only repository never builds a module, which is what creates it; an unreachable
+   remote is still an error); `cleanup_website_branch.sh` drops `manifests/<tag>.json`
+   for deleted releases.
+4. A `catalog-updated` `repository_dispatch` to `vars.WEBSITE_REPO` (skipped when it
+   is unset), authenticated with
    `WEBSITE_DISPATCH_TOKEN` falling back to `APKS_REPO_TOKEN`. `continue-on-error`,
    because the site also rebuilds on its own schedule — a lost dispatch delays the
    catalogue, it does not break it.
