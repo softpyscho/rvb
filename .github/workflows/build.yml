@@ -33,9 +33,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Which config files this run builds: 'all' expands to the stable and the beta pool (an empty
-  # pool is left out); anything else is built as named. The pools are separate builds - each has
-  # its own release tag, channel and archive - so 'all' is a matrix over them, one at a time.
+  # Which configs this run builds: 'all' expands to every enabled app of configs/patches, as a stable
+  # and a beta pool (an empty pool is left out); anything else is built as named. The pools are
+  # separate builds - each has its own release tag, channel and archive - so 'all' is a matrix over
+  # them, one at a time.
   plan:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -96,12 +97,20 @@ jobs:
           fetch-depth: 0
           submodules: true
 
+      # 'all:<pool>' (from a dispatch with config_file: all) is compiled from configs/patches here;
+      # any other value is the config file itself.
+      - name: Prepare config
+        id: prepare
+        env:
+          CONFIG_FILE: ${{ matrix.config_file }}
+        run: bash .github/scripts/build_prepare_config.sh
+
       - name: Resolve build context
         id: context
         env:
           TG_THREAD_STABLE: ${{ vars.TG_THREAD_STABLE }}
           TG_THREAD_BETA: ${{ vars.TG_THREAD_BETA }}
-        run: bash .github/scripts/build_resolve_context.sh "${{ matrix.config_file }}"
+        run: bash .github/scripts/build_resolve_context.sh "${{ steps.prepare.outputs.config }}"
 
       - name: Install Bouncy Castle for BKS Keystore
         run: |

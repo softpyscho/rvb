@@ -16,6 +16,7 @@ on:
       - "configs/patches/**"
       - ".github/scripts/commit_to_main.sh"
       - ".github/scripts/build_plan_configs.sh"
+      - ".github/scripts/build_prepare_config.sh"
       - ".github/scripts/merge_archive_manifest.sh"
       - ".github/scripts/cleanup_manifests.sh"
       - "README.md"

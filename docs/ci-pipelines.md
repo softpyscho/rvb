@@ -94,8 +94,13 @@ forge answers again. The deliberate fail-open inside that check is recorded in
 Called once per pool by the watcher with `config_file` (and optional `remove_apks`), or
 dispatched by hand with `config_file: all` (the default), which builds **every app in one run**.
 A `plan` job (`build_plan_configs.sh`) turns `config_file` into the matrix of the `build` job:
-`all` becomes the stable pool and then the beta pool (a pool with no app is left out, neither
-having one is an error), any other value is built as named, and an unknown value fails loudly.
+`all` becomes `all:stable` and then `all:beta` (a pool with no app is left out, neither having one
+is an error), any other value is built as named, and an unknown value fails loudly. An `all:<pool>`
+entry is **compiled fresh from `configs/patches/*.toml`** (`build_prepare_config.sh` →
+`compile_patch_configs.py`), so it holds every enabled app routed to that pool. It deliberately is
+not the watcher's `configs/*_build.json`: those record what the watcher decided to build next, and
+in the beta pool that is nobody unless a source's beta is newer than stable (every app there is
+written `enabled: false`), so building them for "everything" would build nothing.
 The matrix runs one pool at a time (`max-parallel: 1`: each pool has its own release tag, channel,
 archive and manifest merge) and `fail-fast: false`, so a pool that fails does not stop the other.
 Everything the job needs to be reproducible lives in that one file, including the tuning knobs —
