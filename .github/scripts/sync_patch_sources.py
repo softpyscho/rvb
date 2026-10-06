@@ -84,6 +84,14 @@ def discover_active_sources(patches_dir=PATCHES_DIR):
             if not enabled:
                 continue
 
+            # A mirrored app (`mirror = true`) is re-hosted unpatched and never reads
+            # a patch bundle, so it must not keep a source alive on its own.
+            mirror = merged.get("mirror", False)
+            if isinstance(mirror, str):
+                mirror = mirror.lower() == "true"
+            if mirror:
+                continue
+
             src_str = str(merged.get("patches-source", def_src))
             host_str = str(merged.get("patches-source-host", def_host))
 

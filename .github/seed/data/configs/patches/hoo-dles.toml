@@ -1,0 +1,20 @@
+# hoo-dles/morphe-patches — Xodo, Prime Video.
+patches-source = "hoo-dles/morphe-patches"
+brand = "Morphe"
+arch = "arm64-v8a"
+
+[Xodo]
+pkg-name = "com.xodo.pdf.reader"
+badge-color = "0078D4"
+badge-icon = "adobeacrobatreader"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/apryse-software-inc/xodo-pdf-reader-editor"
+uptodown-dlurl = "https://xodo-docs.en.uptodown.com/android"
+
+[Amazon-Prime-Video]
+pkg-name = "com.amazon.avod.thirdpartyclient"
+badge-color = "00A8E1"
+badge-icon = "amazonprimevideo"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/amazon-mobile-llc/amazon-prime-video/"
+# uptodown-dlurl removed: the page returns HTTP 410 Gone, so it failed on every run.

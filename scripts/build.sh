@@ -46,6 +46,10 @@ DEF_SUB_VARIANT=$(toml_get "$main_config_t" sub-variant) || DEF_SUB_VARIANT=""
 DEF_DPI=$(toml_get "$main_config_t" dpi) || DEF_DPI="nodpi anydpi auto"
 DEF_ARCH=$(toml_get "$main_config_t" arch) || DEF_ARCH="both"
 DEF_BUILD_MODE=$(toml_get "$main_config_t" build-mode) || DEF_BUILD_MODE="apk"
+# Pool configs (configs/*_build.json) arrive with file-level defaults already merged into every
+# app; a hand-written TOML does not, so the file-level keys the engine honours are read here.
+DEF_MIRROR=$(toml_get "$main_config_t" mirror) || DEF_MIRROR=false
+vtf "$DEF_MIRROR" "mirror"
 DEF_AUTHOR_NAME=$(toml_get "$main_config_t" author) || DEF_AUTHOR_NAME="nullcpy"
 DEF_AUTHOR_PAGE=$(toml_get "$main_config_t" author-page) || DEF_AUTHOR_PAGE="github.com/nullcpy/rvb"
 # Concurrent table builds. The ONLY knob is the PARALLEL_JOBS env set in
@@ -176,75 +180,102 @@ for table_name in $(toml_get_table_names); do
 	# "both" is not a channel — it is routing, resolved here from the config being
 	# built: a beta-named file, or a file-level default already set to beta.
 	[ "$patches_ver" = "both" ] && { if [[ "${1:-}" == *"beta"* ]] || [ "$DEF_PATCHES_VER" = "beta" ]; then patches_ver="beta"; else patches_ver="stable"; fi; }
-	cli_src=$(toml_get "$t" cli-source) || cli_src=$DEF_CLI_SRC
-	cli_src_host=$(toml_get "$t" cli-source-host) || cli_src_host=$DEF_CLI_SRC_HOST
-	cli_ver=$(toml_get "$t" cli-version) || cli_ver=$DEF_CLI_VER
-	if ! isoneof "$cli_src_host" github gitlab codeberg; then abort "ERROR: cli-source-host '$cli_src_host' is not a valid option for '$table_name': only 'github', 'gitlab' or 'codeberg' is allowed"; fi
-	resolve_patcher "$cli_src"
-
-	# Parse patch sources: may be a single string or multiline (quoted list)
-	IFS=$'\n'
-	p_srcs=($(list_args "$patches_src" | tr -d \"\')); [ ${#p_srcs[@]} -eq 0 ] && p_srcs=("$patches_src")
-	p_hosts=($(list_args "$patches_src_host" | tr -d \"\')); [ ${#p_hosts[@]} -eq 0 ] && p_hosts=("$patches_src_host")
-	p_vers=($(list_args "$patches_ver" | tr -d \"\')); [ ${#p_vers[@]} -eq 0 ] && p_vers=("$patches_ver")
-	unset IFS
-	for h in "${p_hosts[@]}"; do
-		if ! isoneof "$h" github gitlab codeberg; then abort "ERROR: patches-source-host '$h' is not a valid option for '$table_name': only 'github', 'gitlab' or 'codeberg' is allowed"; fi
-	done
-
-	# NOTE: called directly, not via $(...), so the __PREBUILTS_CACHE__ write in
-	# get_prebuilts survives in this shell (see get_prebuilts in utils.sh).
-	if ! get_prebuilts "$cli_src_host" "$cli_src" "$cli_ver" "$patches_src_host" "$patches_src" "$patches_ver"; then
-		epr "Could not get prebuilts"
-		continue
+	# mirror = true re-hosts the stock APK unmodified (mirror_rv in utils.sh), so none of the
+	# patch machinery below applies: no CLI, no bundle, no patch lists. Anything that would
+	# configure it is rejected rather than ignored - a mirrored app that silently dropped its
+	# patches would publish an unpatched APK under a patched app's name.
+	app_args[mirror]=$(toml_get "$t" mirror) || app_args[mirror]=$DEF_MIRROR
+	vtf "${app_args[mirror]}" "mirror"
+	app_args[keep_filename]=$(toml_get "$t" keep-filename) || app_args[keep_filename]=false
+	vtf "${app_args[keep_filename]}" "keep-filename"
+	if [ "${app_args[mirror]}" = false ] && [ "${app_args[keep_filename]}" = true ]; then
+		abort "ERROR: keep-filename only applies to mirrored apps; '$table_name' is patched (set mirror = true or drop it)"
 	fi
-	read -r -a __pb <<< "$__PREBUILTS_RESULT"
-	cli_jar=${__pb[0]}
-	patches_jar_all="${__pb[*]:1}"
-	# Resolved patch bundles, index-aligned with p_srcs (both derive from the same
-	# patches_src string via list_args), so metadata can name the exact file used.
-	__pb_patches=("${__pb[@]:1}")
-	app_args[cli]=$cli_jar
-	app_args[ptjar]=$patches_jar_all
-	app_args[cli_source]=$cli_src
-	app_args[patches_sources_all]="${p_srcs[*]}"
+	if [ "${app_args[mirror]}" = true ]; then
+		for mirror_bad in patches-source cli-source excluded-patches included-patches exclusive-patches inclusive-patches patcher-args patched-pkg-name include-stock; do
+			if mirror_val=$(toml_get "$t" "$mirror_bad"); then
+				# the two booleans may be spelled out as false; any other value configures patching
+				if [ "$mirror_val" = false ] && isoneof "$mirror_bad" exclusive-patches inclusive-patches; then continue; fi
+				abort "ERROR: '$mirror_bad' is set for '$table_name', which is mirrored (mirror = true) and never patched"
+			fi
+		done
+		mirror_bm=$(toml_get "$t" build-mode) || mirror_bm=apk
+		if [ "$mirror_bm" != apk ]; then abort "ERROR: build-mode '$mirror_bm' is not valid for the mirrored app '$table_name': a mirror has no module form"; fi
+		app_args[cli]="" app_args[ptjar]="" app_args[cli_source]="" app_args[patches_sources_all]=""
+		app_args[patches_src]="" app_args[patches_ref]="" app_args[changelog_url]=""
+		app_args[brand]=$(toml_get "$t" brand) || app_args[brand]="${DEF_BRAND:-Mirror}"
+		app_args[variant]="" app_args[sub_variant]=""
+	else
+		cli_src=$(toml_get "$t" cli-source) || cli_src=$DEF_CLI_SRC
+		cli_src_host=$(toml_get "$t" cli-source-host) || cli_src_host=$DEF_CLI_SRC_HOST
+		cli_ver=$(toml_get "$t" cli-version) || cli_ver=$DEF_CLI_VER
+		if ! isoneof "$cli_src_host" github gitlab codeberg; then abort "ERROR: cli-source-host '$cli_src_host' is not a valid option for '$table_name': only 'github', 'gitlab' or 'codeberg' is allowed"; fi
+		resolve_patcher "$cli_src"
 
-	# Build aggregated patches_ref and changelog_url from all sources
-	patches_ref_all="" changelog_url_all=""
-	for i in "${!p_srcs[@]}"; do
-		psrc="${p_srcs[$i]}"
-		phost="${p_hosts[$i]:-${p_hosts[0]}}"
-		# Use the exact bundle resolved for THIS build (index-aligned with p_srcs)
-		# instead of re-scanning the folder, which would report the highest-sorted
-		# version when several versions of the same repo coexist.
-		pfile="${__pb_patches[$i]:-}"
-		if [ -n "$pfile" ]; then
-			pdir=$(dirname "$pfile")
-			pfilename=${pfile##*/}
-			
-			if [ -f "${pfile}.tag" ]; then
-				ptag=$(cat "${pfile}.tag")
-			elif [ -f "${pdir}/tag_name.txt" ]; then
-				ptag=$(cat "${pdir}/tag_name.txt")
-			else
-				pver_actual=${pfilename#*-}; pver_actual=${pver_actual%.*}
-				ptag="v${pver_actual#v}"
-			fi
-			
-			patches_ref_all+="${psrc%%/*}/${pfilename} "
-			# One owner for the release-page shape (utils.sh). An unrecognised host
-			# contributes no link rather than a guessed one.
-			if cl_url=$(source_release_web_url "$phost" "$psrc" "$ptag"); then
-				changelog_url_all+="${cl_url} "
-			fi
+		# Parse patch sources: may be a single string or multiline (quoted list)
+		IFS=$'\n'
+		p_srcs=($(list_args "$patches_src" | tr -d \"\')); [ ${#p_srcs[@]} -eq 0 ] && p_srcs=("$patches_src")
+		p_hosts=($(list_args "$patches_src_host" | tr -d \"\')); [ ${#p_hosts[@]} -eq 0 ] && p_hosts=("$patches_src_host")
+		p_vers=($(list_args "$patches_ver" | tr -d \"\')); [ ${#p_vers[@]} -eq 0 ] && p_vers=("$patches_ver")
+		unset IFS
+		for h in "${p_hosts[@]}"; do
+			if ! isoneof "$h" github gitlab codeberg; then abort "ERROR: patches-source-host '$h' is not a valid option for '$table_name': only 'github', 'gitlab' or 'codeberg' is allowed"; fi
+		done
+
+		# NOTE: called directly, not via $(...), so the __PREBUILTS_CACHE__ write in
+		# get_prebuilts survives in this shell (see get_prebuilts in utils.sh).
+		if ! get_prebuilts "$cli_src_host" "$cli_src" "$cli_ver" "$patches_src_host" "$patches_src" "$patches_ver"; then
+			epr "Could not get prebuilts"
+			continue
 		fi
-	done
-	app_args[patches_src]=${p_srcs[0]}
-	app_args[patches_ref]="${patches_ref_all% }"
-	app_args[changelog_url]="${changelog_url_all% }"
-	app_args[brand]=$(toml_get "$t" brand) || app_args[brand]="${DEF_BRAND:-${p_srcs[0]%%/*}}"
-	app_args[variant]=$(toml_get "$t" variant) || app_args[variant]="$DEF_VARIANT"
-	app_args[sub_variant]=$(toml_get "$t" sub-variant) || app_args[sub_variant]="$DEF_SUB_VARIANT"
+		read -r -a __pb <<< "$__PREBUILTS_RESULT"
+		cli_jar=${__pb[0]}
+		patches_jar_all="${__pb[*]:1}"
+		# Resolved patch bundles, index-aligned with p_srcs (both derive from the same
+		# patches_src string via list_args), so metadata can name the exact file used.
+		__pb_patches=("${__pb[@]:1}")
+		app_args[cli]=$cli_jar
+		app_args[ptjar]=$patches_jar_all
+		app_args[cli_source]=$cli_src
+		app_args[patches_sources_all]="${p_srcs[*]}"
+
+		# Build aggregated patches_ref and changelog_url from all sources
+		patches_ref_all="" changelog_url_all=""
+		for i in "${!p_srcs[@]}"; do
+			psrc="${p_srcs[$i]}"
+			phost="${p_hosts[$i]:-${p_hosts[0]}}"
+			# Use the exact bundle resolved for THIS build (index-aligned with p_srcs)
+			# instead of re-scanning the folder, which would report the highest-sorted
+			# version when several versions of the same repo coexist.
+			pfile="${__pb_patches[$i]:-}"
+			if [ -n "$pfile" ]; then
+				pdir=$(dirname "$pfile")
+				pfilename=${pfile##*/}
+			
+				if [ -f "${pfile}.tag" ]; then
+					ptag=$(cat "${pfile}.tag")
+				elif [ -f "${pdir}/tag_name.txt" ]; then
+					ptag=$(cat "${pdir}/tag_name.txt")
+				else
+					pver_actual=${pfilename#*-}; pver_actual=${pver_actual%.*}
+					ptag="v${pver_actual#v}"
+				fi
+			
+				patches_ref_all+="${psrc%%/*}/${pfilename} "
+				# One owner for the release-page shape (utils.sh). An unrecognised host
+				# contributes no link rather than a guessed one.
+				if cl_url=$(source_release_web_url "$phost" "$psrc" "$ptag"); then
+					changelog_url_all+="${cl_url} "
+				fi
+			fi
+		done
+		app_args[patches_src]=${p_srcs[0]}
+		app_args[patches_ref]="${patches_ref_all% }"
+		app_args[changelog_url]="${changelog_url_all% }"
+		app_args[brand]=$(toml_get "$t" brand) || app_args[brand]="${DEF_BRAND:-${p_srcs[0]%%/*}}"
+		app_args[variant]=$(toml_get "$t" variant) || app_args[variant]="$DEF_VARIANT"
+		app_args[sub_variant]=$(toml_get "$t" sub-variant) || app_args[sub_variant]="$DEF_SUB_VARIANT"
+	fi
 
 	app_args[excluded_patches]=$(toml_get "$t" excluded-patches) || app_args[excluded_patches]=""
 	if [ -n "${app_args[excluded_patches]}" ] && [[ ${app_args[excluded_patches]} != *'"'* ]]; then abort "patch names inside excluded-patches must be quoted"; fi

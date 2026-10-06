@@ -62,7 +62,9 @@ def config_needs_bks(config_path: str) -> bool:
     with open(config_path, encoding="utf-8") as f:
         data = json.load(f)
     for entry in data.values():
-        if not isinstance(entry, dict) or entry.get("enabled") is not True:
+        # Enabled is the default (CONFIG.md); only an explicit false switches an app off here
+        # (ci_generate_configs.sh writes that for apps outside this run's change set).
+        if not isinstance(entry, dict) or entry.get("enabled") is False:
             continue
         cli = entry.get("cli-source")
         if isinstance(cli, str) and classify(cli) in NEEDS_BKS_KINDS:

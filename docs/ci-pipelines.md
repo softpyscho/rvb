@@ -11,7 +11,7 @@ GitHub's limits; notify reports failures.
 | [cleanup.yml](../.github/workflows/cleanup.yml) | Cleanup | `workflow_call`, `workflow_dispatch` | `clean` |
 | [manual-ci.yml](../.github/workflows/manual-ci.yml) | Manual CI | `workflow_dispatch` (config choice + optional `remove_apks`) | `ci` |
 | [notify.yml](../.github/workflows/notify.yml) | Notify | `workflow_call`, on `failure()` of the caller | — |
-| [trace-verify.yml](../.github/workflows/trace-verify.yml) | Trace Verify | `push` touching `scripts/build.sh`, `scripts/utils.sh` or `.github/traces/**` | `trace-verify` |
+| [trace-verify.yml](../.github/workflows/trace-verify.yml) | Trace Verify | `push` touching `scripts/build.sh`, `scripts/utils.sh`, `.github/traces/**`, the release-notes / Obtainium / manifest scripts, `.github/seed/**`, or the generated `README.md` / `OBTAINIUM.md` / `obtainium-apps.json` | `trace-verify` |
 
 Nothing here runs on `push` to `main` except Trace Verify: a push changes
 behaviour for the *next* scheduled run, it does not start a build.
@@ -94,7 +94,7 @@ forge answers again. The deliberate fail-open inside that check is recorded in
 
 Called once per pool with `config_file` (and optional `remove_apks`). Everything
 it needs to be reproducible lives in that one file, including the tuning knobs —
-`PARALLEL_JOBS: "6"` and `UPLOAD_CONCURRENCY: "12"` are workflow env values, not
+`PARALLEL_JOBS: "1"` and `UPLOAD_CONCURRENCY: "12"` are workflow env values, not
 repo variables, so they are visible in PRs, survive forks, and carry git history
 (why: [decisions/0005](decisions/0005-tuning-knobs-live-in-the-workflow.md)).
 
@@ -164,12 +164,12 @@ Step order, with the reason each is where it is:
 |---|---|---|---|
 | secret | `GITHUB_TOKEN` (auto) | all | `contents: write` on the jobs that push branches |
 | secret | `KEYSTORE_B64`, `KEYSTORE_P12_B64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` | build | signing identity |
-| secret | `APKS_REPO_TOKEN` | build, cleanup | cross-repo write to `nullcpy/apks`, doubles as dispatch token |
+| secret | `APKS_REPO_TOKEN` | build, cleanup | cross-repo write to the cache repo (`vars.APKS_REPO`), doubles as dispatch token |
 | secret | `CODEBERG_TOKEN` | watcher | raises Codeberg/Forgejo rate limits |
 | secret | `TG_TOKEN`, `WEBSITE_DISPATCH_TOKEN` (optional) | notify steps | |
-| var | `APKS_REPO`, `WEBSITE_REPO` | build, cleanup | alternate cache/site repos for forks |
-| var | `TG_CHAT_ID`, `TG_CHAT_ID_BROADCAST`, `TG_THREAD_CI`, `TG_THREAD_STABLE`, `TG_THREAD_BETA` | notifications | Telegram topic routing |
-| var | `RELEASE_NOTES_TG_LINK`, `RELEASE_NOTES_DONATE_LINK`, `RELEASE_NOTES_WEBSITE_LINK` | build | footer links in the generated release body |
+| var | `APKS_REPO`, `WEBSITE_REPO` | build, cleanup | the stock-APK cache repo and the site repo. **No default**: unset turns the cache (read and write, and the usage tracker) and the `catalog-updated` dispatch off, so a fork never talks to the upstream's repositories |
+| var | `TG_CHAT_ID`, `TG_CHAT_ID_BROADCAST`, `TG_THREAD_CI`, `TG_THREAD_STABLE`, `TG_THREAD_BETA`, `TG_THREAD_NOTIFY` | notifications | Telegram destinations. **No default**: with `TG_TOKEN` but no `TG_CHAT_ID` nothing is posted, and an unset thread id is simply not sent |
+| var | `RELEASE_NOTES_TG_LINK`, `RELEASE_NOTES_DONATE_LINK`, `RELEASE_NOTES_WEBSITE_LINK` | build | footer links in the generated release body; a link that is unset is left out |
 | var | `RVB_MORPHE_PASSTHROUGH` | build | bundle handling escape hatch |
 
 ## Log conventions

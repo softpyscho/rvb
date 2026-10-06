@@ -1,0 +1,21 @@
+# Paresh-Maheshwari/paresh-patches (GitLab) — Truecaller, TickTick.
+patches-source = "Paresh-Maheshwari/paresh-patches"
+patches-source-host = "gitlab"
+brand = "Morphe"
+arch = "arm64-v8a"
+
+[Truecaller]
+pkg-name = "com.truecaller"
+badge-color = "0080FF"
+badge-icon = "truecaller"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/true-software-scandinavia-ab/truecaller-caller-id-block/"
+uptodown-dlurl = "https://truecaller.en.uptodown.com/android"
+
+[TickTick]
+pkg-name = "com.ticktick.task"
+badge-color = "4772FA"
+badge-icon = "ticktick"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/ticktick-limited/ticktick-to-do-list-with-reminder-day-planner/"
+uptodown-dlurl = "https://ticktick.en.uptodown.com/android"

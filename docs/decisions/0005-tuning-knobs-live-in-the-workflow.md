@@ -18,8 +18,11 @@ repository variables, and an `"auto"` sentinel that computes a value at runtime.
 
 | Knob | Value | Read by | Effect |
 |---|---|---|---|
-| `PARALLEL_JOBS` | `6` | `scripts/build.sh` | concurrent table builds; `1` = the historical sequential path; non-numeric warns and falls back to `1`; capped at `8` because the runner is 4-core/16 GB |
+| `PARALLEL_JOBS` | `1` | `scripts/build.sh` | concurrent table builds; `1` = the historical sequential path; non-numeric warns and falls back to `1`; capped at `8` because the runner is 4-core/16 GB |
 | `UPLOAD_CONCURRENCY` | `12` | `build_upload_release.sh` | simultaneous asset uploads (script default `4` when unset) |
+
+`PARALLEL_JOBS` is `1` in this fork (upstream ships `6`): a config that arrives with a
+`parallel-jobs = 1` line is carried over by editing this value, not by adding the key back.
 
 There is deliberately **no download-concurrency knob**: stock downloads happen
 inside each table build and are throttled only by the per `pkg+version` flock

@@ -1,0 +1,23 @@
+# crimera/piko — X (Twitter) and Instagram.
+patches-source = "crimera/piko"
+brand = "Morphe"
+arch = "arm64-v8a"
+
+[Twitter]
+pkg-name = "com.twitter.android"
+badge-color = "000000"
+badge-icon = "x"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/x-corp/twitter"
+uptodown-dlurl = "https://twitter.en.uptodown.com/android"
+
+[Instagram]
+pkg-name = "com.instagram.android"
+badge-color = "FF0069"
+badge-icon = "instagram"
+version = "latest"
+# Piko's pre-release ("dev") line: routed to the beta pool, so it ships as a pre-release.
+patches-version = "beta"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/instagram/instagram-instagram"
+uptodown-dlurl = "https://instagram.en.uptodown.com/android"
+github-dlurl = "https://github.com/softpyscho/apkforge/releases/tag/com.instagram.android"

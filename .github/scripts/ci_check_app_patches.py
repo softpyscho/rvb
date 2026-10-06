@@ -27,6 +27,14 @@ def load_channel_config(channel):
     return {}
 
 
+def is_mirror(app):
+    """True for an app that is re-hosted unpatched (`mirror = true`)."""
+    flag = app.get('mirror', False)
+    if isinstance(flag, str):
+        flag = flag.lower() == 'true'
+    return bool(flag)
+
+
 def get_app_mappings():
     apps_stable = {}
     apps_beta = {}
@@ -42,6 +50,11 @@ def get_app_mappings():
             if isinstance(enabled, str):
                 enabled = enabled.lower() == 'true'
             if not enabled:
+                continue
+
+            # A mirrored app is published unpatched, so no patch bundle can ever
+            # cover it; it is rebuilt only when the app itself updates.
+            if is_mirror(val):
                 continue
 
             src = (val.get('patches-source')

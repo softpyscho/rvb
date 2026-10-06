@@ -77,6 +77,15 @@ Two classes, and the distinction is load-bearing:
 Per-build `build.json` is **no longer a release asset**; the `website` branch is
 the only manifest store (completed 2026-09-25).
 
+## Patched and mirrored apps
+
+Most apps are **patched**: stock APK → patch bundle → signed APK. An app with `mirror = true` is
+**mirrored**: the stock APK is downloaded, checked (package, signature, ABI) and republished
+unmodified so that apps without a release page of their own can be followed from these releases
+([build-engine.md](build-engine.md#mirrored-apps-mirror_rv)). Both kinds share the filename grammar,
+the manifests and the releases, and both are delivered to phones through Obtainium
+([OBTAINIUM.md](../OBTAINIUM.md)).
+
 ## Channels and pools
 
 `stable` and `beta` are the only channel keywords. They are routing, not

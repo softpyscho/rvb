@@ -1,0 +1,13 @@
+# arandomhooman/hoomans-morphe-patches — Battery Guru (pre-release line, beta pool).
+patches-source = "arandomhooman/hoomans-morphe-patches"
+patches-version = "beta"
+brand = "Morphe"
+arch = "arm64-v8a"
+
+[Battery-Guru]
+pkg-name = "com.paget96.batteryguru"
+badge-color = "4CAF50"
+badge-icon = "battery_charging_full"
+version = "latest"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/paget96/battery-guru-health-saver/"
+uptodown-dlurl = "https://battery-guru.en.uptodown.com/android"

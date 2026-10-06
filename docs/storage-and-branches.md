@@ -4,6 +4,10 @@ Where every artifact lives, who is allowed to write it, and how to get it back.
 The governing rule: **`main` is pure code.** Anything machine-regenerated and
 single-writer lives on another branch, so `main`'s history stays human.
 
+> A fresh fork has no `data` or `website` branch and the pipeline refuses to start without them.
+> `bash .github/scripts/seed_data_branch.sh` creates both once, from [`.github/seed/`](../.github/seed)
+> (see [fork-setup.md](fork-setup.md)); it never overwrites an existing branch.
+
 ## Branch map
 
 | Branch | Contents | Sole writer(s) | Readers |
@@ -150,6 +154,12 @@ Asset filename grammar — the contract every consumer parses:
 <file-prefix>-v<version>-<arch>.apk                  youtube-morphe-v19.16.39-arm64-v8a.apk
 <file-prefix>-module-v<version>-<arch>.zip           youtube-morphe-module-v19.16.39-arm64-v8a.zip
 ```
+
+A **mirrored** app (`mirror = true`, [CONFIG.md](../CONFIG.md#mirrored-apps)) follows the same
+grammar with no brand segment — `bitget-v9.1-arm64-v8a.apk`. The one sanctioned exception is
+`keep-filename`: the asset keeps its source's own name, which is recorded in the build record's
+`file` field so the manifest step can find it by exact name instead of by prefix; its arch comes
+from the same record, never from the name.
 
 `file-prefix` is everything before the first `-v<digit>` or `-module-`
 (`naming.py:file_prefix`). Arch spelling is normalised for matching

@@ -26,8 +26,12 @@ CHECK_ONLY_LISTED=$(jq -r '."_check_only_listed" // false' state/app_versions.js
 if [ "$CHECK_ONLY_LISTED" = "true" ]; then
     jq -r 'to_entries | map(select(.key | startswith("_") | not)) | .[] | "\(.key)|\(.value.keys[0])"' state/app_versions.json > check_list.txt
 else
-    # All enabled apps across stable and dev configs
-    ENABLED_APPS=$(jq -r -s 'add | to_entries | map(select((.value | type == "object") and .value.enabled == true)) | .[].key' "${CONFIG_INPUTS[@]}")
+    # All enabled apps across stable and beta configs. "Enabled" is the default
+    # (CONFIG.md: enabled = true), so a table that never writes the key still counts: the
+    # compiled pools omit disabled apps already, and requiring an explicit `true` here
+    # silently exempted every app whose TOML relied on the default from version checks -
+    # for a mirrored app, which has no patch release to fall back on, that meant never building.
+    ENABLED_APPS=$(jq -r -s 'add | to_entries | map(select((.value | type == "object") and .value.enabled != false)) | .[].key' "${CONFIG_INPUTS[@]}")
     
     # Get all grouped apps to exclude them
     GROUPED_APPS=$(jq -r 'to_entries | map(select(.key | startswith("_") | not)) | .[].value.keys[]?' state/app_versions.json 2>/dev/null || echo "")
