@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-06T18:50:38Z"
+    "publishedAt": "2026-10-06T21:16:04Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -28,8 +28,8 @@
       "appliedPatches": [
         "Unlock Premium"
       ],
-      "originBuild": "260013",
-      "publishedAt": "2026-10-06T18:50:10Z"
+      "originBuild": "260015",
+      "publishedAt": "2026-10-06T21:15:41Z"
     },
     "amazon-prime-video-morphe-v3.0.470.1047-arm64-v8a.apk": {
       "name": "amazon-prime-video-morphe",
@@ -96,8 +96,8 @@
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260013",
-      "publishedAt": "2026-10-06T18:50:10Z"
+      "originBuild": "260015",
+      "publishedAt": "2026-10-06T21:15:41Z"
     },
     "mix-archive-v3.24-arm64-v8a.apk": {
       "name": "mix-archive",
@@ -132,8 +132,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260013",
-      "publishedAt": "2026-10-06T18:50:10Z"
+      "originBuild": "260015",
+      "publishedAt": "2026-10-06T21:15:41Z"
     },
     "reddit-morphe-v2026.39.0-arm64-v8a.apk": {
       "name": "reddit-morphe",
@@ -379,8 +379,8 @@
         "Disable Analytics / Telemetry",
         "Spoof WARP+ Unlimited UI"
       ],
-      "originBuild": "260013",
-      "publishedAt": "2026-10-06T18:50:10Z"
+      "originBuild": "260015",
+      "publishedAt": "2026-10-06T21:15:41Z"
     },
     "xodo-morphe-v11.2.0-arm64-v8a.apk": {
       "name": "xodo-morphe",
@@ -403,8 +403,8 @@
       "appliedPatches": [
         "Enable Pro"
       ],
-      "originBuild": "260013",
-      "publishedAt": "2026-10-06T18:50:10Z"
+      "originBuild": "260015",
+      "publishedAt": "2026-10-06T21:15:41Z"
     },
     "Duck.Detector-2026.10.06-82566ffa96bb.apk": {
       "name": "duck-detector",
@@ -481,8 +481,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260013",
-      "publishedAt": "2026-10-06T18:50:10Z"
+      "originBuild": "260015",
+      "publishedAt": "2026-10-06T21:15:41Z"
     }
   }
 }
