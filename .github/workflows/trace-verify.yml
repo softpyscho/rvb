@@ -8,6 +8,8 @@ on:
       - ".github/traces/**"
       - ".github/scripts/generate_release_notes.py"
       - ".github/scripts/obtainium.py"
+      - ".github/scripts/ci_fetch_app_versions.sh"
+      - ".github/scripts/patchers.py"
       - ".github/scripts/build_make_manifest.py"
       - ".github/seed/**"
       - "README.md"
@@ -38,3 +40,4 @@ jobs:
           bash .github/traces/test_bundle_helpers.sh
           bash .github/traces/test_mirror.sh
           python3 .github/traces/test_release_notes.py
+          bash .github/traces/test_ci_app_versions.sh

@@ -47,6 +47,12 @@ rolling `stable` archive, the beta pool (pre-releases) plus `beta`. Builds are s
 (`PARALLEL_JOBS: "1"`), so expect a long first run; later runs only rebuild what moved. To try one
 app end to end first, edit `configs/config.manual.toml` and dispatch **Manual CI**.
 
+Two things the first run will not do, by design: the **beta** pool builds an app only when one of its
+sources has a pre-release newer than its latest stable release (otherwise the stable pool already
+covers it), so Instagram and Battery Guru wait for such a release; and a mirrored app that follows a
+rolling tag (Duck Detector's `nightly`) never looks "updated" to the watcher, because the tag name never
+changes — to refresh it, put its table in `configs/config.manual.toml` and dispatch **Manual CI**.
+
 Sources that block GitHub-hosted runners (Cloudflare challenges on APKMirror/Uptodown) fail per
 app and are skipped; the rest of the run is unaffected. A pinned stock APK you host yourself is the
 reliable fallback (`github-dlurl` pointing at a release of your own).
