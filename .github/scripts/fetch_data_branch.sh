@@ -17,7 +17,7 @@ set -euo pipefail
 # to stale or empty state (same stance as merge_archive_branch.sh).
 
 if ! git fetch -q origin data; then
-	echo "FATAL: 'data' branch not found on origin — restore it (see temp/seed_data_branch.sh)." >&2
+	echo "FATAL: 'data' branch not found on origin — restore it (bootstrap a fork with: bash .github/scripts/seed_data_branch.sh)." >&2
 	exit 1
 fi
 

@@ -1,0 +1,31 @@
+# rushiranpise/morphe-patches — WARP, Splitwise, Greenify.
+patches-source = "rushiranpise/morphe-patches"
+brand = "Morphe"
+arch = "arm64-v8a"
+
+[WARP]
+pkg-name = "com.cloudflare.onedotonedotonedotone"
+badge-color = "F48120"
+badge-icon = "cloudflare"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/cloudflare/1-1-1-1-faster-safer-internet"
+uptodown-dlurl = "https://1-1-1-1.en.uptodown.com/android"
+
+[Splitwise]
+pkg-name = "com.Splitwise.SplitwiseMobile"
+badge-color = "40B89C"
+badge-icon = "splitwise"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/splitwise/splitwise/"
+uptodown-dlurl = "https://splitwise.en.uptodown.com/android"
+
+[Greenify]
+pkg-name = "com.oasisfeng.greenify"
+badge-color = "43A047"
+badge-icon = "android"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/oasisfeng/greenify"
+# Newest versions are only reachable from the self-hosted release below: the bundle needs 5.x,
+# APKMirror stops at 4.7.5 and Uptodown gates the download. Replace the asset when updating.
+github-dlurl = "https://github.com/softpyscho/apkforge/releases/tag/com.oasisfeng.greenify"
+uptodown-dlurl = "https://greenify.en.uptodown.com/android"

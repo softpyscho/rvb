@@ -1,0 +1,72 @@
+# Stock APKs re-hosted unmodified, so Obtainium can track apps that publish no GitHub
+# release of their own. `mirror = true` skips the patcher entirely: the engine downloads the
+# stock APK, checks package/signature/arch like any other build, and publishes it as-is.
+# No patch source is involved, so none is set here.
+mirror = true
+brand = "Mirror"
+version = "latest"
+arch = "arm64-v8a"
+
+[Bitget]
+app-name = "Bitget"
+pkg-name = "com.bitget.exchange"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-crypto/"
+uptodown-dlurl = "https://bitget.en.uptodown.com/android"
+
+[Stremio]
+app-name = "Stremio"
+pkg-name = "com.stremio.one"
+# direct-dlurl = "https://www.stremio.com/downloads" is not carried over: it is a web page, and the
+# engine's `direct` source needs a URL that ends in the APK's own file name.
+apkmirror-dlurl = "https://www.apkmirror.com/apk/stremio/stremio-2/"
+uptodown-dlurl = "https://stremio-one.en.uptodown.com/android"
+
+[Mixplorer]
+app-name = "Mixplorer"
+pkg-name = "com.mixplorer"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/hootan-parsa/mixplorer-hootanparsa/"
+uptodown-dlurl = "https://mixplorer.en.uptodown.com/android"
+
+[Mix-Archive]
+app-name = "Mix Archive"
+pkg-name = "com.mixplorer.addon.archive"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/hootan-parsa/mix-archive/"
+uptodown-dlurl = "https://mix-archive.en.uptodown.com/android"
+
+[RedotPay]
+app-name = "RedotPay"
+pkg-name = "com.redotpay"
+# direct-dlurl = "https://www.redotpay.com/app-download" is not carried over (a web page, see Stremio).
+uptodown-dlurl = "https://redotpay.en.uptodown.com/android"
+
+[Duck-Detector]
+app-name = "Duck Detector"
+pkg-name = "Duck.Detector"
+# A nightly build has no version number to put in a file name, so the asset keeps its own.
+keep-filename = true
+version = "nightly"
+arch = "all"
+github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly"
+
+[WhatsApp]
+# Disabled: the only source reachable from GitHub-hosted runners is whatsapp.com, which
+# serves the newest build only, so the WaEnhancer-supported version this entry is pinned
+# to cannot be fetched. APKMirror and Uptodown do carry older versions but are behind
+# Cloudflare here. Re-enable (and configure a solver/proxy) to resume mirroring.
+enabled = false
+app-name = "WhatsApp"
+version = "2.26.37.xx"
+pkg-name = "com.whatsapp"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp/"
+uptodown-dlurl = "https://whatsapp-messenger.en.uptodown.com/android"
+
+[WhatsApp-Business]
+# Disabled: no reachable source. APKMirror serves a Cloudflare managed challenge to
+# GitHub-hosted runners and the Uptodown page below returns HTTP 410 Gone. Re-enable
+# once a source works.
+enabled = false
+app-name = "WhatsApp Business"
+version = "2.26.37.xx"
+pkg-name = "com.whatsapp.w4b"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-business/"
+uptodown-dlurl = "https://whatsapp-business.en.uptodown.com/android"

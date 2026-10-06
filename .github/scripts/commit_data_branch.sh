@@ -55,7 +55,7 @@ build_commit() {
 }
 
 if ! git fetch -q origin "$BRANCH"; then
-	echo "FATAL: '$BRANCH' branch not found on origin — restore it (see temp/seed_data_branch.sh) before running the watcher." >&2
+	echo "FATAL: '$BRANCH' branch not found on origin — restore it (bootstrap a fork with: bash .github/scripts/seed_data_branch.sh) before running the watcher." >&2
 	exit 1
 fi
 
