@@ -15,6 +15,8 @@ people changing the pipeline and for AI agents asked to do so.
 | know where a file lives, who writes it, how to recover it | [storage-and-branches.md](storage-and-branches.md) |
 | work on the catalogue the website renders (`data.json`) | [website-contract.md](website-contract.md) |
 | understand or debug the stock-APK cache (`nullcpy/apks`) | [cache-repo.md](cache-repo.md) |
+| run this as your own fork (bootstrap branches, settings, first run) | [fork-setup.md](fork-setup.md) |
+| follow the builds with Obtainium (links, filters, import file) | [../OBTAINIUM.md](../OBTAINIUM.md) |
 | make any change: setup, tests, commit and publish rules | [contributing.md](contributing.md) |
 | brief an AI agent with the shortest correct context | [ai-context.md](ai-context.md) |
 | know *why* a rule exists and what was rejected | [decisions/](decisions/) |

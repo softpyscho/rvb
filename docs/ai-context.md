@@ -74,6 +74,7 @@ Releases, records build metadata on a Git branch, and feeds a static download si
 | `configs/patches/*.toml` *(on `data`)* | the actual app configuration — one file per patch-source family |
 | `state/*.json` *(on `data`)* | watcher memory: patch source tags/blocked flags, app versions, bundle hashes |
 | `module/` | Magisk/KernelSU module template (scripted `module.prop`, `config`, `service.sh`, `action.sh`, bundled binaries) |
+| `.github/seed/` | starting content for a fork's `data` and `website` branches, pushed once by `seed_data_branch.sh`; the seed TOMLs are the app list that `README.md`, `OBTAINIUM.md` and `obtainium-apps.json` are generated from (`obtainium.py`) |
 | `bin/` | vendored tools: `aapt2`, `htmlq`, `toml/tq` (per-arch), `apksigner.jar`, `dexlib2.jar`, `paccer.jar` |
 | `temp/`, `build/`, `build.json`, `build.md` | scratch + outputs; all gitignored |
 | `CONFIG.md` | the authoritative TOML key reference |
@@ -126,6 +127,8 @@ source and the arch goes unbuilt if none supplies it
 | No config sets `cache_repo-dlurl`, yet the cache source always works | `build_rv` synthesises the URL from `UPLOAD_APKS_REPO` + package name → [cache-repo.md](cache-repo.md) |
 | There is no download-concurrency knob and no pre-download phase | a prewarm pool was built and reverted as unmeasured complexity → [decisions/0004](decisions/0004-no-download-prewarm-pass.md); the per `pkg+version` flock already collapses duplicates |
 | A single-ABI app publishes only one arch and the other is silently absent | the requested arch is a hard requirement; never a mislabeled file — an arm64-only app ships no `arm-v7a` APK and users install the honest artifact → [decisions/0007](decisions/0007-requested-arch-is-a-hard-requirement.md) |
+| `mirror = true` apps have no patch source and are never rebuilt by a patch release | they are the stock APK re-hosted, so only the app's own update triggers them → [build-engine.md](build-engine.md#mirrored-apps-mirror_rv) |
+| No workflow defaults point at `nullcpy/apks`, the upstream site or its Telegram chats | a fork must opt in to every satellite; an unset value switches the feature off instead of sending traffic to somebody else's repository → [fork-setup.md](fork-setup.md) |
 | Tuning values sit in `build.yml` `env:` rather than in config or repo variables | reviewable, fork-safe, git history for the numbers → [decisions/0005](decisions/0005-tuning-knobs-live-in-the-workflow.md) |
 | A malformed `patch_sources.json` answers "not blocked" instead of failing closed | fail-open on purpose: the alternative silently skips every app → [decisions/0003](decisions/0003-blocked-patch-sources-are-skipped.md) |
 | `configs/stable_build.json` keeps `patches-version: "stable"` rather than a tag | one source of truth (`state/patch_sources.json`) instead of a stamped copy that can go stale |
@@ -153,6 +156,11 @@ bash .github/traces/trace_runner.sh capture          # re-record goldens after i
 bash scripts/build.sh configs/config.manual.toml     # real build (network + java + jq)
 bash scripts/build.sh clean                          # reset temp/ build/ build.md
 bash .github/scripts/push_data_configs.sh "feat(config): …"   # publish TOML edits
+bash .github/scripts/seed_data_branch.sh             # fork bootstrap: creates data + website once
+python3 .github/traces/test_release_notes.py         # release notes, Obtainium links, generated docs in sync
+bash .github/traces/test_mirror.sh                   # mirrored-app engine path
+python3 .github/scripts/obtainium.py --configs .github/seed/data/configs/patches --repo softpyscho/rvb \
+        --page OBTAINIUM.md --json obtainium-apps.json --readme README.md   # regenerate the app table and Obtainium files
 gh run list --repo nullcpy/rvb                       # what ran and how
 ```
 

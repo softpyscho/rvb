@@ -82,6 +82,8 @@ describing it. `bash scripts/build.sh clean` resets.
 |---|---|---|
 | Patcher/tool decisions in the engine | `bash .github/traces/trace_runner.sh verify` | offline; stubbed `curl`/`java` + fixtures; runs on push to `build.sh`/`utils.sh`. After an *intentional* argv change: `… capture`, read the diff, commit the goldens |
 | Cache / bundle helpers | `bash .github/traces/test_cache_helpers.sh`, `bash .github/traces/test_bundle_helpers.sh` | same job |
+| Mirrored apps (`mirror_rv`, `mirror`/`keep-filename` parsing) | `bash .github/traces/test_mirror.sh` | same job; fake downloads and a stub `aapt2`, every rejection paired with an accepting control |
+| Release notes, Obtainium links, manifest of mirrored files, seed config | `python3 .github/traces/test_release_notes.py` | same job; also fails when `README.md` / `OBTAINIUM.md` / `obtainium-apps.json` are stale against the seed (regenerate with `.github/scripts/obtainium.py`) |
 | A CI shell script | a stubbed-binary harness under `temp/` | convention below |
 | Website-facing formats | `rebuild-catalog.yml` with `dry_run: true` | see [website-contract.md](website-contract.md) |
 

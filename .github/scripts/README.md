@@ -29,6 +29,29 @@ Converts the builder's raw `build.json` into the unified filename-keyed
 manifest (`temp/manifest/build.json`) that everything downstream consumes.
 Env: `NEXT_VER_CODE` (release tag), `IS_PRERELEASE` (→ channel `beta`/`stable`).
 
+### `generate_release_notes.py`
+Writes `build.md`, the numbered release's body, from `build.json` + `build/` at the end of
+`build.sh`: apps grouped by patch source (mirrored apps last), per-arch download links, an
+applied-patch list per app and a per-app Obtainium link whose filter selects exactly that file
+(`IS_PRERELEASE=true` marks the beta pool and flips the link's pre-release switch). The same file is
+relayed to Telegram, which keeps only the plain Markdown grammar, so GitHub-only markup sits on lines
+`build_notify_telegram.sh` drops (`<…`, `![`, `> `, any line holding an Obtainium link). Footer links
+come only from the `RELEASE_NOTES_*_LINK` variables — nothing is defaulted. Filename/arch parsing is
+imported from `naming.py`, not re-implemented here.
+
+### `obtainium.py`
+The one definition of an Obtainium entry for this repository (filter regex, version-detection off,
+fall-back to older releases, pre-release switch) — imported by `generate_release_notes.py` and used as
+a CLI to regenerate `OBTAINIUM.md`, `obtainium-apps.json` and the README app table from the TOML config
+(`--configs configs/patches --repo owner/repo --page … --json … --readme …`). Pool routing comes from
+`compile_patch_configs.py`; its slug rule is a copy of `resolve_slug` in `utils.sh`, which
+`.github/traces/test_release_notes.py` runs against the engine's own on awkward input.
+
+### `seed_data_branch.sh`
+One-time bootstrap of a fork's `data` and `website` branches from `.github/seed/`. Plumbing only,
+refuses to touch a branch that exists or a remote it cannot query. See
+[docs/fork-setup.md](../../docs/fork-setup.md).
+
 ### `build_upload_release.sh`
 Unified uploader (native `gh`, per-file retry, `--clobber`). Used for the
 numbered release (build outputs) and the archive releases. Note: `gh` names
