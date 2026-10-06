@@ -10,6 +10,7 @@ on:
       - ".github/scripts/obtainium.py"
       - ".github/scripts/ci_fetch_app_versions.sh"
       - ".github/scripts/cleanup_update_branch.sh"
+      - ".github/scripts/update_readme.sh"
       - ".github/scripts/patchers.py"
       - ".github/scripts/build_make_manifest.py"
       - ".github/seed/**"
@@ -44,3 +45,4 @@ jobs:
           bash .github/traces/test_ci_app_versions.sh
           bash .github/traces/test_github_versions.sh
           bash .github/traces/test_cleanup_update_branch.sh
+          bash .github/traces/test_update_readme.sh

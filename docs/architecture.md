@@ -157,7 +157,9 @@ Cloudflare-bypass sidecar service on `:8000`:
 9. `merge_archive_branch.sh` merges this build's manifest into `website`
    (`manifests/<tag>.json` + cumulative `archive/<channel>.json`), live-filtered
    against the archive release's actual files.
-10. Telegram notification for the build.
+10. `update_readme.sh` refreshes the README's apps section on `main` (versions and applied patches
+    from the manifests just merged) — the one thing CI ever writes to `main`.
+11. Telegram notification for the build.
 
 **Cleanup** — `cleanup.yml`, called after a successful build:
 

@@ -140,7 +140,12 @@ Step order, with the reason each is where it is:
     branch. Must run **after** the archive upload so its live-asset filter sees the
     new files. Why manifests live on a branch at all:
     [decisions/0002](decisions/0002-manifests-live-on-a-branch.md).
-16. `build_notify_telegram.sh` posts the release to the channel's thread.
+16. `update_readme.sh` refreshes the README's apps section on `main`: versions and applied
+    patches from the `website` branch's archive manifests, the app list from the materialised
+    config, committed as one `README.md`-only commit built with plumbing on `main`'s own tip
+    (`[skip ci]`). `continue-on-error`: it is presentation and must never cost a build its
+    release; an unreadable generation fails the step loudly rather than reading as "unchanged".
+17. `build_notify_telegram.sh` posts the release to the channel's thread.
 
 ## Cleanup (`cleanup.yml`)
 

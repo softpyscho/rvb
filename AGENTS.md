@@ -6,7 +6,8 @@ damage when broken.
 
 1. **`main` is pure code.** `configs/` and `state/` are gitignored materialisations
    of the `data` branch; `temp/`, `build/`, `build.json`, `build.md` are scratch.
-   Never `git add -A`, never commit those paths.
+   Never `git add -A`, never commit those paths. (CI's only write to `main` is the
+   README apps section, between its `APPS_START`/`APPS_END` markers.)
 2. **Human config is published, not committed:**
    `bash .github/scripts/push_data_configs.sh "<msg>"`. `fetch_data_branch.sh`
    **overwrites** local `configs/` — publish before fetching or lose edits.

@@ -40,12 +40,25 @@ come only from the `RELEASE_NOTES_*_LINK` variables — nothing is defaulted. Fi
 imported from `naming.py`, not re-implemented here.
 
 ### `obtainium.py`
-The one definition of an Obtainium entry for this repository (filter regex, version-detection off,
-fall-back to older releases, pre-release switch) — imported by `generate_release_notes.py` and used as
-a CLI to regenerate `OBTAINIUM.md`, `obtainium-apps.json` and the README app table from the TOML config
-(`--configs configs/patches --repo owner/repo --page … --json … --readme …`). Pool routing comes from
+The one definition of an Obtainium entry for this repository (the complete app object Obtainium reads
+back, filter regex, version-detection off, fall-back to older releases, pre-release switch; the link is
+the whole deep link percent-encoded once behind `apps.obtainium.imranr.dev/redirect?r=`) — imported by
+`generate_release_notes.py` and used as a CLI to regenerate `OBTAINIUM.md`, `obtainium-apps.json` and the
+README's apps section from the TOML config (`--configs configs/patches --repo owner/repo --page … --json …
+--readme … --manifest archive/stable.json`). The apps section reproduces the apkforge layout: one group
+per patch source (MorpheApp's first, the rest A-Z) and a Stock Mirrors group, each a table of App, Arch,
+Version, APK Source, Patches (a dropdown of what the last build applied) and an *Add to Obtainium* badge;
+the version and patch cells come from the manifests given with `--manifest` and read *Auto* / *Pending
+first build* until a build has published. Pool routing comes from
 `compile_patch_configs.py`; its slug rule is a copy of `resolve_slug` in `utils.sh`, which
 `.github/traces/test_release_notes.py` runs against the engine's own on awkward input.
+
+### `update_readme.sh`
+Refreshes the README's apps section on `main` after a build: runs `obtainium.py --readme` against
+`main`'s own copy of the README with the `website` branch's archive manifests, and commits the
+result (`README.md` only) with plumbing on `main`'s tip, retrying on a race. Exits 0 with no commit when
+nothing changed, and fails loudly when the generation does - the workflow step is `continue-on-error`.
+Covered by `.github/traces/test_update_readme.sh`.
 
 ### `seed_data_branch.sh`
 One-time bootstrap of a fork's `data` and `website` branches from `.github/seed/`. Plumbing only,

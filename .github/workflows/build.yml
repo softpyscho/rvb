@@ -245,6 +245,16 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: bash .github/scripts/merge_archive_branch.sh
 
+      # Presentation only: the README's apps section (versions, applied patches) follows what was
+      # just published. It commits README.md alone, with plumbing, so a failure here must never cost
+      # a build its release - hence continue-on-error rather than any `|| true` inside the script.
+      - name: Refresh README app table
+        continue-on-error: true
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_TAG: ${{ steps.version.outputs.NEXT_VER_CODE }}
+        run: bash .github/scripts/update_readme.sh
+
       - name: Notify telegram
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
