@@ -63,6 +63,19 @@ def exact_regex(file_name):
     return f"^{regex_escape(file_name)}$"
 
 
+def kept_file_regex(file_name):
+    """Filter for a file that keeps its source's own name (mirror + keep-filename).
+
+    Such names usually embed what changes from build to build - a date, a hash, a version
+    (`Duck.Detector-2026.10.06-82566ffa96bb.apk`) - so matching the published name exactly would
+    never match the next build. The stable lead is kept (everything before the first `-` that is
+    followed by a digit) and the rest may vary. A name with no such split stays exact."""
+    m = re.match(r"^(.+?)-(?=\d)", file_name)
+    if m and file_name.lower().endswith(".apk"):
+        return f"^{regex_escape(m.group(1))}-.+\\.apk$"
+    return exact_regex(file_name)
+
+
 def additional_settings(apk_filter, prerelease):
     # Every key Obtainium's GitHub source reads is written, so an import is deterministic
     # instead of inheriting whatever default the installed Obtainium version has.

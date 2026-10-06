@@ -106,6 +106,27 @@ class Obtainium(unittest.TestCase):
         self.assertIsNotNone(re.compile(obtainium.exact_regex("Duck.Detector-nightly-all.apk")).match("Duck.Detector-nightly-all.apk"))
         self.assertIsNone(re.compile(obtainium.exact_regex("Duck.Detector-nightly-all.apk")).match("DuckXDetector-nightly-all.apk"))
 
+    def test_kept_file_filter_survives_the_next_build(self):
+        """A kept file name embeds a date/hash, so the filter must match the next build's name."""
+        rx = re.compile(obtainium.kept_file_regex("Duck.Detector-2026.10.06-82566ffa96bb.apk"))
+        self.assertIsNotNone(rx.match("Duck.Detector-2026.10.07-0a1b2c3d4e5f.apk"), "next nightly")
+        self.assertIsNone(rx.match("DuckXDetector-2026.10.07-0a1b2c3d4e5f.apk"), "the '.' is literal")
+        self.assertIsNone(rx.match("bitget-v9.1-arm64-v8a.apk"), "another app's file")
+        self.assertIsNone(rx.match("Duck.Detector-2026.10.07-0a1b2c3d4e5f.apk.sig"), "anchored at the end")
+        # control: a name with nothing stable to split on stays exact, so it cannot over-match
+        exact = re.compile(obtainium.kept_file_regex("DuckDetector_nightly_build.apk"))
+        self.assertIsNotNone(exact.match("DuckDetector_nightly_build.apk"))
+        self.assertIsNone(exact.match("DuckDetector_nightly_build2.apk"))
+
+    def test_release_notes_use_the_stable_filter_for_a_dated_kept_file(self):
+        dated = "Duck.Detector-2026.10.06-82566ffa96bb.apk"
+        info_map = {"Duck-Detector": dict(FIXTURE["Duck-Detector"], file=dated)}
+        md = grn.render(info_map, [dated], ENV)
+        link = re.search(r"\((https://apps\.obtainium[^)]+)\)", md).group(1)
+        flt = re.compile(decode_link(link)[2]["apkFilterRegEx"])
+        self.assertIsNotNone(flt.match(dated))
+        self.assertIsNotNone(flt.match("Duck.Detector-2026.10.07-aaaaaaaaaaaa.apk"), "the link must keep working next build")
+
     def test_beta_pool_apps_include_prereleases(self):
         specs = {s["key"]: s for s in obtainium.specs_from_configs(str(SEED_PATCHES))}
         self.assertTrue(specs["Instagram"]["prerelease"])
