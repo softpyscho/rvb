@@ -6,6 +6,11 @@ if [ -z "${TG_TOKEN:-}" ]; then
   echo "TG_TOKEN is not set. Skipping Telegram notification."
   exit 0
 fi
+# No built-in destination: a fork must name its own chat, never inherit the upstream's.
+if [ -z "${TG_CHAT_ID:-}" ]; then
+  echo "TG_CHAT_ID is not set. Skipping Telegram notification."
+  exit 0
+fi
 
 BUILD_FILE="build.md"
 if [ ! -f "$BUILD_FILE" ]; then
@@ -18,6 +23,10 @@ fi
 
 BODY="$(sed \
   -e 's/&/&amp;/g; s/</\&lt;/g; s/>/\&gt;/g' \
+  -e '/^ *&lt;/d' \
+  -e '/^!\[/d' \
+  -e '/^&gt; /d' \
+  -e '/obtainium\.imranr\.dev/d' \
   -e 's/^### \(.*\)/<b>\1<\/b>/g' \
   -e 's/^\* /• /g' \
   -e 's/^  \* /  ╰ /g' \
@@ -41,19 +50,24 @@ CHUNK=""
 send_chunk() {
   local text="${1:-}"
   [ -z "$text" ] && return 0
+  local thread_arg=()
+  [ -n "${TG_THREAD_ID:-}" ] && thread_arg=(--data-urlencode "message_thread_id=${TG_THREAD_ID}")
   curl -s -X POST \
     --data-urlencode "parse_mode=HTML" \
     --data-urlencode "disable_web_page_preview=true" \
     --data-urlencode "text=${text}" \
-    --data-urlencode "chat_id=${TG_CHAT_ID:-@rvb27}" \
-    --data-urlencode "message_thread_id=${TG_THREAD_ID:-}" \
+    --data-urlencode "chat_id=${TG_CHAT_ID}" \
+    "${thread_arg[@]}" \
     "https://api.telegram.org/bot${TG_TOKEN}/sendMessage"
-  curl -s -X POST \
-    --data-urlencode "parse_mode=HTML" \
-    --data-urlencode "disable_web_page_preview=true" \
-    --data-urlencode "text=${text}" \
-    --data-urlencode "chat_id=${TG_CHAT_ID_BROADCAST:-@rvb28}" \
-    "https://api.telegram.org/bot${TG_TOKEN}/sendMessage"
+  if [ -n "${TG_CHAT_ID_BROADCAST:-}" ]; then
+    curl -s -X POST \
+      --data-urlencode "parse_mode=HTML" \
+      --data-urlencode "disable_web_page_preview=true" \
+      --data-urlencode "text=${text}" \
+      --data-urlencode "chat_id=${TG_CHAT_ID_BROADCAST}" \
+      "https://api.telegram.org/bot${TG_TOKEN}/sendMessage"
+  fi
+  return 0
 }
 
 while IFS= read -r LINE; do

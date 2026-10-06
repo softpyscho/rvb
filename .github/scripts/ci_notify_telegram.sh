@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-if [ -z "${TG_TOKEN:-}" ]; then
-  echo "TG_TOKEN is not set. Skipping Telegram notification."
+if [ -z "${TG_TOKEN:-}" ] || [ -z "${TG_CHAT_ID:-}" ]; then
+  echo "TG_TOKEN or TG_CHAT_ID is not set. Skipping Telegram notification."
   exit 0
 fi
 
@@ -70,10 +70,12 @@ else
   FULL_MSG="${FULL_MSG}${NL}${NL}ℹ️ _No apps are enabled. Build skipped._"
 fi
 
+THREAD_ARG=()
+[ -n "${TG_THREAD_CI:-}" ] && THREAD_ARG=(--data-urlencode "message_thread_id=${TG_THREAD_CI}")
 curl -s -X POST \
   --data-urlencode "parse_mode=Markdown" \
   --data-urlencode "disable_web_page_preview=true" \
   --data-urlencode "text=${FULL_MSG}" \
-  --data-urlencode "chat_id=${TG_CHAT_ID:-@rvb27}" \
-  --data-urlencode "message_thread_id=${TG_THREAD_CI:-2747}" \
+  --data-urlencode "chat_id=${TG_CHAT_ID}" \
+  "${THREAD_ARG[@]}" \
   "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" > /dev/null

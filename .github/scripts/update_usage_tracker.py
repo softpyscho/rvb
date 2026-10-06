@@ -29,7 +29,10 @@ def main():
         print("No versions recorded. Skipping update.")
         return
 
-    apks_repo = os.environ.get("APKS_REPO") or "nullcpy/apks"
+    apks_repo = os.environ.get("APKS_REPO")
+    if not apks_repo:
+        print("APKS_REPO is not set (the stock-APK cache is off). Skipping update.")
+        return
     repo_url = f"https://oauth2:{token}@github.com/{apks_repo}.git"
     clone_dir = "temp/apks_repo"
     

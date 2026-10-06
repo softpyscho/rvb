@@ -45,11 +45,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/cleanup_website_branch.sh
 
+      # Only when a site repository is named: a fork has no catalogue to rebuild, and the
+      # upstream's must never receive its dispatches.
       - name: Notify website catalog rebuild
+        if: ${{ vars.WEBSITE_REPO != '' }}
         continue-on-error: true
         env:
           DISPATCH_TOKEN: ${{ secrets.WEBSITE_DISPATCH_TOKEN || secrets.APKS_REPO_TOKEN }}
-          WEBSITE_REPO: "${{ vars.WEBSITE_REPO || 'nullcpy/nullcpy.github.io' }}"
+          WEBSITE_REPO: "${{ vars.WEBSITE_REPO }}"
         run: |
           curl -fsS -X POST "https://api.github.com/repos/${WEBSITE_REPO}/dispatches" \
             -H "Accept: application/vnd.github+json" \

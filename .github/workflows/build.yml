@@ -42,7 +42,9 @@ jobs:
     env:
       # How many app builds run at the same time. 1 = one at a time (normal).
       # Set to 2-4 to speed up builds (runner has 4 cores).
-      PARALLEL_JOBS: "6"
+      # This fork builds sequentially: slower, but one failing download can never
+      # starve a sibling of CPU or disk, and the Actions log reads top to bottom.
+      PARALLEL_JOBS: "1"
       # How many files upload at the same time.
       UPLOAD_CONCURRENCY: "12"
     services:
@@ -133,14 +135,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.APKS_REPO_TOKEN }}
-          UPLOAD_APKS_REPO: "${{ vars.APKS_REPO || 'nullcpy/apks' }}"
+          UPLOAD_APKS_REPO: "${{ vars.APKS_REPO }}"
           GITHUB_REPOSITORY: ${{ github.repository }}
           NEXT_VER_CODE: ${{ steps.version.outputs.NEXT_VER_CODE }}
+          IS_PRERELEASE: ${{ steps.context.outputs.IS_PRERELEASE }}
           CF_SOLVER_URL: "http://localhost:8000"
           RVB_MORPHE_PASSTHROUGH: "${{ vars.RVB_MORPHE_PASSTHROUGH || 'true' }}"
-          RELEASE_NOTES_TG_LINK: "${{ vars.RELEASE_NOTES_TG_LINK || 'https://t.me/rvb27' }}"
-          RELEASE_NOTES_DONATE_LINK: "${{ vars.RELEASE_NOTES_DONATE_LINK || 'https://fahim-ahmed05.github.io/donate' }}"
-          RELEASE_NOTES_WEBSITE_LINK: "${{ vars.RELEASE_NOTES_WEBSITE_LINK || 'https://nullcpy.github.io' }}"
+          RELEASE_NOTES_TG_LINK: "${{ vars.RELEASE_NOTES_TG_LINK }}"
+          RELEASE_NOTES_DONATE_LINK: "${{ vars.RELEASE_NOTES_DONATE_LINK }}"
+          RELEASE_NOTES_WEBSITE_LINK: "${{ vars.RELEASE_NOTES_WEBSITE_LINK }}"
         run: |
           set -euo pipefail
           bash scripts/build.sh "${{ steps.context.outputs.CONFIG_FILE }}"
@@ -148,7 +151,7 @@ jobs:
       - name: Update Usage Tracker
         env:
           APKS_REPO_TOKEN: ${{ secrets.APKS_REPO_TOKEN }}
-          APKS_REPO: "${{ vars.APKS_REPO || 'nullcpy/apks' }}"
+          APKS_REPO: "${{ vars.APKS_REPO }}"
         run: python3 .github/scripts/update_usage_tracker.py || true
         
       - name: Cleanup old cached APKs
@@ -245,8 +248,8 @@ jobs:
       - name: Notify telegram
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
-          TG_CHAT_ID: "${{ vars.TG_CHAT_ID || '@rvb27' }}"
-          TG_CHAT_ID_BROADCAST: "${{ vars.TG_CHAT_ID_BROADCAST || '@rvb28' }}"
+          TG_CHAT_ID: "${{ vars.TG_CHAT_ID }}"
+          TG_CHAT_ID_BROADCAST: "${{ vars.TG_CHAT_ID_BROADCAST }}"
           TG_THREAD_ID: ${{ steps.context.outputs.TG_THREAD_ID }}
           TITLE_SUFFIX: ${{ steps.context.outputs.TITLE_SUFFIX }}
           NEXT_VER_CODE: ${{ steps.version.outputs.NEXT_VER_CODE }}
