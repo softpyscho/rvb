@@ -19,7 +19,8 @@
     "badge-color": "00A8E1",
     "badge-icon": "amazonprimevideo",
     "version": "auto",
-    "apkmirror-dlurl": "https://www.apkmirror.com/apk/amazon-mobile-llc/amazon-prime-video/"
+    "apkmirror-dlurl": "https://www.apkmirror.com/apk/amazon-mobile-llc/amazon-prime-video/",
+    "enabled": false
   },
   "Bitget": {
     "mirror": true,
@@ -29,7 +30,8 @@
     "app-name": "Bitget",
     "pkg-name": "com.bitget.exchange",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-crypto/",
-    "uptodown-dlurl": "https://bitget.en.uptodown.com/android"
+    "uptodown-dlurl": "https://bitget.en.uptodown.com/android",
+    "enabled": false
   },
   "Stremio": {
     "mirror": true,
@@ -39,7 +41,8 @@
     "app-name": "Stremio",
     "pkg-name": "com.stremio.one",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/stremio/stremio-2/",
-    "uptodown-dlurl": "https://stremio-one.en.uptodown.com/android"
+    "uptodown-dlurl": "https://stremio-one.en.uptodown.com/android",
+    "enabled": false
   },
   "Mixplorer": {
     "mirror": true,
@@ -49,7 +52,8 @@
     "app-name": "Mixplorer",
     "pkg-name": "com.mixplorer",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/hootan-parsa/mixplorer-hootanparsa/",
-    "uptodown-dlurl": "https://mixplorer.en.uptodown.com/android"
+    "uptodown-dlurl": "https://mixplorer.en.uptodown.com/android",
+    "enabled": false
   },
   "Mix-Archive": {
     "mirror": true,
@@ -59,7 +63,8 @@
     "app-name": "Mix Archive",
     "pkg-name": "com.mixplorer.addon.archive",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/hootan-parsa/mix-archive/",
-    "uptodown-dlurl": "https://mix-archive.en.uptodown.com/android"
+    "uptodown-dlurl": "https://mix-archive.en.uptodown.com/android",
+    "enabled": false
   },
   "RedotPay": {
     "mirror": true,
@@ -68,7 +73,8 @@
     "arch": "arm64-v8a",
     "app-name": "RedotPay",
     "pkg-name": "com.redotpay",
-    "uptodown-dlurl": "https://redotpay.en.uptodown.com/android"
+    "uptodown-dlurl": "https://redotpay.en.uptodown.com/android",
+    "enabled": false
   },
   "Duck-Detector": {
     "mirror": true,
@@ -76,9 +82,10 @@
     "version": "nightly",
     "arch": "all",
     "app-name": "Duck Detector",
-    "pkg-name": "Duck.Detector",
+    "pkg-name": "com.eltavine.duckdetector",
     "keep-filename": true,
-    "github-dlurl": "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly"
+    "github-dlurl": "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly",
+    "enabled": false
   },
   "Reddit": {
     "patches-source": "MorpheApp/morphe-patches",
@@ -103,7 +110,10 @@
     "badge-icon": "truecaller",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/true-software-scandinavia-ab/truecaller-caller-id-block/",
-    "uptodown-dlurl": "https://truecaller.en.uptodown.com/android"
+    "uptodown-dlurl": "https://truecaller.en.uptodown.com/android",
+    "apkpure-dlurl": "https://apkpure.com/truecaller-caller-id-block/com.truecaller",
+    "apkcombo-dlurl": "https://apkcombo.com/truecaller-caller-id-block/com.truecaller",
+    "enabled": false
   },
   "TickTick": {
     "patches-source": "Paresh-Maheshwari/paresh-patches",
@@ -115,7 +125,8 @@
     "badge-icon": "ticktick",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/ticktick-limited/ticktick-to-do-list-with-reminder-day-planner/",
-    "uptodown-dlurl": "https://ticktick.en.uptodown.com/android"
+    "uptodown-dlurl": "https://ticktick.en.uptodown.com/android",
+    "enabled": false
   },
   "Twitter": {
     "patches-source": "crimera/piko",
@@ -126,7 +137,8 @@
     "badge-icon": "x",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/x-corp/twitter",
-    "uptodown-dlurl": "https://twitter.en.uptodown.com/android"
+    "uptodown-dlurl": "https://twitter.en.uptodown.com/android",
+    "enabled": false
   },
   "Alarmy": {
     "patches-source": "rabilrbl/fluffy-patches",
@@ -137,7 +149,8 @@
     "badge-icon": "alarmy",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/sleep-tracker-alarm-clock-by-delightroom/alarmy-challenge-alarm-clock/",
-    "uptodown-dlurl": "https://alarmy.en.uptodown.com/android"
+    "uptodown-dlurl": "https://alarmy.en.uptodown.com/android",
+    "enabled": false
   },
   "WARP": {
     "patches-source": "rushiranpise/morphe-patches",
@@ -148,7 +161,8 @@
     "badge-icon": "cloudflare",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/cloudflare/1-1-1-1-faster-safer-internet",
-    "uptodown-dlurl": "https://1-1-1-1.en.uptodown.com/android"
+    "uptodown-dlurl": "https://1-1-1-1.en.uptodown.com/android",
+    "enabled": false
   },
   "Splitwise": {
     "patches-source": "rushiranpise/morphe-patches",
@@ -159,7 +173,8 @@
     "badge-icon": "splitwise",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/splitwise/splitwise/",
-    "uptodown-dlurl": "https://splitwise.en.uptodown.com/android"
+    "uptodown-dlurl": "https://splitwise.en.uptodown.com/android",
+    "enabled": false
   },
   "Greenify": {
     "patches-source": "rushiranpise/morphe-patches",
@@ -171,6 +186,7 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/oasisfeng/greenify",
     "github-dlurl": "https://github.com/softpyscho/apkforge/releases/tag/com.oasisfeng.greenify",
-    "uptodown-dlurl": "https://greenify.en.uptodown.com/android"
+    "uptodown-dlurl": "https://greenify.en.uptodown.com/android",
+    "enabled": false
   }
 }
