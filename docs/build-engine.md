@@ -39,9 +39,15 @@ table per app. For each enabled table `build.sh`:
 5. Calls `get_prebuilts` to fetch the CLI jar and every patch bundle, then builds
    the `app_args` associative array, including the aggregated `patches_ref` and
    `changelog_url` derived from the **exact** bundle resolved for this build.
-6. `arch = both` fans out into two builds, `arm64-v8a` and `arm-v7a`, each with
+6. `mirror = true` skips steps 3–5 for that app: no CLI and no bundle are fetched, any
+   patch-selection key (`patches-source`, `cli-source`, `included-patches`,
+   `excluded-patches`, `exclusive-patches`, `inclusive-patches`, `patcher-args`,
+   `patched-pkg-name`, `include-stock`) or a non-`apk` `build-mode` is a hard error rather
+   than silently ignored, and `keep-filename` on a patched app is one too. The build is
+   handed to `mirror_rv` ([below](#mirrored-apps-mirror_rv)).
+7. `arch = both` fans out into two builds, `arm64-v8a` and `arm-v7a`, each with
    its own module-id suffix (`-arm64` / `-arm`).
-7. Beta builds get `-beta` appended to the module id automatically, so a phone's
+8. Beta builds get `-beta` appended to the module id automatically, so a phone's
    module updater never crosses channels.
 
 `get_prebuilts` must be called directly rather than inside `$( )`: it writes the
@@ -50,7 +56,7 @@ table per app. For each enabled table `build.sh`:
 ## Parallel pool (`PARALLEL_JOBS`)
 
 The only knob is the env var set in [build.yml](../.github/workflows/build.yml)
-(`PARALLEL_JOBS: "6"`); no config file can change it. `1` — the historical
+(`PARALLEL_JOBS: "1"` in this fork); no config file can change it. `1` — the historical
 default — runs the original sequential path untouched. Above that, each table
 build becomes a fresh `bash -c` child that re-sources `utils.sh`:
 
@@ -70,6 +76,46 @@ a config key: [decisions/0005](decisions/0005-tuning-knobs-live-in-the-workflow.
 There is no second pool for downloads either — a prewarm pass was built and reverted
 for adding surface without a measured gain
 ([decisions/0004](decisions/0004-no-download-prewarm-pass.md)).
+
+## Mirrored apps (`mirror_rv`)
+
+`mirror = true` re-hosts an app's stock APK **unmodified**, so a phone can track it from
+this repository's releases (Obtainium has nothing to follow for an app that publishes no
+release of its own). `build_rv` hands such an app to `mirror_rv` before doing anything
+else, which:
+
+1. picks the first download source that answers (the usual `DL_SRCS` order; `archive` and
+   `cache_repo` are skipped when the version has to be discovered), then takes `latest` as
+   the highest version that source lists, or the pinned `version` verbatim — `auto`, `exp`
+   and `beta` are refused because there is no patch bundle to resolve them against;
+2. downloads through the same `dl_<source>` helpers and applies the same gates as a patched
+   build: valid zip with a manifest, package identity (`_meta_field_of`),
+   `verify_downloaded_apk`, and the arch-honesty gate
+   ([decisions/0007](decisions/0007-requested-arch-is-a-hard-requirement.md));
+3. publishes `build/<app-slug>-v<version>-<arch>.apk` — the ordinary grammar, with no brand
+   segment — and records a `write_build_info` entry with `brand` `Mirror` (unless named),
+   no patch source, and no applied patches.
+
+What differs from `build_rv`, on purpose: no stock-APK cache (the Actions cache and the cache
+repo are not consulted or fed — a mirror downloads once per new upstream version and the
+release is the store); a bundle source is merged to one APK by the `dl_*` helper, which
+**re-signs** it, so a plain-APK source is preferable and a signed-bundle mirror cannot update
+over a store install; and for `github`/`direct` sources, where the config names the exact
+file, a package-id mismatch is a warning and the id found in the APK is the one published
+(that id is what Obtainium matches against the installed app), while a store scrape still
+rejects a mismatch. The download loop is deliberately a short second copy rather than a flag
+threaded through `build_rv`; a gate added to one belongs in the other. Covered offline by
+`.github/traces/test_mirror.sh`.
+
+`keep-filename = true` (mirror only, `github` source only) publishes the release asset under its
+own sanitised name instead of the grammar — for builds like a nightly that have no version
+number to put in a name. `write_build_info` then records that exact name in a `file` field and
+`build_make_manifest.py` finds the artifact by it instead of by `<prefix>-v`, taking the arch
+from the build record rather than from a filename token it cannot trust.
+
+The watcher treats a mirrored app as unpatched too: `sync_patch_sources.py` does not let it keep
+a patch source alive and `ci_check_app_patches.py` never counts it as covered by a bundle, so it
+is rebuilt only when the app itself updates.
 
 ## `build_rv`, stage by stage
 

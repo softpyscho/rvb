@@ -5,6 +5,10 @@ The numbered release gets this file uploaded as build.json, and the archive
 releases (stable/beta) get a cumulative merge of it (see merge_archive_manifest.sh).
 Schema matches .github/scripts/backfill_manifests.py output (schema version 1).
 
+A build record may carry `file`, the exact asset name of an artifact that keeps its source's
+own name (mirror apps with keep-filename); such an entry is matched by that name instead of by
+the <name>-v / <name>-module- prefix, and its arch comes from the record's own fields.
+
 Env:
     NEXT_VER_CODE   release tag / build number (required)
     IS_PRERELEASE   true -> beta channel, else stable
@@ -45,10 +49,16 @@ def main():
     for target_key, info in build_info.items():
         file_prefix = info.get("name") or target_key
         prefix_lower = file_prefix.lower()
-        matching_files = [
-            f for f in built_files
-            if f.name.lower().startswith(prefix_lower + "-v") or f.name.lower().startswith(prefix_lower + "-module-")
-        ]
+        # `file` is set only for an artifact that keeps its source's own name (mirror
+        # apps with keep-filename) and so cannot be found by the <prefix>-v grammar.
+        exact_file = (info.get("file") or "").strip()
+        if exact_file:
+            matching_files = [f for f in built_files if f.name == exact_file]
+        else:
+            matching_files = [
+                f for f in built_files
+                if f.name.lower().startswith(prefix_lower + "-v") or f.name.lower().startswith(prefix_lower + "-module-")
+            ]
         if not matching_files:
             continue
 
@@ -69,6 +79,12 @@ def main():
         patches_ref = (info.get("patches") or "").strip()
         changelog_url = (info.get("changelog") or "").strip()
 
+        # A kept name carries no reliable arch token, so read it from what the build
+        # recorded (exts look like "arm64-v8a.apk").
+        exact_arch = ""
+        if exact_file:
+            exts = info.get("exts") or [""]
+            exact_arch = info.get("arch") or exts[0].rsplit(".", 1)[0]
         for f in matching_files:
             fname = f.name
             lower = fname.lower()
@@ -79,7 +95,7 @@ def main():
                 "version": version,
                 "appKey": app_key,
                 "appName": app_name,
-                "arch": normalize_arch(extract_arch(fname, version)),
+                "arch": normalize_arch(exact_arch if exact_file else extract_arch(fname, version)),
                 "fileType": "APK" if lower.endswith(".apk") else "Module",
                 "brandKey": brand_key,
                 "brandName": brand_name,

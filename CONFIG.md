@@ -49,6 +49,10 @@ patched-pkg-name = "com.some.app.clone" # optional override for the resulting in
 patch-folder = "someapp" # explicit patch folder name override. forces the CI to strictly match patches inside this exact folder name, bypassing fallback heuristics (useful for resolving collisions like youtube vs youtube-music). Supports multiple folders space-separated (e.g. "ad backup geo"), or a wildcard "*" to force mapping every single patch folder in the repo.
 enabled = true       # whether to build the app. default: true
 build-mode = "both"  # 'both', 'apk' or 'module'. default: apk
+mirror = false       # true: publish the stock APK unmodified instead of patching it (see "Mirrored apps"). default: false
+keep-filename = false # mirror + github source only: publish the release asset under its own name (see "Mirrored apps"). default: false
+badge-color = "FF4500"  # presentation only (README / Obtainium tooling read it; the build ignores it): hex colour, no '#'
+badge-icon = "reddit"   # presentation only: a simple-icons slug for the README badge
 arch = "both"        # 'both', 'auto', 'all', 'arm64-v8a', 'arm-v7a', 'x86_64', or 'x86'. default: both
 # A requested arch is a hard requirement: a build is produced only when a download
 # actually carries that ABI (or is universal / has no native code at all). A wrong
@@ -150,6 +154,49 @@ Examples:
 - `app-name = "Prime Video"`, `brand = "Android TV"`, `sub-variant = "clone"` ➔ `prime-video-android-tv-clone-v3.0.354-arm-v7a.apk`
 - `app-name = "TikTok"`, `brand = "Morphe"`, `sub-variant = "alt"` ➔ `tiktok-morphe-alt-v37.5.4-arm64-v8a.apk`
 - `app-name = "Disney+"`, `brand = "Android TV"`, `sub-variant = "clone"` ➔ `disney-android-tv-clone-v3.0.354-arm-v7a.apk`
+
+## Mirrored apps
+
+`mirror = true` turns an app into a plain re-host of its stock APK: nothing is patched, so
+no CLI or patch bundle is fetched and none of the patch keys apply. It exists so an app that
+publishes no GitHub release of its own can still be tracked (e.g. by Obtainium) from this
+repository.
+
+```toml
+mirror = true            # file-level default for a "stock apps" file
+brand = "Mirror"         # metadata only; a mirrored file name has no brand segment
+version = "latest"       # 'latest' or an explicit version. 'auto', 'exp' and 'beta' are refused: there are no patches to resolve them against
+arch = "arm64-v8a"
+
+[Bitget]
+app-name = "Bitget"
+pkg-name = "com.bitget.exchange"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-crypto/"
+
+[Duck-Detector]
+app-name = "Duck Detector"
+pkg-name = "Duck.Detector"
+keep-filename = true     # a nightly has no version number to put in a name: the asset keeps its own
+version = "nightly"
+arch = "all"
+github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly"
+```
+
+- **Rejected, not ignored:** `patches-source`, `cli-source`, `included-patches`, `excluded-patches`,
+  `exclusive-patches`, `inclusive-patches`, `patcher-args`, `patched-pkg-name`, `include-stock`
+  and a `build-mode` other than `apk` on a mirrored app abort the run, as does `keep-filename`
+  on an app that is not mirrored. Keep file-level defaults for patched keys out of a file that
+  holds mirrored apps.
+- **File name:** `<app-slug>-v<version>-<arch>.apk`, the same grammar as every other asset, so
+  releases, manifests and Obtainium filters treat it like any build.
+- **Signature:** a plain APK is published byte for byte. A bundle (`.xapk`/`.apkm`/`.apks`) source
+  is merged into one APK, which re-signs it; prefer a source that serves a plain APK if the
+  mirror has to update over a store install.
+- **Identity:** the APK's real package id is what gets published. For `github`/`direct` sources a
+  `pkg-name` that differs from it is a warning (you named the file); for a store scrape it is a
+  rejection.
+- **When it rebuilds:** only when the app itself updates in a tracked store. A patch release never
+  rebuilds a mirrored app.
 
 ## Multiple Patch Sources
 

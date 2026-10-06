@@ -71,6 +71,15 @@ download counts belong to the releases, immutable build-time facts belong to the
 manifests. Splitting them that way is what makes a stale catalogue impossible
 rather than merely unlikely.
 
+## Mirrored apps in the manifest
+
+A mirrored app (stock APK, no patcher) is an ordinary schema-v1 entry: `brandName` is `Mirror`
+unless the config names one, `patchSources` is `[]` and `appliedPatches` is `[]`, and its file name
+has no brand segment (`<app>-v<version>-<arch>.apk`). With `keep-filename` the asset is named by its
+source, so `build_make_manifest.py` locates it through the build record's exact `file` name and takes
+`arch` from the record; `naming.py` is never asked to parse such a name. Nothing in the schema
+changed — no key was added or reinterpreted.
+
 ## Filename parsing is shared, not duplicated
 
 `arch` extraction/normalisation, `file_prefix` and key normalisation have exactly one

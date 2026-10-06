@@ -43,6 +43,7 @@ declare -gA __PATCHES_LIST_CACHE__
 declare -gA __PATCH_VER_CACHE__
 declare -gA __PKG_VERS_CACHE__
 declare -gA __DL_RESP_CACHE__
+declare -g __DL_ASSET_NAME__=""
 
 # Patcher tool registry: resolve_patcher() + PATCHER_* flags.
 # RVB_PATCHERS_SH lets the trace harness point at it when utils.sh is sourced
@@ -2830,6 +2831,9 @@ local regex=""
         epr "Version ${version} with arch ${arch} not found in github"
         return 1
     fi
+    # Which release asset was picked, for a caller that wants to keep its name
+    # (mirror_rv with keep-filename). A global because dl_* run in the caller's shell.
+    __DL_ASSET_NAME__="$path"
     
     local ext="${path##*.}"
     case "$ext" in
@@ -3349,6 +3353,9 @@ write_build_info() {
 	local brand=${11:-${args[brand]:-}}
 	local variant=${12:-${args[variant]:-}}
 	local sub_variant=${13:-${args[sub_variant]:-}}
+	# Exact asset name, only for artifacts that do not follow the <prefix>-v<version>-<arch>
+	# grammar (mirror_rv with keep-filename); empty means "derive it from name/version/arch".
+	local file=${14:-}
 	local arch_orig="${args[arch]// /}"
 	if [ "$arch_orig" != "auto" ]; then ext="${arch}${ext}"; arch=""; fi
 	# Applied patches: morphe's -r summary when we have one (it lists every patch
@@ -3425,6 +3432,7 @@ write_build_info() {
 		--arg brand "$brand" \
 		--arg variant "$variant" \
 		--arg sub_variant "$sub_variant" \
+		--arg file "$file" \
 		--argjson applied "$applied_json" \
 		'{ ($key): {
 			exts: [$ext],
@@ -3439,6 +3447,7 @@ write_build_info() {
 			brand: $brand,
 			variant: $variant,
 			sub_variant: $sub_variant,
+			file: $file,
 			applied_patches: $applied
 		} }' >"${frag_dir}/${fid}.$$.json"
 }
@@ -3463,7 +3472,7 @@ merge_build_info() {
 			if .[$e.key] == null then .[$e.key] = $e.value
 			else
 				.[$e.key].exts = ((.[$e.key].exts + $e.value.exts) | unique) |
-				reduce (["name","arch","version","patches","changelog","package_name","display_name","patches_source","brand","variant","sub_variant"][]) as $k (.;
+				reduce (["name","arch","version","patches","changelog","package_name","display_name","patches_source","brand","variant","sub_variant","file"][]) as $k (.;
 					if ((.[$e.key][$k] // "") == "") and (($e.value[$k] // "") != "")
 					then .[$e.key][$k] = $e.value[$k] else . end) |
 				if ((.[$e.key].applied_patches | length) == 0) and (($e.value.applied_patches | length) > 0)
@@ -3724,8 +3733,192 @@ _resolve_list_and_version() {
 	return 0
 }
 
+# Re-host an app's stock APK unmodified (`mirror = true`), so a phone can track it from this
+# repository's releases like any patched app. Same contract as build_rv: argument is a
+# `declare -p` of the app_args array, an app that cannot be built is logged and skipped
+# (return 0), never fatal to its siblings.
+#
+# Deliberately NOT a mode inside build_rv: that function is ~1000 lines of patch resolution,
+# version-compatibility gating and patching wrapped around its download loop, none of which
+# applies here, and a flag threaded through all of it would be a second code path in every
+# one of those places. What is shared is the set of leaf helpers (dl_*, verify_downloaded_apk,
+# _artifact_satisfies_arch, _meta_field_of, write_build_info). What is repeated is the shape
+# of the download loop, kept small on purpose; a check added to one loop belongs in the other.
+#
+# Differences from a patched build, all on purpose:
+#   - no patch bundle, so no version-compatibility gate and `auto` is not a valid version;
+#   - no stock-APK cache (neither the Actions cache nor the cache repo): a mirror downloads once
+#     per new upstream version and the release itself is the store;
+#   - a bundle (.xapk/.apkm/.apks) is merged to one APK by the dl_* helper, as in a
+#     non-passthrough build. A merged APK is re-signed, so it cannot update over the store
+#     install; a plain APK source is therefore preferable and is not altered at all;
+#   - the identity gate is strict for a store scrape, but for `github`/`direct` - where the
+#     config names the exact file - a package-id mismatch is a warning, and the id actually
+#     found in the APK is what gets published, because that is what a phone tracks.
+mirror_rv() {
+	eval "declare -A args=${1#*=}"
+	local table=${args[table]} app_name=${args[app_name]} pkg_name=${args[pkg_name]:-}
+	local version_mode=${args[version]:-latest} arch=${args[arch]}
+	local arch_f="${arch// /}" keep_filename=${args[keep_filename]:-false}
+	local brand_val=${args[brand]:-Mirror}
+	local app_name_l
+	app_name_l=$(resolve_slug "$app_name")
+	[ -z "$app_name_l" ] && { app_name_l=${app_name,,}; app_name_l=${app_name_l// /-}; }
+	local apk_dl_dir="${TEMP_DIR}/apks_dl"
+	mkdir -p "$apk_dl_dir" "$BUILD_DIR"
+
+	if isoneof "$version_mode" auto exp beta; then
+		epr "'$table' is mirrored, so it has no patches to pick a '$version_mode' version from; use 'latest' or an explicit version."
+		return 0
+	fi
+	if [ "$arch_f" = auto ]; then
+		epr "arch 'auto' is not supported for the mirrored app '$table'; name one architecture or 'all'."
+		return 0
+	fi
+	# Nothing here is patched, and every write_build_info field below is named explicitly:
+	# clear what a previous patched build in this shell left behind so it cannot leak in.
+	PATCH_OUTPUT="" PATCH_RESULT_FILE=""
+
+	# 1. Pick the first source that answers; a version has to be discoverable from it unless
+	#    one was pinned. archive/cache_repo are not scraped for a latest version (they only
+	#    hold what an earlier run already stored).
+	local pinned=false dl_p dl_from="" tried_dl=()
+	isoneof "$version_mode" latest || pinned=true
+	for dl_p in "${DL_SRCS[@]}"; do
+		[ -z "${args[${dl_p}_dlurl]:-}" ] && continue
+		if [ "$pinned" = false ] && { [ "$dl_p" = archive ] || [ "$dl_p" = cache_repo ]; }; then continue; fi
+		if ! get_${dl_p}_resp "${args[${dl_p}_dlurl]}"; then
+			epr "ERROR: Could not get response for ${table} in ${dl_p}"
+			args[${dl_p}_dlurl]=""
+			continue
+		fi
+		if [ -z "$pkg_name" ]; then
+			if ! pkg_name=$(get_"${dl_p}"_pkg_name) || [ -z "$pkg_name" ]; then
+				epr "ERROR: Could not scrape pkg_name for ${table} in ${dl_p}"
+				args[${dl_p}_dlurl]=""
+				continue
+			fi
+		fi
+		tried_dl+=("$dl_p")
+		dl_from=$dl_p
+		break
+	done
+	if [ -z "$dl_from" ]; then
+		epr "ERROR: No valid download source found for ${table}."
+		return 0
+	fi
+	pr "Package name of '${table}' is '$pkg_name'"
+
+	local version="" get_latest_ver=false
+	if [ "$pinned" = true ]; then
+		version=$version_mode
+	else
+		get_latest_ver=true
+		local pkgvers
+		pkgvers=$(get_"${dl_from}"_vers) || pkgvers=""
+		version=$(get_highest_ver <<<"$pkgvers") || version=$(head -1 <<<"$pkgvers")
+	fi
+	if [ -z "$version" ]; then
+		epr "empty version, not mirroring ${table}."
+		return 0
+	fi
+	pr "Choosing version '${version}' for ${table} (mirror)"
+	local version_f=${version// /}
+	version_f=${version_f#v}
+
+	# 2. Download from the first source that yields a file passing every gate.
+	local stock_apk="${apk_dl_dir}/mirror-${pkg_name}-${version_f}-${arch_f}.apk"
+	rm -f "$stock_apk" "${stock_apk%.apk}".* "${stock_apk}".*
+	local got_from="" asset_name="" downloaded_pkg
+	for dl_p in "${DL_SRCS[@]}"; do
+		[ -z "${args[${dl_p}_dlurl]:-}" ] && continue
+		if [ "$pinned" = false ] && { [ "$dl_p" = archive ] || [ "$dl_p" = cache_repo ]; }; then continue; fi
+		pr "Downloading '${table}' from '${dl_p}'"
+		if ! isoneof "$dl_p" "${tried_dl[@]}"; then
+			if ! get_${dl_p}_resp "${args[${dl_p}_dlurl]}"; then
+				epr "ERROR: Could not get '${table}' from '${dl_p}'"
+				continue
+			fi
+		fi
+		__DL_ASSET_NAME__=""
+		if ! dl_${dl_p} "${args[${dl_p}_dlurl]}" "$version" "$stock_apk" "$arch" "${args[dpi]:-}" "$get_latest_ver" ""; then
+			pr "ERROR: Could not download '${table}' from '${dl_p}' with version '${version}', arch '${arch}'"
+			rm -f "$stock_apk" "${stock_apk%.apk}".* "${stock_apk}".*
+			continue
+		fi
+		asset_name=$__DL_ASSET_NAME__
+		if ! unzip -l "$stock_apk" >/dev/null 2>&1; then
+			epr "ERROR: Downloaded file from ${dl_p} is not a valid zip archive (Cloudflare block or bad file)!"
+			rm -f "$stock_apk" "${stock_apk%.apk}".* "${stock_apk}".*
+			continue
+		fi
+		if ! unzip -l "$stock_apk" 2>/dev/null | grep -q '^[[:space:]]*[0-9].*AndroidManifest\.xml$'; then
+			# a bundle that no dl_* helper unpacked (direct, for one): merge it here
+			mv -f "$stock_apk" "${stock_apk}.bundle"
+			if ! merge_splits "${stock_apk}.bundle" "$stock_apk"; then
+				epr "ERROR: Failed to extract/merge bundle from ${dl_p}"
+				rm -f "${stock_apk}.bundle" "$stock_apk"
+				continue
+			fi
+			rm -f "${stock_apk}.bundle"
+		fi
+		downloaded_pkg=$(_meta_field_of "$stock_apk" package) || downloaded_pkg=""
+		if [ -z "$downloaded_pkg" ]; then
+			epr "ERROR: Downloaded file from ${dl_p} is not a valid APK or aapt failed to parse it. Rejecting..."
+			rm -f "$stock_apk" "${stock_apk%.apk}".* "${stock_apk}".*
+			continue
+		fi
+		if [ "$downloaded_pkg" != "$pkg_name" ]; then
+			if isoneof "$dl_p" github direct; then
+				wpr "Package id in the APK ('$downloaded_pkg') differs from pkg-name ('$pkg_name'); '${dl_p}' is a file the config named, so it is kept and '$downloaded_pkg' is published."
+			elif [[ "$pkg_name" == *.* ]]; then
+				epr "ERROR: Downloaded APK package name ($downloaded_pkg) does not match expected ($pkg_name). Rejecting..."
+				rm -f "$stock_apk" "${stock_apk%.apk}".* "${stock_apk}".*
+				continue
+			fi
+		fi
+		if ! verify_downloaded_apk "$stock_apk" "$pkg_name" "$dl_p"; then
+			rm -f "$stock_apk" "${stock_apk%.apk}".* "${stock_apk}".*
+			continue
+		fi
+		if ! _artifact_satisfies_arch "$stock_apk" "$arch"; then
+			wpr "Downloaded artifact from '${dl_p}' does not carry '$arch' (found: $(tr '\n' ' ' <<<"$(_artifact_abis "$stock_apk" 2>/dev/null)")); skipping source"
+			rm -f "$stock_apk" "${stock_apk%.apk}".* "${stock_apk}".*
+			continue
+		fi
+		got_from=$dl_p
+		break
+	done
+	if [ -z "$got_from" ]; then
+		epr "Mirroring '${table}' failed: no source supplied a valid ${arch} APK for v${version_f}."
+		rm -f "$stock_apk" "${stock_apk%.apk}".* "${stock_apk}".*
+		return 0
+	fi
+
+	# 3. Name it and publish. The grammar name is the default; keep-filename opts into the
+	#    source's own, which only a source that reports one (github) can honour.
+	local out_name="${app_name_l}-v${version_f}-${arch_f}.apk" kept_file=""
+	if [ "$keep_filename" = true ]; then
+		if [ -n "$asset_name" ]; then
+			# one path segment, no spaces, always ending in .apk (a merged bundle is one)
+			kept_file=$(sed -E 's#.*/##; s/[^A-Za-z0-9._+-]+/-/g; s/\.(apk|apkm|xapk|apks)$//' <<<"$asset_name").apk
+			out_name=$kept_file
+		else
+			wpr "keep-filename is set for '${table}' but '${got_from}' reports no file name; using ${out_name}"
+		fi
+	fi
+	mv -f "$stock_apk" "${BUILD_DIR}/${out_name}"
+	pr "Mirrored ${table} (unmodified, from ${got_from}): '${BUILD_DIR}/${out_name}'"
+	write_build_info "${table% (*}" "${arch_f}" ".apk" "${app_name_l}" "$version_f" "" "" "${downloaded_pkg:-$pkg_name}" "${app_name}" "" "${brand_val}" "" "" "$kept_file"
+	return 0
+}
+
 build_rv() {
 	eval "declare -A args=${1#*=}"
+	if [ "${args[mirror]:-false}" = true ]; then
+		mirror_rv "$1"
+		return
+	fi
 	local version="${args[version]:-}" pkg_name="${args[pkg_name]:-}"
 	
 	if [ -z "$pkg_name" ]; then
