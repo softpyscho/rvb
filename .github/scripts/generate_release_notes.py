@@ -1,18 +1,34 @@
 #!/usr/bin/env python3
+"""Write build.md — the body of a numbered release — from build.json and build/.
+
+Run by scripts/build.sh after the last build. build.md is rendered on GitHub and also
+relayed to Telegram by build_notify_telegram.sh, which keeps only the plain grammar
+(`### heading`, `* bullet`, `  * sub-bullet`, `**bold**`, `` `code` ``, `[text](url)`) and
+drops what GitHub alone can show: lines starting with `<`, `![`, `> `, and any line that
+carries a long Obtainium link. Anything added here must either use that grammar or sit on
+such a line.
+
+Env (all optional):
+    NEXT_VER_CODE                    release tag (links point at it)
+    GITHUB_REPOSITORY, GITHUB_SERVER_URL
+    IS_PRERELEASE                    "true" for the beta pool
+    RELEASE_NOTES_TG_LINK / _DONATE_LINK / _WEBSITE_LINK
+                                     footer links; a link that is not set is left out
+"""
+import json
 import os
 import re
-import json
-import glob
+import sys
 from pathlib import Path
 
-def load_json(path, default=None):
-    if os.path.exists(path):
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"Warning: Could not read {path}: {e}")
-    return default if default is not None else {}
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import obtainium  # noqa: E402
+from naming import extract_arch, normalize_arch  # noqa: E402
+
+ARCH_ORDER = {"arm64": 0, "arm": 1, "all": 2, "universal": 3, "x86_64": 4, "x86": 5}
+ARCH_LABEL = {"arm64": "arm64", "arm": "arm-v7a", "all": "universal", "universal": "universal",
+              "x86_64": "x86_64", "x86": "x86"}
+
 
 def resolve_display_name(target_key, info):
     base_name = info.get("display_name") or target_key
@@ -23,58 +39,180 @@ def resolve_display_name(target_key, info):
         extras.append(variant)
     if sub_variant:
         extras.append(sub_variant)
-    if extras:
-        return f"{base_name} ({' - '.join(extras)})"
-    return base_name
+    return f"{base_name} ({' - '.join(extras)})" if extras else base_name
 
-def normalize_arch(arch_raw):
-    a = (arch_raw or "").lower().strip()
-    if "arm64" in a or "aarch64" in a:
-        return "arm64"
-    if "arm" in a or "armeabi" in a:
-        return "arm"
-    if a in ["all", "universal"] or a.endswith("-all") or a.endswith("-universal"):
-        return "all"
-    if "x86_64" in a or "x64" in a:
-        return "x86_64"
-    if "x86" in a:
-        return "x86"
-    return a or "all"
 
-def extract_arch(fname, version=""):
-    # First match against known architecture tokens at the end of the filename
-    match = re.search(
-        r"-(arm64-v8a|armeabi-v7a|arm-v7a|aarch64|arm64|arm32|arm|x86_64|x64|x86|universal|all)(?:-(?:apk|module))?\.(?:apk|zip)$",
-        fname,
-        re.IGNORECASE
-    )
-    if match:
-        return match.group(1)
-
-    # If version is provided, match what follows -v<version>-
-    if version:
-        clean_ver = re.escape(version.lstrip("v"))
-        m = re.search(rf"-v?{clean_ver}-([a-zA-Z0-9_-]+?)(?:-(?:apk|module))?\.(?:apk|zip)$", fname, re.IGNORECASE)
+def patch_tag(changelog_url, patches_ref):
+    """The patch bundle's release tag, from its changelog link or, failing that, its file name."""
+    first_url = changelog_url.split()[0] if changelog_url else ""
+    for marker in ("/tag/", "/-/releases/", "/releases/"):
+        if marker in first_url:
+            return first_url.split(marker)[-1].strip("/")
+    if patches_ref:
+        ref_part = re.sub(r"\.(mpp|jar|rvp|apk|zip)$", "", patches_ref.split()[0], flags=re.IGNORECASE)
+        m = re.search(r"v?\d+(\.\d+)+([.-][a-zA-Z0-9]+)*", ref_part)
         if m:
-            return m.group(1)
+            return m.group(0) if m.group(0).startswith("v") else f"v{m.group(0)}"
+    return ""
 
-    # Fallback to the last hyphen-delimited segment before extension
-    name_no_ext = re.sub(r"\.(?:apk|zip)$", "", fname, flags=re.IGNORECASE)
-    name_no_mode = re.sub(r"-(?:apk|module)$", "", name_no_ext, flags=re.IGNORECASE)
-    parts = name_no_mode.split("-")
-    if len(parts) > 1:
-        return parts[-1]
 
-    return "all"
+def is_mirror(info):
+    """A mirrored app names no patch source and applied no patches."""
+    return not (info.get("patches_source") or "").strip() and not (info.get("patches") or "").strip()
+
+
+def collect(build_info, built_files, base_url):
+    """Group the build's apps by patch source (mirrored apps last)."""
+    groups = {}
+    for target_key, info in build_info.items():
+        mirrored = is_mirror(info)
+        patches_source = (info.get("patches_source") or "").strip()
+        patches_ref = (info.get("patches") or "").strip()
+        changelog_url = (info.get("changelog") or "").strip()
+        if mirrored:
+            gkey, source, tag, cl = "~mirror", "", "", ""
+        else:
+            source = patches_source.split()[0] if patches_source else \
+                (patches_ref.split()[0].split("/")[0] if "/" in patches_ref else "Patched")
+            gkey, tag, cl = source, patch_tag(changelog_url, patches_ref), (changelog_url.split() or [""])[0]
+        group = groups.setdefault(gkey, {"source": source, "tag": tag, "changelog": cl, "mirrored": mirrored, "apps": {}})
+
+        display_name = resolve_display_name(target_key, info)
+        version = info.get("version", "")
+        prefix = (info.get("name") or "").lower()
+        exact = (info.get("file") or "").strip()
+        app = {"display": display_name, "version": version, "package": (info.get("package_name") or "").strip(),
+               "apks": [], "modules": [], "applied": info.get("applied_patches") or [], "prefix": info.get("name") or "",
+               "exact": exact}
+        for fname in built_files:
+            lower = fname.lower()
+            if exact:
+                if fname != exact:
+                    continue
+                exts = info.get("exts") or [""]
+                raw_arch = info.get("arch") or exts[0].rsplit(".", 1)[0]
+            elif lower.startswith(prefix + "-v") or lower.startswith(prefix + "-module-"):
+                raw_arch = extract_arch(fname, version)
+            else:
+                continue
+            url = f"{base_url}/{fname}"
+            if lower.endswith(".apk") and "-module-" not in lower:
+                app["apks"].append((normalize_arch(raw_arch), raw_arch, url))
+            elif lower.endswith(".zip") and "-module-" in lower:
+                app["modules"].append((normalize_arch(raw_arch), raw_arch, url))
+        for key in ("apks", "modules"):
+            app[key].sort(key=lambda x: ARCH_ORDER.get(x[0], 99))
+        if app["apks"] or app["modules"]:
+            group["apps"][display_name] = app
+    return groups
+
+
+def badge(label, message, color):
+    return f"![{label}](https://img.shields.io/badge/{label}-{message}-{color}?style=for-the-badge)"
+
+
+def render(build_info, built_files, env):
+    repo = (env.get("GITHUB_REPOSITORY") or "").strip()
+    server = (env.get("GITHUB_SERVER_URL") or "https://github.com").rstrip("/")
+    tag = (env.get("NEXT_VER_CODE") or "").strip()
+    prerelease = (env.get("IS_PRERELEASE") or "").lower() == "true"
+    base_url = f"{server}/{repo}/releases/download/{tag}" if (repo and tag) else "./build"
+
+    groups = collect(build_info, built_files, base_url)
+    # patched sources A-Z, mirrored apps last
+    order = sorted(k for k in groups if not groups[k]["mirrored"]) + [k for k in groups if groups[k]["mirrored"]]
+    order = [k for k in order if groups[k]["apps"]]
+    total = sum(len(groups[k]["apps"]) for k in order)
+
+    lines = []
+    if total:
+        channel = ("beta", "pre--release", "8957e5") if prerelease else ("stable", "stable", "21a378")
+        lines += [
+            '<div align="center">', "",
+            " ".join(filter(None, [
+                badge("build", tag, "2f81f7") if tag else "",
+                badge("channel", channel[1], channel[2]),
+                badge("apps", str(total), "f78166"),
+            ])), "",
+            "</div>", "",
+        ]
+        if repo:
+            lines += [
+                "> [!TIP]",
+                f"> **Following these in Obtainium?** Tap **🔔 Obtainium** under an app to add it with the right "
+                f"filter already filled in, or see the [Obtainium guide]({server}/{repo}/blob/main/OBTAINIUM.md).",
+                "",
+            ]
+        if prerelease:
+            lines += ["> [!WARNING]", "> Pre-release channel: built from beta patches, expect rough edges.", ""]
+
+    any_patched = False
+    for gkey in order:
+        group = groups[gkey]
+        if group["mirrored"]:
+            lines += ["### 📦 Mirrored apps (stock, unmodified)", ""]
+        else:
+            any_patched = True
+            src, tag_s, cl = group["source"], group["tag"], group["changelog"]
+            if tag_s and cl:
+                tag_str = f" ([{tag_s}]({cl}))"
+            elif tag_s:
+                tag_str = f" ({tag_s})"
+            elif cl:
+                tag_str = f" ([changelog]({cl}))"
+            else:
+                tag_str = ""
+            lines += [f"### 🧩 {src}{tag_str}", ""]
+
+        for name in sorted(group["apps"], key=str.lower):
+            app = group["apps"][name]
+            # "v" only in front of a number: a nightly's version is the word "nightly"
+            v = app["version"]
+            ver = f" `{'v' if v[:1].isdigit() else ''}{v}`" if v else ""
+            lines.append(f"* **{app['display']}**{ver}")
+            if app["apks"]:
+                lines.append("  * APK: " + " • ".join(f"[{ARCH_LABEL.get(a, raw)}]({u})" for a, raw, u in app["apks"]))
+            if app["modules"]:
+                lines.append("  * Module: " + " • ".join(f"[{ARCH_LABEL.get(a, raw)}]({u})" for a, raw, u in app["modules"]))
+            if repo and app["apks"] and app["package"]:
+                links = []
+                for a, raw, _ in app["apks"]:
+                    flt = obtainium.exact_regex(app["exact"]) if app["exact"] else obtainium.apk_regex(app["prefix"], raw)
+                    entry = obtainium.app_entry(app["package"], app["display"], repo, flt, prerelease)
+                    links.append(f"[{ARCH_LABEL.get(a, raw)}]({obtainium.redirect_link(entry)})")
+                # one line, so Telegram can drop it whole (the links are very long)
+                lines.append("  * 🔔 Add to Obtainium: " + " • ".join(links))
+            if app["applied"]:
+                patches = " · ".join(str(p).replace("<", "&lt;").replace(">", "&gt;") for p in app["applied"])
+                lines.append(f"  <details><summary>{len(app['applied'])} patches applied</summary><br>{patches}</details>")
+            lines.append("")
+
+    lines += ["---", "", "### ℹ️ Notes"]
+    if any_patched:
+        lines += [
+            "• Install [MicroG-RE](https://github.com/MorpheApp/MicroG-RE/releases/latest) or "
+            "[MicroG](https://github.com/ReVanced/GmsCore/releases/latest), required for Google APKs.  ",
+            "• Use [Zygisk Detach](https://github.com/j-hc/zygisk-detach) to stop Play Store from updating Modules.  ",
+        ]
+    if any(groups[k]["mirrored"] for k in order):
+        lines.append("• 📦 Mirrored apps are the vendor's own APK, republished as-is so they can be tracked here.  ")
+    lines.append("")
+    footer = []
+    if repo:
+        footer.append(f"🌐 [GitHub]({server}/{repo})")
+    for var, label, icon in (("RELEASE_NOTES_TG_LINK", "Group", "💬"), ("RELEASE_NOTES_DONATE_LINK", "Donate", "☕"),
+                             ("RELEASE_NOTES_WEBSITE_LINK", "Website", "🔗")):
+        link = (env.get(var) or "").strip()
+        if link:
+            footer.append(f"{icon} [{label}]({link})")
+    if footer:
+        lines += [" | ".join(footer), ""]
+    return "\n".join(lines)
+
 
 def main():
-    next_ver_code = os.environ.get("NEXT_VER_CODE", "").strip()
-    github_server = os.environ.get("GITHUB_SERVER_URL", "https://github.com").rstrip("/")
-    github_repo = os.environ.get("GITHUB_REPOSITORY", "").strip()
-
     build_dir = Path("build")
     build_json_file = Path("build.json")
-
     build_info = {}
     if build_json_file.exists():
         try:
@@ -82,157 +220,14 @@ def main():
                 build_info = json.load(f)
         except Exception as e:
             print(f"Warning: Could not read {build_json_file}: {e}")
-
-    # Discover actual files in build/
     built_files = []
     if build_dir.exists():
-        built_files = [f.name for f in build_dir.iterdir() if f.is_file() and f.suffix.lower() in [".apk", ".zip"]]
-
-    # Map target keys to patch groups
-    # Group: patch_source -> { "tag": str, "changelog_url": str, "apps": { app_name: { "version": str, "apks": [], "modules": [] } } }
-    patch_groups = {}
-
-    for target_key, info in build_info.items():
-        patches_source = info.get("patches_source") or ""
-        patches_ref = info.get("patches") or ""
-        changelog_url = (info.get("changelog") or "").strip()
-
-        # Extract primary patch source and version tag
-        primary_source = patches_source.split()[0] if patches_source else (patches_ref.split()[0].split("/")[0] if "/" in patches_ref else "Patched")
-        
-        # Determine patch version tag
-        patch_tag = ""
-        if changelog_url:
-            first_url = changelog_url.split()[0]
-            if "/tag/" in first_url:
-                patch_tag = first_url.split("/tag/")[-1].strip("/")
-            elif "/-/releases/" in first_url:
-                patch_tag = first_url.split("/-/releases/")[-1].strip("/")
-            elif "/releases/" in first_url:
-                patch_tag = first_url.split("/releases/")[-1].strip("/")
-
-        if not patch_tag and patches_ref:
-            ref_part = re.sub(r"\.(mpp|jar|rvp|apk|zip)$", "", patches_ref.split()[0], flags=re.IGNORECASE)
-            tag_match = re.search(r"v?\d+(\.\d+)+([.-][a-zA-Z0-9]+)*", ref_part)
-            if tag_match:
-                matched = tag_match.group(0)
-                patch_tag = matched if matched.startswith("v") else f"v{matched}"
-
-        group_key = primary_source
-        if group_key not in patch_groups:
-            patch_groups[group_key] = {
-                "source": primary_source,
-                "tag": patch_tag,
-                "changelog_url": changelog_url.split()[0] if changelog_url else "",
-                "apps": {}
-            }
-
-        # Resolve display name directly from structured build info
-        display_name = resolve_display_name(target_key, info)
-        version = info.get("version", "")
-        file_prefix = info.get("name", "")
-
-        app_entry = {
-            "display_name": display_name,
-            "version": version,
-            "apks": [],
-            "modules": []
-        }
-
-        # Find matching built files
-        # apk format: <file_prefix>-v<version>-<arch>.apk
-        # module format: <file_prefix>-module-v<version>-<arch>.zip
-        for fname in built_files:
-            lower = fname.lower()
-            prefix_lower = file_prefix.lower()
-            if not (lower.startswith(prefix_lower + "-v") or lower.startswith(prefix_lower + "-module-")):
-                continue
-
-            # Check if apk
-            if lower.endswith(".apk") and not "-module-" in lower:
-                raw_arch = extract_arch(fname, version)
-                norm_arch = normalize_arch(raw_arch)
-                dl_url = f"{github_server}/{github_repo}/releases/download/{next_ver_code}/{fname}" if (github_repo and next_ver_code) else f"./build/{fname}"
-                app_entry["apks"].append((norm_arch, dl_url))
-
-            # Check if module zip
-            elif lower.endswith(".zip") and "-module-" in lower:
-                raw_arch = extract_arch(fname, version)
-                norm_arch = normalize_arch(raw_arch)
-                dl_url = f"{github_server}/{github_repo}/releases/download/{next_ver_code}/{fname}" if (github_repo and next_ver_code) else f"./build/{fname}"
-                app_entry["modules"].append((norm_arch, dl_url))
-
-        # Sort architectures consistently: arm64, arm, all, etc.
-        arch_priority = {"arm64": 0, "arm": 1, "all": 2, "universal": 3, "x86_64": 4, "x86": 5}
-        app_entry["apks"].sort(key=lambda x: arch_priority.get(x[0], 99))
-        app_entry["modules"].sort(key=lambda x: arch_priority.get(x[0], 99))
-
-        if app_entry["apks"] or app_entry["modules"]:
-            patch_groups[group_key]["apps"][display_name] = app_entry
-
-    # Build output markdown
-    lines = []
-
-    # Sort groups alphabetically
-    sorted_group_keys = sorted(patch_groups.keys())
-
-    for gkey in sorted_group_keys:
-        group = patch_groups[gkey]
-        apps = group["apps"]
-        if not apps:
-            continue
-
-        # Header format: ### 🧩 source ([tag](url))
-        src = group["source"]
-        tag = group["tag"]
-        cl_url = group["changelog_url"]
-
-        if tag and cl_url:
-            tag_str = f" ([{tag}]({cl_url}))"
-        elif tag:
-            tag_str = f" ({tag})"
-        elif cl_url:
-            tag_str = f" ([changelog]({cl_url}))"
-        else:
-            tag_str = ""
-
-        lines.append(f"### 🧩 {src}{tag_str}")
-        lines.append("")
-
-        # List apps in this patch group
-        for app_name in sorted(apps.keys()):
-            app = apps[app_name]
-            ver_str = f" `v{app['version']}`" if app['version'] else ""
-            lines.append(f"* **{app['display_name']}**{ver_str}")
-
-            if app["apks"]:
-                apk_links = " • ".join([f"[{arch}]({url})" for arch, url in app["apks"]])
-                lines.append(f"  * APK: {apk_links}")
-
-            if app["modules"]:
-                mod_links = " • ".join([f"[{arch}]({url})" for arch, url in app["modules"]])
-                lines.append(f"  * Module: {mod_links}")
-
-            lines.append("")
-
-    # Notes section
-    lines.append("---")
-    lines.append("")
-    lines.append("### ℹ️ Notes")
-    lines.append("• Install [MicroG-RE](https://github.com/MorpheApp/MicroG-RE/releases/latest) or [MicroG](https://github.com/ReVanced/GmsCore/releases/latest), required for Google APKs.  ")
-    lines.append("• Use [Zygisk Detach](https://github.com/j-hc/zygisk-detach) to stop Play Store from updating Modules.  ")
-    lines.append("")
-    gh_repo = os.environ.get("GITHUB_REPOSITORY") or "nullcpy/rvb"
-    tg_link = os.environ.get("RELEASE_NOTES_TG_LINK") or "https://t.me/rvb27"
-    donate_link = os.environ.get("RELEASE_NOTES_DONATE_LINK") or "https://fahim-ahmed05.github.io/donate"
-    website_link = os.environ.get("RELEASE_NOTES_WEBSITE_LINK") or "https://nullcpy.github.io"
-    lines.append(f"🌐 [GitHub](https://github.com/{gh_repo}) | 💬 [Group]({tg_link}) | ☕ [Donate]({donate_link}) | 🔗 [Website]({website_link})")
-    lines.append("")
-    content = "\n".join(lines)
+        built_files = sorted(f.name for f in build_dir.iterdir() if f.is_file() and f.suffix.lower() in [".apk", ".zip"])
+    content = render(build_info, built_files, os.environ)
     with open("build.md", "w", encoding="utf-8") as f:
         f.write(content)
-
     print("Successfully generated build.md")
+
 
 if __name__ == "__main__":
     main()
