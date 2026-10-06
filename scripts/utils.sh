@@ -2745,7 +2745,10 @@ get_archive_resp() {
 	__DL_RESP_CACHE__["archive_resp_$url"]="$__ARCHIVE_RESP__"
 	__DL_RESP_CACHE__["archive_pkg_$url"]="$__ARCHIVE_PKG_NAME__"
 }
-get_archive_vers() {
+# Versions encoded in `<pkg>-<version>[-<versionCode>]-<arch>.<ext>` asset names, one per
+# line, from the names on stdin. Shared by the archive source and by a `github` release that
+# is laid out the same way (see get_github_vers).
+_versions_from_asset_names() {
 	if command -v python3 >/dev/null 2>&1 || command -v python >/dev/null 2>&1; then
 		local py_bin="python3"
 		command -v python3 >/dev/null 2>&1 || py_bin="python"
@@ -2756,11 +2759,12 @@ for line in sys.stdin:
     l = line.strip()
     if l:
         print(pat.sub('', l))
-" <<<"$__ARCHIVE_RESP__"
+"
 	else
-		sed -E 's/^[^-]*-//;s/(-[0-9]+)?-(all|arm64-v8a|arm-v7a|x86|x86_64)\.(apk|apkm|xapk|apks)$//g' <<<"$__ARCHIVE_RESP__"
+		sed -E 's/^[^-]*-//;s/(-[0-9]+)?-(all|arm64-v8a|arm-v7a|x86|x86_64)\.(apk|apkm|xapk|apks)$//g'
 	fi
 }
+get_archive_vers() { _versions_from_asset_names <<<"$__ARCHIVE_RESP__"; }
 get_archive_pkg_name() { echo "$__ARCHIVE_PKG_NAME__"; }
 
 # -------------------- github --------------------
@@ -2952,9 +2956,18 @@ get_github_resp() {
 	__DL_RESP_CACHE__["github_tag_$cache_key"]="$__GITHUB_TAG__"
 }
 
-# Extracts version matching the archive logic: strips prefix (up to first '-') and suffix (arch/extension)
+# The version(s) a github release offers. An ordinary release is tagged with its version
+# (v1.2.3), so the tag is the answer. A release-per-package layout - tagged with the package
+# name itself (`releases/tag/com.instagram.android`, the shape of the apks cache and of
+# self-hosted stock releases) - holds many versions as `<pkg>-<version>-<arch>.apk` assets, and
+# the tag says nothing about them: read the versions off the asset names, like the archive
+# source does. Taking the tag there made the "version" the package name.
 get_github_vers() {
-    echo "$__GITHUB_TAG__" | sed 's/^v//'
+    if [ -n "${pkg_name:-}" ] && [ "${__GITHUB_TAG__:-}" = "$pkg_name" ]; then
+        _versions_from_asset_names <<<"$__GITHUB_RESP__"
+    else
+        echo "$__GITHUB_TAG__" | sed 's/^v//'
+    fi
 }
 
 # Extracts package name by stripping everything from the first hyphen '-' onwards

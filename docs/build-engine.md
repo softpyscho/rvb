@@ -117,6 +117,14 @@ The watcher treats a mirrored app as unpatched too: `sync_patch_sources.py` does
 a patch source alive and `ci_check_app_patches.py` never counts it as covered by a bundle, so it
 is rebuilt only when the app itself updates.
 
+A `github` source reports versions in one of two ways. An ordinary release is tagged with its version
+(`v1.2.3`) and the tag is the answer. A **release-per-package** release — tagged with the package name
+itself (`releases/tag/com.instagram.android`), the shape of the apks cache and of self-hosted stock
+releases — holds many versions as `<pkg>-<version>-<arch>.apk` assets, so the versions are read off the
+asset names with the same parser the `archive` source uses (`_versions_from_asset_names`). The two are
+told apart by the tag equalling `pkg-name`; without a known package name (the watcher) the tag is
+reported as before.
+
 ## `build_rv`, stage by stage
 
 1. **Identity** — resolve display name/slug, package name (a `pkg-name` of its
