@@ -15,7 +15,7 @@ uptodown-dlurl = "https://twitter.en.uptodown.com/android"
 pkg-name = "com.instagram.android"
 badge-color = "FF0069"
 badge-icon = "instagram"
-version = "latest"
+version = "auto"
 # Piko's pre-release ("dev") line: routed to the beta pool, so it ships as a pre-release.
 patches-version = "beta"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/instagram/instagram-instagram"

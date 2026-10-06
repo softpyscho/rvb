@@ -41,7 +41,7 @@ uptodown-dlurl = "https://redotpay.en.uptodown.com/android"
 
 [Duck-Detector]
 app-name = "Duck Detector"
-pkg-name = "Duck.Detector"
+pkg-name = "com.eltavine.duckdetector"
 # A nightly build has no version number to put in a file name, so the asset keeps its own.
 keep-filename = true
 version = "nightly"

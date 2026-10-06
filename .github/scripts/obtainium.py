@@ -246,6 +246,7 @@ DEFAULT_BADGE_COLOR = "4500FF"
 DEFAULT_BADGE_ICON = "android"
 OBTAINIUM_BADGE = ("![Add to Obtainium](https://img.shields.io/badge/Add_to_Obtainium-8b5cf6"
                    "?style=flat-square&logo=android&logoColor=white)")
+STORE_SOURCES = {"apkmirror", "uptodown", "apkpure", "apkcombo"}  # sources that are app stores
 _PLAY_ID = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$")
 
 
@@ -255,15 +256,18 @@ def obtainium_badge_link(spec, repo):
 
 
 def app_badge(spec):
-    """The app's flat badge, in its own colour and logo, linking to its Play Store page - or,
-    for a package id that cannot be a Play listing (`Duck.Detector`), to where it is downloaded."""
+    """The app's flat badge, in its own colour and logo, linking to its Play Store page - or, when
+    the app cannot be a Play listing, to where it is downloaded: a package id that is not one
+    (`Duck.Detector`), or an app that only comes from a GitHub release or a direct link (no store
+    among its sources), such as an APK its author publishes themselves."""
     name = spec["display"]
     color = spec["color"] if re.fullmatch(r"[0-9A-Fa-f]{6}", spec["color"] or "") else DEFAULT_BADGE_COLOR
     icon = quote(spec["icon"] or DEFAULT_BADGE_ICON, safe="")
     url = (f"https://img.shields.io/badge/{quote(name.replace('-', '--'), safe='')}-{color}"
            f"?style=flat-square&logo={icon}&logoColor=%23FFFFFF")
     badge = f"![{name}]({url})"
-    if spec["package"] and _PLAY_ID.match(spec["package"]):
+    on_a_store = not spec["urls"] or bool(set(spec["urls"]) & STORE_SOURCES)
+    if spec["package"] and _PLAY_ID.match(spec["package"]) and on_a_store:
         return f"[{badge}](https://play.google.com/store/apps/details?id={spec['package']})"
     first = next(iter(spec["urls"].values()), "")
     return f"[{badge}]({first})" if first else badge
@@ -285,7 +289,7 @@ def version_label(spec, data):
     if known:
         label = known if known.startswith("v") or not known[:1].isdigit() else f"v{known}"
     elif mode == "auto":
-        label = "Auto"
+        label = "Auto (pre-release)" if spec["prerelease"] else "Auto"
     elif mode == "latest":
         label = "Latest (pre-release)" if spec["prerelease"] else "Latest"
     else:

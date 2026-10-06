@@ -333,7 +333,9 @@ class AppsSection(unittest.TestCase):
         # stock mirror: no patches by definition; shares the table, not the patch dropdown
         self.assertIn("*(None - Stock Mirror)*", row["Bitget"])
         self.assertIn("version-v2.94.3-", row["Bitget"])
-        # a package id that cannot be a Play listing links to where the file comes from instead
+        # an app that cannot be a Play listing - a bad package id, or only a GitHub release as its
+        # source - links to where the file comes from instead; one with a store source keeps Play
+        self.assertIn("play.google.com/store/apps/details?id=com.bitget.exchange", row["Bitget"])
         self.assertNotIn("play.google.com", row["Duck-Detector"])
         self.assertIn("(https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly)", row["Duck-Detector"])
 
@@ -343,7 +345,8 @@ class AppsSection(unittest.TestCase):
         self.assertTrue(gh < mirror < uptodown, "github before apkmirror before uptodown, as DL_SRCS tries them")
 
     def test_pre_release_apps_say_so_until_a_build_names_the_version(self):
-        self.assertIn("version-Latest_%28pre--release%29", self.section(keys=["Instagram"]))
+        self.assertIn("version-Auto_%28pre--release%29", self.section(keys=["Instagram"]))
+        self.assertNotIn("pre--release", self.section(keys=["Reddit"]), "a stable app must not claim to be a pre-release")
         self.assertIn("version-v450.0-", self.section({"instagram-morphe": {"version": "450.0", "applied": ["x"]}}, keys=["Instagram"]))
 
     def test_obtainium_link_is_the_full_app_object_in_the_working_format(self):

@@ -175,7 +175,7 @@ apkmirror-dlurl = "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-cryp
 
 [Duck-Detector]
 app-name = "Duck Detector"
-pkg-name = "Duck.Detector"
+pkg-name = "com.eltavine.duckdetector"
 keep-filename = true     # a nightly has no version number to put in a name: the asset keeps its own
 version = "nightly"
 arch = "all"

@@ -4,8 +4,9 @@
 #   git commit -am "chore(config): ..." && git push
 # and run Manual CI.
 #
-# Currently: the two stable-pool apps whose first run failed (a Cloudflare-blocked store for
-# Truecaller; Duck Detector's release asset name, since fixed in the engine).
+# Currently: the two stable-pool apps that needed a second look - Truecaller (APKMirror and
+# Uptodown refuse a GitHub-hosted runner, so APKPure and APKCombo are tried next) and Duck Detector
+# (its package id is now the APK's own).
 brand = "Morphe"
 arch = "arm64-v8a"
 
@@ -16,12 +17,14 @@ pkg-name = "com.truecaller"
 version = "auto"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/true-software-scandinavia-ab/truecaller-caller-id-block/"
 uptodown-dlurl = "https://truecaller.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/truecaller-caller-id-block/com.truecaller"
+apkcombo-dlurl = "https://apkcombo.com/truecaller-caller-id-block/com.truecaller"
 
 [Duck-Detector]
 mirror = true
 brand = "Mirror"
 app-name = "Duck Detector"
-pkg-name = "Duck.Detector"
+pkg-name = "com.eltavine.duckdetector"
 keep-filename = true
 version = "nightly"
 arch = "all"

@@ -11,6 +11,9 @@ badge-icon = "truecaller"
 version = "auto"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/true-software-scandinavia-ab/truecaller-caller-id-block/"
 uptodown-dlurl = "https://truecaller.en.uptodown.com/android"
+# Further sources, tried in order when APKMirror and Uptodown refuse a GitHub-hosted runner.
+apkpure-dlurl = "https://apkpure.com/truecaller-caller-id-block/com.truecaller"
+apkcombo-dlurl = "https://apkcombo.com/truecaller-caller-id-block/com.truecaller"
 
 [TickTick]
 pkg-name = "com.ticktick.task"
