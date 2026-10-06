@@ -2956,15 +2956,23 @@ get_github_resp() {
 	__DL_RESP_CACHE__["github_tag_$cache_key"]="$__GITHUB_TAG__"
 }
 
+# True when the github release just fetched is a release-per-package: tagged with the package
+# name itself (`releases/tag/com.instagram.android`) instead of a version. Such a release is a
+# store of whatever was uploaded to it, in whatever naming the uploader used - the same kind of
+# thing as the archive and cache_repo sources - so it is not an authority on "the latest version"
+# (see the source loops in build_rv and mirror_rv).
+_github_release_per_package() {
+    [ -n "${pkg_name:-}" ] && [ "${__GITHUB_TAG__:-}" = "$pkg_name" ]
+}
+
 # The version(s) a github release offers. An ordinary release is tagged with its version
-# (v1.2.3), so the tag is the answer. A release-per-package layout - tagged with the package
-# name itself (`releases/tag/com.instagram.android`, the shape of the apks cache and of
-# self-hosted stock releases) - holds many versions as `<pkg>-<version>-<arch>.apk` assets, and
-# the tag says nothing about them: read the versions off the asset names, like the archive
-# source does. Taking the tag there made the "version" the package name.
+# (v1.2.3), so the tag is the answer. A release-per-package holds many versions as assets; only
+# names in the `<pkg>-<version>[-<versionCode>]-<arch>.<ext>` grammar say what version they are,
+# so those are read like the archive source reads them, and any other name (a raw store download
+# kept under its own file name, say) contributes nothing rather than a made-up version.
 get_github_vers() {
-    if [ -n "${pkg_name:-}" ] && [ "${__GITHUB_TAG__:-}" = "$pkg_name" ]; then
-        _versions_from_asset_names <<<"$__GITHUB_RESP__"
+    if _github_release_per_package; then
+        grep -E -- '-(all|arm64-v8a|arm-v7a|x86|x86_64)\.(apk|apkm|xapk|apks)$' <<<"$__GITHUB_RESP__" | _versions_from_asset_names || true
     else
         echo "$__GITHUB_TAG__" | sed 's/^v//'
     fi
@@ -3805,6 +3813,7 @@ mirror_rv() {
 			args[${dl_p}_dlurl]=""
 			continue
 		fi
+		if [ "$dl_p" = github ] && [ "$pinned" = false ] && _github_release_per_package; then continue; fi
 		if [ -z "$pkg_name" ]; then
 			if ! pkg_name=$(get_"${dl_p}"_pkg_name) || [ -z "$pkg_name" ]; then
 				epr "ERROR: Could not scrape pkg_name for ${table} in ${dl_p}"
@@ -3854,6 +3863,18 @@ mirror_rv() {
 			fi
 		fi
 		__DL_ASSET_NAME__=""
+		# A mirrored release names its one file however it likes. When the config gives no
+		# github-regex and the release holds exactly one APK-like asset, that asset is the one
+		# to re-host; with several, guessing would be wrong, so the usual selection (and its
+		# failure) stands.
+		if [ "$dl_p" = github ] && [ -z "${args[github_regex]:-}" ]; then
+			local _apk_assets _n_assets
+			_apk_assets=$(grep -iE '\.(apk|apkm|xapk|apks)$' <<<"${__GITHUB_RESP__//$'\r'/}" || true)
+			_n_assets=$(grep -c . <<<"$_apk_assets" || true)
+			if [ "$_n_assets" = 1 ]; then
+				args[github_regex]="^$(sed -E 's/[][\\.^$*+?(){}|]/\\&/g' <<<"$_apk_assets")\$"
+			fi
+		fi
 		if ! dl_${dl_p} "${args[${dl_p}_dlurl]}" "$version" "$stock_apk" "$arch" "${args[dpi]:-}" "$get_latest_ver" ""; then
 			pr "ERROR: Could not download '${table}' from '${dl_p}' with version '${version}', arch '${arch}'"
 			rm -f "$stock_apk" "${stock_apk%.apk}".* "${stock_apk}".*
@@ -4225,6 +4246,13 @@ build_rv() {
 				if ! get_${dl_p}_resp "${args[${dl_p}_dlurl]}"; then
 					args[${dl_p}_dlurl]=""
 					epr "ERROR: Could not get response for ${table} in ${dl_p}"
+					continue
+				fi
+
+				# Same rule as archive/cache_repo above: a release-per-package is somewhere to
+				# download from, not a source of truth for the latest version. It stays available
+				# to the download loop, which asks it for the version another source chose.
+				if [ "$dl_p" = github ] && [ -z "$resolved_version" ] && _github_release_per_package; then
 					continue
 				fi
 				

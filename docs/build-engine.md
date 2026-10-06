@@ -120,10 +120,18 @@ is rebuilt only when the app itself updates.
 A `github` source reports versions in one of two ways. An ordinary release is tagged with its version
 (`v1.2.3`) and the tag is the answer. A **release-per-package** release — tagged with the package name
 itself (`releases/tag/com.instagram.android`), the shape of the apks cache and of self-hosted stock
-releases — holds many versions as `<pkg>-<version>-<arch>.apk` assets, so the versions are read off the
-asset names with the same parser the `archive` source uses (`_versions_from_asset_names`). The two are
-told apart by the tag equalling `pkg-name`; without a known package name (the watcher) the tag is
-reported as before.
+releases — is a store of whatever was uploaded, under whatever names the uploader chose. It is told apart
+by the tag equalling `pkg-name` (`_github_release_per_package`; without a known package name, as in the
+watcher, the tag is reported as before) and is treated like `archive` and `cache_repo`: **never the
+authority on "latest"**. When a version has to be discovered, the source loops in `build_rv` and
+`mirror_rv` skip it and take the version from the next source; it stays in the download loop, which asks it
+for that version. Only assets named `<pkg>-<version>[-<code>]-<arch>.<ext>` ever yield a version
+(`_versions_from_asset_names`, shared with `archive`) — a raw store download kept under its own file name
+yields none, rather than a version made of the file name.
+
+A mirrored app whose github release holds exactly one APK-like asset and no `github-regex` re-hosts that
+asset whatever it is called; with several, the usual name-based selection (and its failure) stands rather
+than a guess.
 
 ## `build_rv`, stage by stage
 

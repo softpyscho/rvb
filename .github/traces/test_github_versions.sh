@@ -20,6 +20,21 @@ got=$(get_github_vers | tr '\n' ' ')
 # the highest of them is what the engine picks for "latest"
 [ "$(get_github_vers | get_highest_ver)" = "428.0.0.1" ] || fail "highest version"
 
+# a raw store download kept under its own name (the real shape of a self-hosted release) says nothing
+# about its version: it must contribute nothing, never a version made of the file name
+__GITHUB_TAG__=com.instagram.android pkg_name=com.instagram.android
+__GITHUB_RESP__=$'com.instagram.android-384510833_2dpi_9feat_3919c8a7e7a3d863f8881e4cfef992a7_apkmirror.com.apkm'
+[ -z "$(get_github_vers)" ] || fail "an assets-only-by-store-name release must report no version, got '$(get_github_vers)'"
+# ...while a grammar-named asset next to it still counts
+__GITHUB_RESP__+=$'\ncom.instagram.android-428.0.0.1-arm64-v8a.apk'
+[ "$(get_github_vers)" = "428.0.0.1" ] || fail "only the grammar-named asset may count, got '$(get_github_vers)'"
+
+# the predicate the source loops use to refuse a release-per-package as a version authority
+__GITHUB_TAG__=com.x pkg_name=com.x; _github_release_per_package || fail "tag == pkg is a release-per-package"
+__GITHUB_TAG__=v1.0 pkg_name=com.x; _github_release_per_package && fail "an ordinary tag is not"
+__GITHUB_TAG__=com.x; unset pkg_name; _github_release_per_package && fail "no package name known: not decidable, so not"
+__GITHUB_TAG__=com.instagram.android pkg_name=com.instagram.android __GITHUB_RESP__=$assets
+
 # control 1: an ordinary release is still its tag, minus the v
 __GITHUB_TAG__=v1.2.3 __GITHUB_RESP__=$'app-1.2.3-all.apk' pkg_name=com.x
 [ "$(get_github_vers)" = "1.2.3" ] || fail "ordinary release must report its tag"

@@ -84,6 +84,7 @@ describing it. `bash scripts/build.sh clean` resets.
 | Cache / bundle helpers | `bash .github/traces/test_cache_helpers.sh`, `bash .github/traces/test_bundle_helpers.sh` | same job |
 | Mirrored apps (`mirror_rv`, `mirror`/`keep-filename` parsing) | `bash .github/traces/test_mirror.sh` | same job; fake downloads and a stub `aapt2`, every rejection paired with an accepting control |
 | How a `github` source reports versions (tag vs release-per-package asset names) | `bash .github/traces/test_github_versions.sh` | same job |
+| Cleanup of the `update` branch (absent branch, dead pointers) | `bash .github/traces/test_cleanup_update_branch.sh` | same job; local bare origin and a stub `gh` |
 | Which apps the watcher version-checks, BKS need | `bash .github/traces/test_ci_app_versions.sh` | same job; offline, a stub `utils.sh` and compiled-pool fixtures |
 | Release notes, Obtainium links, manifest of mirrored files, seed config | `python3 .github/traces/test_release_notes.py` | same job; also fails when `README.md` / `OBTAINIUM.md` / `obtainium-apps.json` are stale against the seed (regenerate with `.github/scripts/obtainium.py`) |
 | A CI shell script | a stubbed-binary harness under `temp/` | convention below |

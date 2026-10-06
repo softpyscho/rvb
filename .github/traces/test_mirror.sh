@@ -163,6 +163,22 @@ run_mirror table="Duck-Detector" app_name="Duck Detector" pkg_name="Duck.Detecto
 [ "$(built)" = "evil-name-1-.apk " ] || fail "asset name must be sanitised to one segment, got: '$(built)'"
 FAKE_ASSET="Duck.Detector-nightly-all.apk"
 
+# 7b. "latest" is not taken from a release-per-package: the store source supplies the version
+reset; FAKE_PKG=com.bitget.exchange FAKE_ABIS="arm64-v8a"; GH_TAG=com.bitget.exchange
+get_github_resp() { __GITHUB_TAG__=$GH_TAG; __GITHUB_RESP__="com.bitget.exchange-raw_download_apkmirror.com.apkm"; }
+get_github_vers() { echo "should-not-be-used"; }
+dl_github() { return 1; }
+run_mirror github_dlurl="https://github.com/o/r/releases/tag/com.bitget.exchange"
+[ -f "$BUILD_DIR/bitget-v1.10.0-arm64-v8a.apk" ] || fail "release-per-package must not decide the version; got: $(built)"
+# control: the same github source with an ordinary tag IS the version authority (listed first)
+reset; GH_TAG=v7.7.7
+get_github_vers() { echo 7.7.7; }
+dl_github() { DL_CALLS=$((DL_CALLS + 1)); mkapk "$3" $FAKE_ABIS; }
+run_mirror github_dlurl="https://github.com/o/r/releases/tag/v7.7.7"
+[ -f "$BUILD_DIR/bitget-v7.7.7-arm64-v8a.apk" ] || fail "control: an ordinary github release should supply the version; got: $(built)"
+get_github_resp() { :; }; get_github_vers() { echo nightly; }
+dl_github() { DL_CALLS=$((DL_CALLS + 1)); __DL_ASSET_NAME__="$FAKE_ASSET"; mkapk "$3" $FAKE_ABIS; }
+
 # 8. build.sh: configuration that contradicts a mirror is refused at parse time ------------
 # A sandbox repo root: the engine writes under module/, temp/ and build/ relative to the cwd, so
 # module/ is copied and bin/ rebuilt (symlinks to the vendored tools, a stub aapt2) rather than
@@ -212,9 +228,9 @@ while [ \$# -gt 0 ]; do
 done
 case "\$url" in
 	https://api.github.com/repos/o/r/releases/tags/nightly)
-		body='{"tag_name":"nightly","prerelease":false,"assets":[{"name":"Duck.Detector-nightly-all.apk"}]}'
+		body=\$(printf '%s' "\${E2E_ASSETS:-Duck.Detector-nightly-all.apk}" | tr ',' '\\n' | jq -R '{name: .}' | jq -s -c '{tag_name:"nightly",prerelease:false,assets:.}')
 		if [ -z "\$out" ] || [ "\$out" = - ]; then printf '%s\\n' "\$body"; else printf '%s\\n' "\$body" > "\$out"; fi ;;
-	https://github.com/o/r/releases/download/nightly/Duck.Detector-nightly-all.apk)
+	https://github.com/o/r/releases/download/nightly/*)
 		[ -n "\${E2E_NO_ASSET:-}" ] && exit 22
 		cp "$WORK/served.apk" "\$out" ;;
 	*) echo "curl-stub: unexpected \$url" >&2; exit 22 ;;
@@ -240,9 +256,21 @@ CFG
 [ "$(jq -r '."Duck-Detector".package_name' "$SANDBOX/build.json")" = "com.eltavine.duckdetector" ] || fail "e2e: published package id"
 grep -q "Duck Detector" "$SANDBOX/build.md" && grep -q "Mirrored apps" "$SANDBOX/build.md" || fail "e2e: release notes should list the mirrored app"
 grep -q "apps.obtainium.imranr.dev" "$SANDBOX/build.md" || fail "e2e: release notes should carry the Obtainium link"
+# a release whose one APK is named however its author likes is re-hosted without any github-regex
+rm -r "$SANDBOX/build" "$SANDBOX/build.json" "$SANDBOX/temp"; : > "$SANDBOX/build.md"
+( cd "$SANDBOX" && E2E_ASSETS="DuckDetector_nightly_build.apk,SHA256SUMS.txt" PATH="$WORK/e2ebin:$PATH" FAKE_PKG=com.eltavine.duckdetector \
+	bash scripts/build.sh cfg.toml > e2e3.log 2>&1 ); rc=$?
+[ "$rc" = 0 ] && [ -f "$SANDBOX/build/DuckDetector_nightly_build.apk" ] || fail "a single oddly named APK should be re-hosted (rc=$rc, built: $(ls "$SANDBOX/build" 2>&1)): $(tail -3 "$SANDBOX/e2e3.log")"
+# control: two APKs and no regex is a guess the engine refuses to make
+rm -r "$SANDBOX/build" "$SANDBOX/build.json" "$SANDBOX/temp"; : > "$SANDBOX/build.md"
+( cd "$SANDBOX" && E2E_ASSETS="DuckDetector_a.apk,DuckDetector_b.apk" PATH="$WORK/e2ebin:$PATH" FAKE_PKG=com.eltavine.duckdetector \
+	bash scripts/build.sh cfg.toml > e2e4.log 2>&1 ); rc=$?
+[ "$rc" != 0 ] && [ -z "$(ls "$SANDBOX/build" 2>/dev/null)" ] || fail "two APKs and no github-regex must not be guessed (rc=$rc)"
+rm -r "$SANDBOX/build" "$SANDBOX/build.json" "$SANDBOX/temp"; : > "$SANDBOX/build.md"
+
 # control: the same config when the asset cannot be fetched publishes nothing and fails the run
 # ("All builds failed."), which is how an absent file is told apart from a skipped assertion
-( cd "$SANDBOX" && : > build.md && rm -r build build.json temp && E2E_NO_ASSET=1 PATH="$WORK/e2ebin:$PATH" FAKE_PKG=com.eltavine.duckdetector \
+( cd "$SANDBOX" && : > build.md && rm -rf build build.json temp && E2E_NO_ASSET=1 PATH="$WORK/e2ebin:$PATH" FAKE_PKG=com.eltavine.duckdetector \
 	bash scripts/build.sh cfg.toml > e2e2.log 2>&1 ); rc=$?
 [ "$rc" != 0 ] && grep -q "All builds failed" "$SANDBOX/e2e2.log" || fail "e2e control: an unfetchable asset must fail the run (rc=$rc): $(tail -3 "$SANDBOX/e2e2.log")"
 [ -z "$(ls "$SANDBOX/build" 2>/dev/null)" ] || fail "e2e control: nothing may be published when the download failed"
