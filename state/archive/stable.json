@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-07T05:56:24Z"
+    "publishedAt": "2026-10-07T19:12:16Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -354,8 +354,8 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260008",
-      "publishedAt": "2026-10-06T14:45:23Z"
+      "originBuild": "260020",
+      "publishedAt": "2026-10-07T19:11:45Z"
     },
     "warp-morphe-v6.38.9-arm64-v8a.apk": {
       "name": "warp-morphe",
@@ -481,8 +481,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260015",
-      "publishedAt": "2026-10-06T21:15:41Z"
+      "originBuild": "260020",
+      "publishedAt": "2026-10-07T19:11:45Z"
     }
   }
 }
