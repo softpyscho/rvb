@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-06T21:16:04Z"
+    "publishedAt": "2026-10-07T05:56:24Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -28,8 +28,8 @@
       "appliedPatches": [
         "Unlock Premium"
       ],
-      "originBuild": "260015",
-      "publishedAt": "2026-10-06T21:15:41Z"
+      "originBuild": "260017",
+      "publishedAt": "2026-10-07T05:55:57Z"
     },
     "amazon-prime-video-morphe-v3.0.470.1047-arm64-v8a.apk": {
       "name": "amazon-prime-video-morphe",
