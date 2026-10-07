@@ -151,7 +151,8 @@
     "badge-icon": "alarmy",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/sleep-tracker-alarm-clock-by-delightroom/alarmy-challenge-alarm-clock/",
-    "uptodown-dlurl": "https://alarmy.en.uptodown.com/android"
+    "uptodown-dlurl": "https://alarmy.en.uptodown.com/android",
+    "enabled": false
   },
   "WARP": {
     "patches-source": "rushiranpise/morphe-patches",
