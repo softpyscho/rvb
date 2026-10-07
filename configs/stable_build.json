@@ -9,7 +9,8 @@
     "badge-icon": "adobeacrobatreader",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/apryse-software-inc/xodo-pdf-reader-editor",
-    "uptodown-dlurl": "https://xodo-docs.en.uptodown.com/android"
+    "uptodown-dlurl": "https://xodo-docs.en.uptodown.com/android",
+    "enabled": false
   },
   "Amazon-Prime-Video": {
     "patches-source": "hoo-dles/morphe-patches",
@@ -30,7 +31,8 @@
     "app-name": "Bitget",
     "pkg-name": "com.bitget.exchange",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-crypto/",
-    "uptodown-dlurl": "https://bitget.en.uptodown.com/android"
+    "uptodown-dlurl": "https://bitget.en.uptodown.com/android",
+    "enabled": false
   },
   "Stremio": {
     "mirror": true,
@@ -51,7 +53,8 @@
     "app-name": "Mixplorer",
     "pkg-name": "com.mixplorer",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/hootan-parsa/mixplorer-hootanparsa/",
-    "uptodown-dlurl": "https://mixplorer.en.uptodown.com/android"
+    "uptodown-dlurl": "https://mixplorer.en.uptodown.com/android",
+    "enabled": false
   },
   "Mix-Archive": {
     "mirror": true,
@@ -111,7 +114,8 @@
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/true-software-scandinavia-ab/truecaller-caller-id-block/",
     "uptodown-dlurl": "https://truecaller.en.uptodown.com/android",
     "apkpure-dlurl": "https://apkpure.com/truecaller-caller-id-block/com.truecaller",
-    "apkcombo-dlurl": "https://apkcombo.com/truecaller-caller-id-block/com.truecaller"
+    "apkcombo-dlurl": "https://apkcombo.com/truecaller-caller-id-block/com.truecaller",
+    "enabled": false
   },
   "TickTick": {
     "patches-source": "Paresh-Maheshwari/paresh-patches",
@@ -158,7 +162,8 @@
     "badge-icon": "cloudflare",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/cloudflare/1-1-1-1-faster-safer-internet",
-    "uptodown-dlurl": "https://1-1-1-1.en.uptodown.com/android"
+    "uptodown-dlurl": "https://1-1-1-1.en.uptodown.com/android",
+    "enabled": false
   },
   "Splitwise": {
     "patches-source": "rushiranpise/morphe-patches",
@@ -182,6 +187,7 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/oasisfeng/greenify",
     "github-dlurl": "https://github.com/softpyscho/apkforge/releases/tag/com.oasisfeng.greenify",
-    "uptodown-dlurl": "https://greenify.en.uptodown.com/android"
+    "uptodown-dlurl": "https://greenify.en.uptodown.com/android",
+    "enabled": false
   }
 }
