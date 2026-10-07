@@ -31,8 +31,7 @@
     "app-name": "Bitget",
     "pkg-name": "com.bitget.exchange",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-crypto/",
-    "uptodown-dlurl": "https://bitget.en.uptodown.com/android",
-    "enabled": false
+    "uptodown-dlurl": "https://bitget.en.uptodown.com/android"
   },
   "Stremio": {
     "mirror": true,
@@ -139,8 +138,7 @@
     "badge-icon": "x",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/x-corp/twitter",
-    "uptodown-dlurl": "https://twitter.en.uptodown.com/android",
-    "enabled": false
+    "uptodown-dlurl": "https://twitter.en.uptodown.com/android"
   },
   "Alarmy": {
     "patches-source": "rabilrbl/fluffy-patches",
