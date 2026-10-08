@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-07T21:39:08Z"
+    "publishedAt": "2026-10-08T00:17:28Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -28,8 +28,8 @@
       "appliedPatches": [
         "Unlock Premium"
       ],
-      "originBuild": "260022",
-      "publishedAt": "2026-10-07T21:38:51Z"
+      "originBuild": "260024",
+      "publishedAt": "2026-10-08T00:17:10Z"
     },
     "amazon-prime-video-morphe-v3.0.470.1047-arm64-v8a.apk": {
       "name": "amazon-prime-video-morphe",
@@ -96,8 +96,8 @@
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260022",
-      "publishedAt": "2026-10-07T21:38:51Z"
+      "originBuild": "260024",
+      "publishedAt": "2026-10-08T00:17:10Z"
     },
     "mix-archive-v3.24-arm64-v8a.apk": {
       "name": "mix-archive",
@@ -132,8 +132,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260022",
-      "publishedAt": "2026-10-07T21:38:51Z"
+      "originBuild": "260024",
+      "publishedAt": "2026-10-08T00:17:10Z"
     },
     "reddit-morphe-v2026.39.0-arm64-v8a.apk": {
       "name": "reddit-morphe",
@@ -354,8 +354,8 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260022",
-      "publishedAt": "2026-10-07T21:38:51Z"
+      "originBuild": "260024",
+      "publishedAt": "2026-10-08T00:17:10Z"
     },
     "warp-morphe-v6.38.9-arm64-v8a.apk": {
       "name": "warp-morphe",
@@ -379,8 +379,8 @@
         "Disable Analytics / Telemetry",
         "Spoof WARP+ Unlimited UI"
       ],
-      "originBuild": "260022",
-      "publishedAt": "2026-10-07T21:38:51Z"
+      "originBuild": "260024",
+      "publishedAt": "2026-10-08T00:17:10Z"
     },
     "xodo-morphe-v11.2.0-arm64-v8a.apk": {
       "name": "xodo-morphe",
@@ -403,8 +403,8 @@
       "appliedPatches": [
         "Enable Pro"
       ],
-      "originBuild": "260022",
-      "publishedAt": "2026-10-07T21:38:51Z"
+      "originBuild": "260024",
+      "publishedAt": "2026-10-08T00:17:10Z"
     },
     "Duck.Detector-2026.10.06-82566ffa96bb.apk": {
       "name": "duck-detector",
