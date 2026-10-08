@@ -22,7 +22,6 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/instagram/instagram-instagram",
     "uptodown-dlurl": "https://instagram.en.uptodown.com/android",
-    "github-dlurl": "https://github.com/softpyscho/apkforge/releases/tag/com.instagram.android",
-    "enabled": false
+    "github-dlurl": "https://github.com/softpyscho/apkforge/releases/tag/com.instagram.android"
   }
 }
