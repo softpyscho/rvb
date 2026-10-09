@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-09T07:46:23Z"
+    "publishedAt": "2026-10-09T08:00:25Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -28,8 +28,10 @@
       "appliedPatches": [
         "Unlock Premium"
       ],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "cache",
+      "recommendedVersion": "26.32.1"
     },
     "amazon-prime-video-morphe-v3.0.470.1047-arm64-v8a.apk": {
       "name": "amazon-prime-video-morphe",
@@ -54,8 +56,10 @@
         "Rename shared permissions",
         "Skip ads"
       ],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "cache",
+      "recommendedVersion": "3.0.470.1047"
     },
     "bitget-v2.94.3-arm64-v8a.apk": {
       "name": "bitget",
@@ -96,8 +100,10 @@
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "cache",
+      "recommendedVersion": "5.1.1"
     },
     "mix-archive-v3.24-arm64-v8a.apk": {
       "name": "mix-archive",
@@ -114,8 +120,10 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "apkmirror",
+      "recommendedVersion": null
     },
     "mixplorer-v6.71.15-arm64-v8a.apk": {
       "name": "mixplorer",
@@ -132,8 +140,10 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "apkmirror",
+      "recommendedVersion": null
     },
     "reddit-morphe-v2026.39.0-arm64-v8a.apk": {
       "name": "reddit-morphe",
@@ -216,8 +226,10 @@
       "appliedPatches": [
         "Unlock Pro"
       ],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "cache",
+      "recommendedVersion": "26.7.3"
     },
     "stremio-v2.4.0-arm64-v8a.apk": {
       "name": "stremio",
@@ -234,8 +246,10 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "apkmirror",
+      "recommendedVersion": null
     },
     "ticktick-morphe-v8.1.3.3-arm64-v8a.apk": {
       "name": "ticktick-morphe",
@@ -260,8 +274,10 @@
         "Restore reminder alarms",
         "TickTick Premium"
       ],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "cache",
+      "recommendedVersion": "8.1.3.3\n8.0.6.1"
     },
     "twitter-morphe-v12.19.1-release.0-arm64-v8a.apk": {
       "name": "twitter-morphe",
@@ -354,8 +370,10 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "cache",
+      "recommendedVersion": "12.19.1-release.0"
     },
     "warp-morphe-v6.38.9-arm64-v8a.apk": {
       "name": "warp-morphe",
@@ -379,8 +397,10 @@
         "Disable Analytics / Telemetry",
         "Spoof WARP+ Unlimited UI"
       ],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "cache",
+      "recommendedVersion": "6.38.9"
     },
     "xodo-morphe-v11.2.0-arm64-v8a.apk": {
       "name": "xodo-morphe",
@@ -403,8 +423,10 @@
       "appliedPatches": [
         "Enable Pro"
       ],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "cache",
+      "recommendedVersion": "11.2.0"
     },
     "Duck.Detector-2026.10.06-82566ffa96bb.apk": {
       "name": "duck-detector",
@@ -463,8 +485,10 @@
         "Spoof signature",
         "Start as guest"
       ],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "cache",
+      "recommendedVersion": "2026.40.0\n2026.39.0"
     },
     "bitget-v2.94.4-arm64-v8a.apk": {
       "name": "bitget",
@@ -481,8 +505,10 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "apkmirror",
+      "recommendedVersion": null
     },
     "Duck.Detector-2026.10.09-6125c4271db5.apk": {
       "name": "duck-detector",
@@ -499,8 +525,10 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "github",
+      "recommendedVersion": null
     },
     "truecaller-morphe-v26.10.6-arm64-v8a.apk": {
       "name": "truecaller-morphe",
@@ -532,8 +560,10 @@
         "Neutralize third-party SDKs",
         "Truecaller Premium"
       ],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "cache",
+      "recommendedVersion": "26.10.6"
     },
     "battery-guru-morphe-v2.5.0.6-arm64-v8a.apk": {
       "name": "battery-guru-morphe",
@@ -556,8 +586,10 @@
       "appliedPatches": [
         "Unlock PRO"
       ],
-      "originBuild": "260031",
-      "publishedAt": "2026-10-09T07:45:53Z"
+      "originBuild": "260033",
+      "publishedAt": "2026-10-09T07:59:57Z",
+      "apkSource": "cache",
+      "recommendedVersion": "2.5.0.6\n2.5.0.2-beta1"
     }
   }
 }
