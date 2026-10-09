@@ -4,7 +4,7 @@
   "meta": {
     "build": "beta",
     "channel": "beta",
-    "publishedAt": "2026-10-09T08:44:08Z"
+    "publishedAt": "2026-10-09T11:35:24Z"
   },
   "files": {
     "battery-guru-morphe-v2.5.0.2-beta1-arm64-v8a.apk": {
@@ -42,14 +42,13 @@
       "subVariant": null,
       "packageName": "com.instagram.android",
       "patchSources": [
-        "crimera/patches-3.10.0-dev.12.mpp"
+        "crimera/patches-3.10.0-dev.13.mpp"
       ],
       "changelogs": [
-        "https://github.com/crimera/piko/releases/tag/v3.10.0-dev.12"
+        "https://github.com/crimera/piko/releases/tag/v3.10.0-dev.13"
       ],
       "appliedPatches": [
         "Add settings",
-        "Allow user network certificate",
         "Change like animation",
         "Change version code",
         "Copy comment",
@@ -60,13 +59,11 @@
         "Customize navigation bar",
         "Disable Reels scrolling",
         "Disable ads",
-        "Disable analytics",
         "Disable comments",
         "Disable discover people",
         "Disable double tap like",
         "Disable explore",
         "Disable highlights",
-        "Disable screenshot detection",
         "Disable stories",
         "Disable story flipping",
         "Disable swipe to create",
@@ -90,7 +87,6 @@
         "Inbox lock",
         "Limit feed to following profiles",
         "Loop story",
-        "Make ephemeral media permanent",
         "Mark chat as read manually",
         "More options on post",
         "More options on profile",
@@ -103,17 +99,12 @@
         "Save deleted messages",
         "Save media comment",
         "Theme",
-        "Unlock Plus benefits",
         "Unlock developer options",
-        "Unlock employee options",
         "Validate links",
-        "View DMs anonymously",
-        "View live anonymously",
-        "View stories anonymously",
         "View story mentions"
       ],
-      "originBuild": "260036",
-      "publishedAt": "2026-10-09T08:43:53Z",
+      "originBuild": "260037",
+      "publishedAt": "2026-10-09T11:35:10Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "447.0.0.55.81"
     }
