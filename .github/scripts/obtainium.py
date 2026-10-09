@@ -291,11 +291,11 @@ def _vlabel(version):
     return version if version.startswith("v") or not version[:1].isdigit() else f"v{version}"
 
 
-def _version_badge(spec, label):
+def _version_badge(spec, label, name="version"):
     color = spec["color"] if re.fullmatch(r"[0-9A-Fa-f]{6}", spec["color"] or "") else "3e9cfb"
     # _shield_text, not a bare quote(): a dash in the message ("v12.19.1-release.0") would
     # otherwise split it into message and colour in shields.io's path syntax.
-    return f"![version](https://img.shields.io/badge/version-{_shield_text(label)}-{color}?logo=android&logoColor=white)"
+    return f"![{name}](https://img.shields.io/badge/{name}-{_shield_text(label)}-{color}?logo=android&logoColor=white)"
 
 
 def _configured_version_label(spec):
@@ -315,21 +315,20 @@ def version_label(spec, data):
     return _version_badge(spec, _vlabel(known) if known else _configured_version_label(spec))
 
 
-def recommended_badge(spec, data):
-    """The version the patches recommend for this app, as the last build saw it ("Any" when they
-    name none). A build that predates the record, or no build yet, falls back to what the config
-    asks for - the nearest honest answer."""
+def versions_cell(spec, data):
+    """The Version cell of a patched app: two labelled badges in one column, what the patches
+    recommend above what was built. The recommendation is always a version number (or "Any" when
+    the bundle names none) as the last build recorded it - never the config's `auto`, which is a
+    setting, not a version. Where nothing has been recorded yet it says pending."""
     d = data.get(spec["prefix"]) or {}
+    rec = d.get("recommended")
     if d.get("has_record"):
-        rec = d.get("recommended")
-        return _version_badge(spec, _vlabel(rec) if rec else "Any")
-    return _version_badge(spec, _configured_version_label(spec))
-
-
-def built_badge(spec, data):
-    """The version that was actually built and published."""
-    known = (data.get(spec["prefix"]) or {}).get("version")
-    return _version_badge(spec, _vlabel(known)) if known else "*(pending)*"
+        recommended = _version_badge(spec, _vlabel(rec) if rec else "Any", "recommended")
+    else:
+        recommended = "*recommended: pending*"
+    known = d.get("version")
+    built = _version_badge(spec, _vlabel(known), "built") if known else "*built: pending*"
+    return f"{recommended}<br>{built}"
 
 
 def patches_cell(spec, data):
@@ -385,14 +384,14 @@ def _group_header(badge, logo, alt=None):
             f'&logo={logo}&logoColor=white" alt="{alt or badge}">')
 
 
-TABLE_HEAD = ["<div align=\"center\">", "", "| App | Recommended | Built | APK Source | Patches | Obtainium |",
-              "|:---|:-----------:|:-----:|:----------:|:--------|:---------:|"]
+TABLE_HEAD = ["<div align=\"center\">", "", "| App | Version | APK Source | Patches | Obtainium |",
+              "|:---|:-------:|:----------:|:--------|:---------:|"]
 MIRROR_HEAD = ["<div align=\"center\">", "", "| App | Version | APK Source | Obtainium |",
                "|:---|:-------:|:----------:|:---------:|"]
 
 
 def _row(spec, repo, data):
-    return (f"| {app_badge(spec)} | {recommended_badge(spec, data)} | {built_badge(spec, data)} "
+    return (f"| {app_badge(spec)} | {versions_cell(spec, data)} "
             f"| {apk_source(spec, data)} | {patches_cell(spec, data)} | {obtainium_badge_link(spec, repo)} |")
 
 
@@ -403,9 +402,9 @@ def _mirror_row(spec, repo, data):
 
 def render_apps_section(specs, repo, data=None):
     """The apps section of the README: one group per patch source (in config order), then the
-    stock mirrors, each a centred table. Patched apps: App, Recommended (what the patches target),
-    Built (what was published), APK Source (the one used), Patches (with what was not applied),
-    Obtainium. Mirrors have nothing patched or recommended: App, Version, APK Source, Obtainium."""
+    stock mirrors, each a centred table. Patched apps: App, Version (what the patches recommend and
+    what was built, two badges in the one column), APK Source (the one used), Patches (with what was
+    not applied), Obtainium. Mirrors have nothing patched or recommended: App, Version, APK Source, Obtainium."""
     data = data or {}
     groups, mirrors = {}, []
     for spec in specs:
@@ -414,7 +413,7 @@ def render_apps_section(specs, repo, data=None):
         else:
             groups.setdefault((spec["source"], spec["host"]), []).append(spec)
 
-    legend = ("> **Recommended** is the version the patches target; **Built** is the version published "
+    legend = ("> **Version** shows the version the patches *recommend* above the version that was *built* "
               "(they differ when a source no longer offers the recommended one). **APK Source** is where the "
               "stock APK of that build came from. ⚠️ in **Patches** means a patch the build meant to apply was "
               "skipped or failed - open the row to see which and why.")

@@ -316,12 +316,13 @@ class AppsSection(unittest.TestCase):
 
     def test_layout_matches_the_reference(self):
         md = self.section()
-        self.assertIn("| App | Recommended | Built | APK Source | Patches | Obtainium |", md)
-        self.assertIn("|:---|:-----------:|:-----:|:----------:|:--------|:---------:|", md)
+        self.assertIn("| App | Version | APK Source | Patches | Obtainium |", md)
+        self.assertIn("|:---|:-------:|:----------:|:--------|:---------:|", md)
+        self.assertNotIn("| Recommended |", md, "recommended and built share the Version column")
         self.assertIn("| App | Version | APK Source | Obtainium |", md, "the mirrors have no patches column")
         self.assertNotIn("| Arch |", md, "no Arch column anywhere")
-        self.assertEqual(md.count("**Recommended**"), 1, "one legend, above the tables")
-        self.assertLess(md.index("**Recommended**"), md.index("| App |"))
+        self.assertEqual(md.count("**Version** shows"), 1, "one legend, above the tables")
+        self.assertLess(md.index("**Version** shows"), md.index("| App |"))
         self.assertNotIn("Stock Mirror)*", md, "nothing is patched there, so nothing to say about patches")
         self.assertEqual(md.count('<div align="center">'), md.count("</div>"))
         self.assertIn("> **Source:** [`Paresh-Maheshwari/paresh-patches`](https://gitlab.com/Paresh-Maheshwari/paresh-patches) (GitLab)", md)
@@ -337,7 +338,7 @@ class AppsSection(unittest.TestCase):
         for line in md.splitlines():
             if line.startswith("| [![") and "Add_to_Obtainium" in line:
                 cells = len(re.findall(r"(?<!\\)\|", re.sub(r"\([^)]*\)", "", line))) - 1
-                self.assertIn(cells, (4, 6), line[:80])
+                self.assertIn(cells, (4, 5), line[:80])
 
     RECORD = {"has_record": True, "apk_source": "uptodown", "recommended": "2026.39.0", "skipped": [], "failed": [], "excluded": []}
 
@@ -348,7 +349,9 @@ class AppsSection(unittest.TestCase):
         md = self.section(data)
         row = {k: self.row(md, k) for k in ("Reddit", "Twitter", "Truecaller", "Bitget", "Duck-Detector")}
         # patched app with a build: the patches' recommendation and the built version side by side
-        self.assertEqual(row["Reddit"].count("version-v2026.39.0-FF4500"), 2, "Recommended and Built")
+        self.assertIn("recommended-v2026.39.0-FF4500", row["Reddit"])
+        self.assertIn("built-v2026.39.0-FF4500", row["Reddit"])
+        self.assertLess(row["Reddit"].index("recommended-"), row["Reddit"].index("built-"), "recommended above built")
         self.assertIn("<summary><b>3 patches</b></summary><br>`App icon`<br>`Hide ads`<br>`hide ads 2`", row["Reddit"])
         self.assertIn("⚙️ appName=Reddit", row["Reddit"])
         self.assertIn("(https://play.google.com/store/apps/details?id=com.reddit.frontpage)", row["Reddit"])
@@ -358,13 +361,16 @@ class AppsSection(unittest.TestCase):
         self.assertNotIn("`arm64-v8a`", row["Reddit"], "no arch cell")
         # singular noun, and a dash in the version is escaped so it stays in the message
         self.assertIn("<b>1 patch</b>", row["Twitter"])
-        self.assertIn("version-v12.19.1--release.0-000000", row["Twitter"])
-        # no build yet: what the config asks for as the recommendation, honest pending markers elsewhere
-        self.assertIn("version-Auto-0080FF", row["Truecaller"])
-        self.assertEqual(row["Truecaller"].count("*(pending)*"), 2, "Built and APK Source")
+        self.assertIn("built-v12.19.1--release.0-000000", row["Twitter"])
+        # no build yet: "auto" is a setting, not a version, so it is never shown as the recommendation
+        self.assertNotIn("Auto", row["Truecaller"])
+        self.assertIn("*recommended: pending*", row["Truecaller"])
+        self.assertIn("*built: pending*", row["Truecaller"])
+        self.assertIn("*(pending)*", row["Truecaller"], "APK Source")
         self.assertIn("*(Pending first build)*", row["Truecaller"])
         # stock mirror: one version, a source, no patches column at all
         self.assertIn("version-v2.94.3-", row["Bitget"])
+        self.assertNotIn("recommended", row["Bitget"], "nothing to recommend for an unpatched APK")
         self.assertIn("[APKMirror](", row["Bitget"])
         self.assertNotIn("Stock Mirror", row["Bitget"])
         # an app that cannot be a Play listing - a bad package id, or only a GitHub release as its
@@ -388,17 +394,24 @@ class AppsSection(unittest.TestCase):
         self.assertIn("*(not recorded)*", self.row(self.section(legacy, keys=["Instagram"]), "Instagram"))
         self.assertNotIn("[Uptodown](", self.row(self.section(legacy, keys=["Instagram"]), "Instagram"))
 
-    def test_recommended_and_built_versions_are_two_columns(self):
+    def test_recommended_and_built_versions_share_one_column(self):
         differs = {"battery-guru-morphe": dict(self.RECORD, version="2.5.0.2", recommended="2.5.0.6", applied=["P"])}
         row = self.row(self.section(differs, keys=["Battery-Guru"]), "Battery-Guru")
-        self.assertLess(row.index("version-v2.5.0.6-"), row.index("version-v2.5.0.2-"), "Recommended before Built")
-        # the patches name no version: "Any"; a build before the record existed falls back to the config's ask
+        self.assertLess(row.index("recommended-v2.5.0.6-"), row.index("built-v2.5.0.2-"), "recommended above built")
+        cell = row.split(" | ")[1]
+        self.assertIn("recommended-v2.5.0.6", cell)
+        self.assertIn("built-v2.5.0.2", cell)
+        self.assertIn("<br>", cell, "stacked in the one cell")
+        # the patches name no version: "Any" is shown, not a made-up number
         anyv = {"battery-guru-morphe": dict(self.RECORD, version="1.0", recommended="", applied=["P"])}
-        self.assertIn("version-Any-", self.row(self.section(anyv, keys=["Battery-Guru"]), "Battery-Guru"))
+        self.assertIn("recommended-Any-", self.row(self.section(anyv, keys=["Battery-Guru"]), "Battery-Guru"))
+        # a build from before the record existed: never the config's `auto`, say pending instead
         old = {"battery-guru-morphe": {"version": "1.0", "applied": ["P"]}}
         r = self.row(self.section(old, keys=["Battery-Guru"]), "Battery-Guru")
-        self.assertIn("version-Auto-", r)
-        self.assertNotIn("version-Any-", r)
+        self.assertIn("*recommended: pending*", r)
+        self.assertIn("built-v1.0-", r)
+        self.assertNotIn("Auto", r)
+        self.assertNotIn("recommended-Any-", r)
 
     def test_patches_cell_says_what_was_not_applied(self):
         bg = dict(self.RECORD, version="2.5.0.2", recommended="2.5.0.6", applied=[],
@@ -424,11 +437,13 @@ class AppsSection(unittest.TestCase):
         self.assertIn("Excluded by config", cell)
         self.assertNotIn("not applied", cell)
 
-    def test_pre_release_apps_say_so_until_a_build_names_the_version(self):
-        self.assertIn("version-Auto_%28pre--release%29", self.section(keys=["Instagram"]))
-        self.assertNotIn("pre--release", self.section(keys=["Reddit"]), "a stable app must not claim to be a pre-release")
+    def test_an_unbuilt_app_never_shows_the_auto_setting_as_a_version(self):
+        # not built yet: pending, and never "Auto" - the setting is not a version
+        before = self.row(self.section(keys=["Instagram"]), "Instagram")
+        self.assertIn("*built: pending*", before)
+        self.assertNotIn("Auto", before)
         built = {"instagram-morphe": dict(self.RECORD, version="450.0", recommended="450.0", applied=["x"])}
-        self.assertIn("version-v450.0-", self.section(built, keys=["Instagram"]))
+        self.assertIn("built-v450.0-", self.section(built, keys=["Instagram"]))
 
     def test_obtainium_link_is_the_full_app_object_in_the_working_format(self):
         md = self.section(keys=["Reddit"])

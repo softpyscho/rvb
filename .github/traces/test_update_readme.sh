@@ -41,7 +41,7 @@ out=$(run)
 after=$(tip)
 [ "$before" != "$after" ] || fail "the README should have been refreshed: $out"
 new=$(git -C "$WORK/origin.git" show main:README.md)
-grep -q "version-v2026.39.0-" <<<"$new" || fail "the section should carry the published version: $new"
+grep -q "built-v2026.39.0-" <<<"$new" || fail "the section should carry the published version: $new"
 grep -q '<b>2 patches</b>' <<<"$new" && grep -q '`App icon`<br>`Hide ads`' <<<"$new" || fail "the section should list the applied patches, sorted"
 grep -q '^# Title$' <<<"$new" && grep -q '^intro text$' <<<"$new" && grep -q '^outro text$' <<<"$new" || fail "text outside the markers must be untouched"
 grep -q "old table" <<<"$new" && fail "the old section content should be replaced"
@@ -64,7 +64,7 @@ git pull -q --ff-only origin main 2>&1 | quiet; cp "$WORK/new.json" state/archiv
 after=$(tip)
 out=$(run)
 [ "$(tip)" != "$after" ] || fail "a new version must produce a commit: $out"
-git -C "$WORK/origin.git" show main:README.md | grep -q "version-v2026.40.0-" || fail "the newest published version should win"
+git -C "$WORK/origin.git" show main:README.md | grep -q "built-v2026.40.0-" || fail "the newest published version should win"
 [ "$(git -C "$WORK/origin.git" rev-parse main~1)" = "$after" ] || fail "the refresh must build on the previous tip, not replace it"
 
 # control 3: without the markers the step fails loudly instead of rewriting anything
