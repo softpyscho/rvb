@@ -131,8 +131,10 @@ class Obtainium(unittest.TestCase):
     def test_beta_pool_apps_include_prereleases(self):
         specs = {s["key"]: s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
         self.assertTrue(specs["Instagram"]["prerelease"])
-        self.assertTrue(specs["Battery-Guru"]["prerelease"])
-        self.assertFalse(specs["Reddit"]["prerelease"])  # control
+        # Battery Guru is on the stable patches: the beta line of its source is months behind and
+        # supports no current version, so it must not be offered as a pre-release (controls)
+        self.assertFalse(specs["Battery-Guru"]["prerelease"])
+        self.assertFalse(specs["Reddit"]["prerelease"])
         for key in ("Instagram", "Battery-Guru", "Reddit"):
             _, _, st = decode_link(obtainium.redirect_link(obtainium.entry_for_spec(specs[key], REPO)))
             self.assertEqual(st["includePrereleases"], specs[key]["prerelease"], key)
@@ -387,7 +389,8 @@ class SeedConfig(unittest.TestCase):
                 else:
                     self.assertTrue(app.get("patches-source"), f"{key}: patched apps name their source")
                     self.assertNotIn("keep-filename", app)
-        self.assertEqual(set(beta), {"Instagram", "Battery-Guru"})
+        self.assertEqual(set(beta), {"Instagram"})
+        self.assertIn("Battery-Guru", stable)
         self.assertEqual(stable["Reddit"]["included-patches"], "'Custom branding name for Reddit'")
 
     def test_generated_documents_are_in_sync_with_the_config(self):

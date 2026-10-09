@@ -30,3 +30,11 @@ keep-filename = true
 version = "nightly"
 arch = "all"
 github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly"
+
+[Battery-Guru]
+patches-source = "arandomhooman/hoomans-morphe-patches"
+patches-version = "stable"
+pkg-name = "com.paget96.batteryguru"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/paget96/battery-guru-health-saver/"
+uptodown-dlurl = "https://battery-guru.en.uptodown.com/android"
