@@ -3772,7 +3772,9 @@ _resolve_list_and_version() {
 				epr "get_patch_last_supported_ver failed for '$pkg_name'"
 				return 2
 			fi
-			recommended_version="$resolved_version"
+			# the bundle can tie several versions for "most patches supported"; the build takes the
+			# first (newest) and so does the recommendation
+			recommended_version="${resolved_version%%$'\n'*}"
 			# A bundle can also advertise no version at all ("Any" — see
 			# _get_patch_last_supported_ver), which succeeds with empty output.
 			# That is the only case the watcher's recorded version is a fallback
@@ -3807,6 +3809,7 @@ _resolve_list_and_version() {
 		if [ "$version_mode" != auto ] && [ "$PATCHER_HAS_PATCH_LIST" = true ]; then
 			recommended_version=$(get_patch_last_supported_ver "$list_patches" "$pkg_name" \
 				"${args[included_patches]:-}" "${args[excluded_patches]:-}" "${args[exclusive_patches]:-}" "${args[cli_source]:-}" "$cli_jar" "$patches_jar" 2>/dev/null) || recommended_version=""
+			recommended_version="${recommended_version%%$'\n'*}"
 		fi
 	fi
 	return 0

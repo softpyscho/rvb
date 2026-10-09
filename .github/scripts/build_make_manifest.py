@@ -118,7 +118,8 @@ def main():
             # name no version). The three lists appear only when they have something to say.
             if "apk_source" in info:
                 files[fname]["apkSource"] = (info.get("apk_source") or "").strip() or None
-                files[fname]["recommendedVersion"] = (info.get("recommended_version") or "").strip() or None
+                # a bundle can tie several versions; the first listed is the newest, the one the build takes
+                files[fname]["recommendedVersion"] = ((info.get("recommended_version") or "").strip().splitlines() or [""])[0].strip() or None
             for rec_key, out_key in (("skipped_patches", "skippedPatches"), ("failed_patches", "failedPatches"),
                                      ("excluded_patches", "excludedPatches")):
                 if info.get(rec_key):

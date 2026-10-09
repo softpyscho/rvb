@@ -402,6 +402,12 @@ class AppsSection(unittest.TestCase):
         self.assertIn("recommended-v2.5.0.6", cell)
         self.assertIn("built-v2.5.0.2", cell)
         self.assertIn("<br>", cell, "stacked in the one cell")
+        # a manifest from before the fix may hold every tied version: only the newest is shown
+        tied = {"battery-guru-morphe": dict(self.RECORD, version="2.5.0.6", recommended="2.5.0.6\n2.5.0.2-beta1", applied=["P"])}
+        r = self.row(self.section(tied, keys=["Battery-Guru"]), "Battery-Guru")
+        self.assertIn("recommended-v2.5.0.6-", r)
+        self.assertNotIn("%0A", r)
+        self.assertNotIn("2.5.0.2", r)
         # the patches name no version: "Any" is shown, not a made-up number
         anyv = {"battery-guru-morphe": dict(self.RECORD, version="1.0", recommended="", applied=["P"])}
         self.assertIn("recommended-Any-", self.row(self.section(anyv, keys=["Battery-Guru"]), "Battery-Guru"))

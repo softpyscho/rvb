@@ -35,6 +35,11 @@ args[excluded_patches]="'Telemetry' 'Update check'"
 record Truecaller com.truecaller archive 26.10.6 >/dev/null 2>&1
 args[excluded_patches]=""
 
+# 2b. the bundle ties several versions: the record keeps the newest (first) line only
+PATCH_OUTPUT='INFO: Applied: A'
+PATCH_RESULT_FILE="$WORK/tie.json"; echo '{"appliedPatches":["A"],"failedPatches":[]}' > "$PATCH_RESULT_FILE"
+record Tied com.tied archive $'2026.40.0\n2026.39.0' >/dev/null 2>&1
+
 # 3. nothing wrong, nothing recommended (the patches name no version)
 PATCH_OUTPUT='INFO: Applied: Only patch'
 PATCH_RESULT_FILE="$WORK/ok.json"; echo '{"appliedPatches":["Only patch"],"failedPatches":[]}' > "$PATCH_RESULT_FILE"
@@ -61,13 +66,15 @@ jq -e '.["Battery-Guru"].skipped_patches[0].reason | test("incompatible with com
 
 # the manifest: additive keys, lists only when non-empty
 mkdir -p "$WORK/mf/build" "$WORK/mf/temp" && cp "$BUILD_JSON_FILE" "$WORK/mf/build.json"
-for f in battery-guru-morphe-v2.5.0.2-arm64-v8a.apk truecaller-morphe-v2.5.0.2-arm64-v8a.apk plain-morphe-v2.5.0.2-arm64-v8a.apk; do : > "$WORK/mf/build/$f"; done
+for f in tied-morphe-v2.5.0.2-arm64-v8a.apk battery-guru-morphe-v2.5.0.2-arm64-v8a.apk truecaller-morphe-v2.5.0.2-arm64-v8a.apk plain-morphe-v2.5.0.2-arm64-v8a.apk; do : > "$WORK/mf/build/$f"; done
 ( cd "$WORK/mf" && NEXT_VER_CODE=260100 IS_PRERELEASE=false python3 "$REPO_ROOT/.github/scripts/build_make_manifest.py" >/dev/null 2>&1 ) || fail "build_make_manifest.py failed"
 M="$WORK/mf/temp/manifest/build.json"
 mq() { jq -c "$1" "$M"; }
 [ "$(mq '.files["battery-guru-morphe-v2.5.0.2-arm64-v8a.apk"] | [.apkSource, .recommendedVersion, (.skippedPatches|map(.name))]')" = '["uptodown","2.5.0.6",["Unlock PRO"]]' ] || fail "manifest battery guru: $(mq '.files')"
 [ "$(mq '.files["truecaller-morphe-v2.5.0.2-arm64-v8a.apk"] | [.apkSource, .failedPatches, .excludedPatches, has("skippedPatches")]')" = '["archive",["Flaky patch"],["Telemetry","Update check"],false]' ] || fail "manifest truecaller"
 [ "$(mq '.files["plain-morphe-v2.5.0.2-arm64-v8a.apk"] | [.apkSource, .recommendedVersion, has("skippedPatches"), has("failedPatches")]')" = '["cache",null,false,false]' ] || fail "manifest plain: $(mq '.files')"
+
+[ "$(mq '.files["tied-morphe-v2.5.0.2-arm64-v8a.apk"].recommendedVersion')" = '"2026.40.0"' ] || fail "a tie must collapse to the first version: $(mq '.files["tied-morphe-v2.5.0.2-arm64-v8a.apk"].recommendedVersion')"
 
 # a record that predates these fields yields none of the keys (readers treat that as unknown)
 printf '{"Old":{"exts":[".apk"],"name":"old-morphe","arch":"arm64-v8a","version":"1.0","patches":"","changelog":"","package_name":"com.old","display_name":"Old","patches_source":"x/y","brand":"Morphe","variant":"","sub_variant":"","file":"","applied_patches":["A"]}}' > "$WORK/mf/build.json"

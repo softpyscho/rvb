@@ -321,7 +321,8 @@ def versions_cell(spec, data):
     the bundle names none) as the last build recorded it - never the config's `auto`, which is a
     setting, not a version. Where nothing has been recorded yet it says pending."""
     d = data.get(spec["prefix"]) or {}
-    rec = d.get("recommended")
+    # manifests written before 2026-10-09 may hold every tied version, newest first
+    rec = ((d.get("recommended") or "").splitlines() or [""])[0].strip()
     if d.get("has_record"):
         recommended = _version_badge(spec, _vlabel(rec) if rec else "Any", "recommended")
     else:
