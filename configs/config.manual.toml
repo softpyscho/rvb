@@ -17,6 +17,7 @@ pkg-name = "com.truecaller"
 version = "auto"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/true-software-scandinavia-ab/truecaller-caller-id-block/"
 uptodown-dlurl = "https://truecaller.en.uptodown.com/android"
+archive-dlurl = "https://archive.org/download/geologically/apks/com.truecaller"
 apkpure-dlurl = "https://apkpure.com/truecaller-caller-id-block/com.truecaller"
 apkcombo-dlurl = "https://apkcombo.com/truecaller-caller-id-block/com.truecaller"
 
