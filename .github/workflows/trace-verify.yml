@@ -52,5 +52,6 @@ jobs:
           bash .github/traces/test_cleanup_update_branch.sh
           bash .github/traces/test_update_readme.sh
           bash .github/traces/test_build_plan.sh
+          bash .github/traces/test_build_record.sh
           bash .github/traces/test_commit_to_main.sh
           bash .github/traces/test_manifest_scripts.sh

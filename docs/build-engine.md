@@ -176,7 +176,14 @@ than a guess.
 7. **Naming and metadata** — `aapt2`/`aapt` re-reads the patched manifest, so a
    patcher that rewrote the package id is recorded honestly; output is
    `<file-prefix>-v<version>-<arch>.apk`; `write_build_info` appends the record
-   that becomes the release manifest.
+   that becomes the release manifest. The record also carries which download source supplied
+   the stock APK (`apk_source`: written next to the cached file as `<apk>.source` when it is
+   downloaded, so a later cache hit can still say; `cache` when a pre-existing cached file has no
+   such note), the version the patches recommend (`recommended_version`, from the same
+   `get_patch_last_supported_ver` that `version = "auto"` uses, whichever version was asked for),
+   and what was meant to apply but did not: `skipped_patches` (the patcher's own
+   `Skipping "<name>": incompatible with …` lines), `failed_patches` (Morphe's result file) and
+   `excluded_patches` (the config's `excluded-patches`). The README's apps table shows them.
 8. **Module mode** (`build-mode` `module`/`both`) — the `module/` template is
    copied to a scratch dir, `module_config` writes `config`
    (`PKG_NAME`/`PKG_VER`/`MODULE_ARCH`), `module_prop` writes `module.prop` and —

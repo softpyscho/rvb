@@ -9,6 +9,10 @@ A build record may carry `file`, the exact asset name of an artifact that keeps 
 own name (mirror apps with keep-filename); such an entry is matched by that name instead of by
 the <name>-v / <name>-module- prefix, and its arch comes from the record's own fields.
 
+Additive keys per file, from the record's apk_source / recommended_version / skipped_patches /
+failed_patches / excluded_patches: apkSource, recommendedVersion, skippedPatches ([{name, reason}]),
+failedPatches, excludedPatches. See docs/storage-and-branches.md for what each means.
+
 Env:
     NEXT_VER_CODE   release tag / build number (required)
     IS_PRERELEASE   true -> beta channel, else stable
@@ -108,6 +112,17 @@ def main():
                 "originBuild": next_ver_code,
                 "publishedAt": now_iso,
             }
+            # What this build actually used and left out (added 2026-10; older records have none of
+            # these keys, which readers must treat as "unknown"). apkSource: the download source that
+            # supplied the stock APK; recommendedVersion: what the patches recommend (null = they
+            # name no version). The three lists appear only when they have something to say.
+            if "apk_source" in info:
+                files[fname]["apkSource"] = (info.get("apk_source") or "").strip() or None
+                files[fname]["recommendedVersion"] = (info.get("recommended_version") or "").strip() or None
+            for rec_key, out_key in (("skipped_patches", "skippedPatches"), ("failed_patches", "failedPatches"),
+                                     ("excluded_patches", "excludedPatches")):
+                if info.get(rec_key):
+                    files[fname][out_key] = info[rec_key]
 
     manifest = {
         "schema": 1,

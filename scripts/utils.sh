@@ -1104,6 +1104,28 @@ _failed_from_result() {
 	[ -f "$1" ] || return 0
 	jq -r '[.failedPatches[]? | if type=="object" then (.name // .patch // tostring) else . end] | join(", ")' "$1" 2>/dev/null || :
 }
+# The same list as a JSON array (for the build record).
+_failed_json_from_result() {
+	[ -f "$1" ] || return 0
+	jq -c '[.failedPatches[]? | if type=="object" then (.name // .patch // tostring) else . end | select(. != null)]' "$1" 2>/dev/null || :
+}
+# Patches the patcher chose not to apply, as [{"name","reason"}], from its own log. Morphe says
+#   WARNING: Skipping "Unlock PRO": incompatible with com.paget96.batteryguru 2.5.0.2 (supported: ...)
+# for a patch whose target versions do not include the APK it was handed. Nothing else is
+# inferred: a tool that prints no such line yields [].
+_skipped_patches_json() { # $1 = the patcher's output
+	printf '%s\n' "$1" | sed -nE 's/.*Skipping "([^"]+)": *(.*)$/\1\t\2/p' \
+		| jq -R -s -c 'split("\n") | map(select(length > 0) | split("\t") | {name: .[0], reason: (.[1:] | join(" "))}) | unique_by(.name)' 2>/dev/null || echo '[]'
+}
+# Patch names a quoted list from the config ("'a' 'b c'") names, as a JSON array.
+_names_json() { # $1 = list string as written in the config
+	local n out="" 
+	while IFS= read -r n; do
+		n="${n#\'}"; n="${n%\'}"; n="${n#\"}"; n="${n%\"}"
+		[ -n "$n" ] && out+="${n}"$'\n'
+	done <<<"$(list_args "${1//|/ }")"
+	printf '%s' "$out" | jq -R -s -c 'split("\n") | map(select(length > 0)) | unique' 2>/dev/null || echo '[]'
+}
 
 patches_list() {
 	local cache_key="${1}_${2}_${3}_${4}"
@@ -3377,6 +3399,11 @@ write_build_info() {
 	# Exact asset name, only for artifacts that do not follow the <prefix>-v<version>-<arch>
 	# grammar (mirror_rv with keep-filename); empty means "derive it from name/version/arch".
 	local file=${14:-}
+	# Which download source supplied the stock APK, and which version the patches recommend for
+	# this app ("" when they advertise none, or nothing is patched). Both are recorded as the
+	# build actually saw them, so the README can say what was used instead of what is configured.
+	local apk_source=${15:-}
+	local recommended=${16:-}
 	local arch_orig="${args[arch]// /}"
 	if [ "$arch_orig" != "auto" ]; then ext="${arch}${ext}"; arch=""; fi
 	# Applied patches: morphe's -r summary when we have one (it lists every patch
@@ -3405,6 +3432,20 @@ write_build_info() {
 		applied_json=$(printf '%s\n' "$PATCH_OUTPUT" | grep -oP '(?<=INFO: ")[^"\n]+(?=" succeeded)|(?<=INFO: Applied: ).*|(?<=I: Patch \x27)[^\x27]+(?=\x27 loaded)' | jq -R -s -c 'split("\n") | map(select(length > 0))' 2>/dev/null || true)
 	fi
 	[[ "$applied_json" != \[* ]] && applied_json='[]'
+
+	# What the build was meant to apply and did not: skipped by the patcher (no support for this
+	# version), reported failed, or excluded by the config. Recorded, never fatal - but a
+	# patched app that ends up with a skipped patch is worth a visible warning.
+	local skipped_json='[]' failed_json='[]' excluded_json='[]'
+	if [ -n "${PATCH_OUTPUT:-}" ]; then skipped_json=$(_skipped_patches_json "$PATCH_OUTPUT"); fi
+	[ -n "${PATCH_RESULT_FILE:-}" ] && failed_json=$(_failed_json_from_result "$PATCH_RESULT_FILE")
+	[[ "$failed_json" != \[* ]] && failed_json='[]'
+	[[ "$skipped_json" != \[* ]] && skipped_json='[]'
+	if [ -n "${args[excluded_patches]:-}" ]; then excluded_json=$(_names_json "${args[excluded_patches]}"); fi
+	[[ "$excluded_json" != \[* ]] && excluded_json='[]'
+	if [ "$skipped_json" != "[]" ]; then
+		wpr "Patches skipped for '$key' v$version: $(jq -r 'map(.name) | join(", ")' <<<"$skipped_json")"
+	fi
 
 	# A name the config explicitly asked for that the run did not report applying means
 	# the catalog would advertise a patch that is not in the APK: usually the author
@@ -3454,7 +3495,12 @@ write_build_info() {
 		--arg variant "$variant" \
 		--arg sub_variant "$sub_variant" \
 		--arg file "$file" \
+		--arg apk_source "$apk_source" \
+		--arg recommended "$recommended" \
 		--argjson applied "$applied_json" \
+		--argjson skipped "$skipped_json" \
+		--argjson failed "$failed_json" \
+		--argjson excluded "$excluded_json" \
 		'{ ($key): {
 			exts: [$ext],
 			name: $name,
@@ -3469,7 +3515,12 @@ write_build_info() {
 			variant: $variant,
 			sub_variant: $sub_variant,
 			file: $file,
-			applied_patches: $applied
+			apk_source: $apk_source,
+			recommended_version: $recommended,
+			applied_patches: $applied,
+			skipped_patches: $skipped,
+			failed_patches: $failed,
+			excluded_patches: $excluded
 		} }' >"${frag_dir}/${fid}.$$.json"
 }
 
@@ -3493,7 +3544,7 @@ merge_build_info() {
 			if .[$e.key] == null then .[$e.key] = $e.value
 			else
 				.[$e.key].exts = ((.[$e.key].exts + $e.value.exts) | unique) |
-				reduce (["name","arch","version","patches","changelog","package_name","display_name","patches_source","brand","variant","sub_variant","file"][]) as $k (.;
+				reduce (["name","arch","version","patches","changelog","package_name","display_name","patches_source","brand","variant","sub_variant","file","apk_source","recommended_version"][]) as $k (.;
 					if ((.[$e.key][$k] // "") == "") and (($e.value[$k] // "") != "")
 					then .[$e.key][$k] = $e.value[$k] else . end) |
 				if ((.[$e.key].applied_patches | length) == 0) and (($e.value.applied_patches | length) > 0)
@@ -3721,6 +3772,7 @@ _resolve_list_and_version() {
 				epr "get_patch_last_supported_ver failed for '$pkg_name'"
 				return 2
 			fi
+			recommended_version="$resolved_version"
 			# A bundle can also advertise no version at all ("Any" — see
 			# _get_patch_last_supported_ver), which succeeds with empty output.
 			# That is the only case the watcher's recorded version is a fallback
@@ -3749,6 +3801,12 @@ _resolve_list_and_version() {
 			: # Needs latest
 		else
 			resolved_version=$version_mode
+		fi
+		# What the patches themselves recommend, whichever version was asked for: the README shows
+		# it next to the version that was built. Best effort - it is information, not a gate.
+		if [ "$version_mode" != auto ] && [ "$PATCHER_HAS_PATCH_LIST" = true ]; then
+			recommended_version=$(get_patch_last_supported_ver "$list_patches" "$pkg_name" \
+				"${args[included_patches]:-}" "${args[excluded_patches]:-}" "${args[exclusive_patches]:-}" "${args[cli_source]:-}" "$cli_jar" "$patches_jar" 2>/dev/null) || recommended_version=""
 		fi
 	fi
 	return 0
@@ -3943,7 +4001,7 @@ mirror_rv() {
 	fi
 	mv -f "$stock_apk" "${BUILD_DIR}/${out_name}"
 	pr "Mirrored ${table} (unmodified, from ${got_from}): '${BUILD_DIR}/${out_name}'"
-	write_build_info "${table% (*}" "${arch_f}" ".apk" "${app_name_l}" "$version_f" "" "" "${downloaded_pkg:-$pkg_name}" "${app_name}" "" "${brand_val}" "" "" "$kept_file"
+	write_build_info "${table% (*}" "${arch_f}" ".apk" "${app_name_l}" "$version_f" "" "" "${downloaded_pkg:-$pkg_name}" "${app_name}" "" "${brand_val}" "" "" "$kept_file" "$got_from" ""
 	return 0
 }
 
@@ -4137,6 +4195,11 @@ build_rv() {
 
 	local skip_dl_source_check=false
 	local resolved_version=""
+	# Set by _resolve_list_and_version: the version the patches recommend ("" = they name none).
+	local recommended_version=""
+	# The source that supplied the stock APK of the build that finally ran ("cache" when it was
+	# already in the cache from a run that did not record where it came from).
+	local used_source=""
 	local get_latest_ver=false
 	local cli_source_l="${args[cli_source]:-}"
 	cli_source_l="${cli_source_l,,}"
@@ -4610,6 +4673,14 @@ build_rv() {
 					fi
 				fi
 
+				# Remember which source this came from, next to the cached file, so a later build that
+				# finds it in the cache can still say. A tiny sidecar: the cache cleanup only evicts
+				# APK/bundle names, and nothing else reads this directory's other files.
+				if [ -f "$stock_apk" ]; then
+					used_source="$dl_p"
+					printf '%s\n' "$dl_p" > "${stock_apk}.source" 2>/dev/null || :
+				fi
+
 				if [ -f "$stock_apk" ] && [ -n "${UPLOAD_APKS_REPO:-}" ] && [ "$dl_p" != "archive" ] && [ "$dl_p" != "cache_repo" ]; then
 					pr "Uploading newly downloaded APKs to ${UPLOAD_APKS_REPO}..."
 					local _ua_file="$stock_apk" _ua_ok="" _ua_att
@@ -4630,6 +4701,7 @@ build_rv() {
 				fi
 			else
 				pr "Found APK in cache: ${stock_apk}. Skipping download!"
+				if [ -s "${stock_apk}.source" ]; then used_source=$(head -n1 "${stock_apk}.source" | tr -dc 'a-z_'); else used_source=cache; fi
 			fi
 			if [ -n "$_apk_lock_held" ]; then exec 203>&-; fi
 			if [ -f "$stock_apk" ]; then break; fi
@@ -4895,7 +4967,7 @@ build_rv() {
 				cp -f "$patched_apk" "$apk_output"
 			fi
 			pr "Built ${table} (non-root): '${apk_output}'"
-			write_build_info "${table% (*}" "${arch_f}" ".apk" "${file_prefix}" "$version_f" "$patches_ref" "$changelog_url" "$final_pkg_name" "${app_name}" "${args[patches_src]}" "${brand_val}" "${variant_val}" "${sub_variant_val}"
+			write_build_info "${table% (*}" "${arch_f}" ".apk" "${file_prefix}" "$version_f" "$patches_ref" "$changelog_url" "$final_pkg_name" "${app_name}" "${args[patches_src]}" "${brand_val}" "${variant_val}" "${sub_variant_val}" "" "$used_source" "$recommended_version"
 			continue
 		fi
 		local base_template
@@ -4971,7 +5043,7 @@ build_rv() {
 		zip -"$COMPRESSION_LEVEL" -FSqr "${CWD}/${BUILD_DIR}/${module_output}" .
 		popd >/dev/null || :
 		pr "Built ${table} (root): '${BUILD_DIR}/${module_output}'"
-		write_build_info "${table% (*}" "${arch_f}" ".zip" "${file_prefix}" "$version_f" "$patches_ref" "$changelog_url" "$final_pkg_name" "${app_name}" "${args[patches_src]}" "${brand_val}" "${variant_val}" "${sub_variant_val}"
+		write_build_info "${table% (*}" "${arch_f}" ".zip" "${file_prefix}" "$version_f" "$patches_ref" "$changelog_url" "$final_pkg_name" "${app_name}" "${args[patches_src]}" "${brand_val}" "${variant_val}" "${sub_variant_val}" "" "$used_source" "$recommended_version"
 	done
 }
 

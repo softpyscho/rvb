@@ -72,6 +72,15 @@ Per-file entry keys: `name` (file prefix), `version`, `appKey`, `appName`, `arch
 is merged into an archive, which is how the site still links an archived file to
 its build), `publishedAt`.
 
+Added 2026-10 (additive; a file built earlier has none of them, which readers treat as "unknown",
+never as "nothing"): `apkSource` — the download source that supplied the stock APK
+(`archive`, `apkmirror`, `uptodown`, `github`, …, or `cache` when an earlier run's download had no
+record of where it came from); `recommendedVersion` — the version the patch bundle recommends for
+the app (`null`: it names none); and, only when non-empty, `skippedPatches[]` (`{name, reason}`:
+the patcher declined it, typically because it does not support the version that was built),
+`failedPatches[]`, and `excludedPatches[]` (excluded by the config). The README's apps table is the
+reader of these.
+
 The `<arch>` token in an asset filename is frozen grammar (parse it only through
 `.github/scripts/naming.py`). A manifest records exactly the arches a build
 produced, so an app may legitimately list one arch rather than both — the requested

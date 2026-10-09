@@ -85,6 +85,7 @@ describing it. `bash scripts/build.sh clean` resets.
 | Patcher/tool decisions in the engine | `bash .github/traces/trace_runner.sh verify` | offline; stubbed `curl`/`java` + fixtures; runs on push to `build.sh`/`utils.sh`. After an *intentional* argv change: `… capture`, read the diff, commit the goldens |
 | Cache / bundle helpers | `bash .github/traces/test_cache_helpers.sh`, `bash .github/traces/test_bundle_helpers.sh` | same job |
 | Mirrored apps (`mirror_rv`, `mirror`/`keep-filename` parsing) | `bash .github/traces/test_mirror.sh` | same job; fake downloads and a stub `aapt2`, every rejection paired with an accepting control |
+| What a build records about itself (stock-APK source, recommended version, skipped / failed / excluded patches) and how it reaches the manifest | `bash .github/traces/test_build_record.sh` | same job; the real `write_build_info` over a Morphe-shaped log and result file |
 | Which configs a build run covers (`all` → both pools, empty pool left out, typo rejected) | `bash .github/traces/test_build_plan.sh` | same job; offline, jq only |
 | CI's writer to `main` (`commit_to_main.sh`); manifest merge and prune | `bash .github/traces/test_commit_to_main.sh`, `bash .github/traces/test_manifest_scripts.sh` | same job; local bare origin, stub `gh`; includes a human push landing mid-run and loud failures |
 | How a `github` source reports versions (tag vs release-per-package asset names) | `bash .github/traces/test_github_versions.sh` | same job |

@@ -62,6 +62,7 @@ entirely.
 | `appKey`, `appName` | `apps[]` identity | app grouping |
 | `brandKey`, `brandName`, `variant`, `subVariant` | `brands[]`, `variants[]` | variant is `null` for `default` |
 | `appliedPatches[]`, `changelogs[]`, `patchSources[]` | the ref tables above | |
+| `apkSource`, `recommendedVersion`, `skippedPatches[]`, `failedPatches[]`, `excludedPatches[]` | not read | additive keys (2026-10); a consumer that ignores unknown keys is unaffected — see [storage-and-branches.md](storage-and-branches.md) |
 | `originBuild` | build identity for archived files | an archive entry still names the numbered build it came from |
 | `meta.channel`, `meta.kind` | `releaseType`, `isArchive` | `kind: "archive"` ⇒ `isArchive: true` |
 | — (never in the manifest) | `size`, `downloadCount`, download URL | live from the Releases API |
