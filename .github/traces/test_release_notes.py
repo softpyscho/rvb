@@ -294,16 +294,35 @@ class AppsSection(unittest.TestCase):
             "reddit-morphe-v2-arm64-v8a.apk": {"name": "reddit-morphe", "fileType": "APK", "version": "2", "appliedPatches": ["A", "B"], "publishedAt": "2026-02-01T00:00:00Z"},
             "reddit-morphe-module-v9-arm64-v8a.zip": {"name": "reddit-morphe", "fileType": "Module", "version": "9", "appliedPatches": [], "publishedAt": "2027-01-01T00:00:00Z"},
         }))
-        self.assertEqual(data["reddit-morphe"], {"version": "2", "applied": ["A", "B"]})  # not the older, not the module
+        got = data["reddit-morphe"]  # not the older, not the module
+        self.assertEqual((got["version"], got["applied"]), ("2", ["A", "B"]))
+        # a record that predates apkSource says so, instead of passing as "nothing recommended"
+        self.assertFalse(got["has_record"])
+        self.assertEqual((got["apk_source"], got["recommended"], got["skipped"], got["failed"], got["excluded"]), ("", "", [], [], []))
+        new = self.load(self.manifest({"x-v1-arm64-v8a.apk": {
+            "name": "x", "fileType": "APK", "version": "1", "appliedPatches": [], "publishedAt": "2026-03-01T00:00:00Z",
+            "apkSource": "archive", "recommendedVersion": None, "skippedPatches": [{"name": "P", "reason": "incompatible with a.b 1"}],
+            "failedPatches": ["F"], "excludedPatches": ["E"]}}))["x"]
+        self.assertTrue(new["has_record"])
+        self.assertEqual((new["apk_source"], new["recommended"], new["failed"], new["excluded"]), ("archive", "", ["F"], ["E"]))
+        self.assertEqual(new["skipped"][0]["name"], "P")
 
     def section(self, data=None, keys=None):
         specs = [self.SPECS[k] for k in (keys or self.SPECS)]
         return obtainium.render_apps_section(specs, REPO, data or {})
 
+    def row(self, md, key):
+        return next(l for l in md.splitlines() if l.startswith(f"| [![{self.SPECS[key]['display']}]"))
+
     def test_layout_matches_the_reference(self):
         md = self.section()
-        self.assertIn("| App | Arch | Version | APK Source | Patches | Obtainium |", md)
-        self.assertIn("|:---|:----:|:-------:|:----------:|:--------|:---------:|", md)
+        self.assertIn("| App | Recommended | Built | APK Source | Patches | Obtainium |", md)
+        self.assertIn("|:---|:-----------:|:-----:|:----------:|:--------|:---------:|", md)
+        self.assertIn("| App | Version | APK Source | Obtainium |", md, "the mirrors have no patches column")
+        self.assertNotIn("| Arch |", md, "no Arch column anywhere")
+        self.assertEqual(md.count("**Recommended**"), 1, "one legend, above the tables")
+        self.assertLess(md.index("**Recommended**"), md.index("| App |"))
+        self.assertNotIn("Stock Mirror)*", md, "nothing is patched there, so nothing to say about patches")
         self.assertEqual(md.count('<div align="center">'), md.count("</div>"))
         self.assertIn("> **Source:** [`Paresh-Maheshwari/paresh-patches`](https://gitlab.com/Paresh-Maheshwari/paresh-patches) (GitLab)", md)
         self.assertIn("> **Source:** [`MorpheApp/morphe-patches`](https://github.com/MorpheApp/morphe-patches)\n", md)  # GitHub: no suffix
@@ -314,42 +333,102 @@ class AppsSection(unittest.TestCase):
         self.assertEqual(heads[1:-1], sorted(heads[1:-1], key=str.lower), "the other sources A-Z")
         self.assertNotIn("---\n\n---", md)
         self.assertFalse(md.rstrip().endswith("---"), "no trailing separator")
+        # every row has as many cells as its table's header
+        for line in md.splitlines():
+            if line.startswith("| [![") and "Add_to_Obtainium" in line:
+                cells = len(re.findall(r"(?<!\\)\|", re.sub(r"\([^)]*\)", "", line))) - 1
+                self.assertIn(cells, (4, 6), line[:80])
+
+    RECORD = {"has_record": True, "apk_source": "uptodown", "recommended": "2026.39.0", "skipped": [], "failed": [], "excluded": []}
 
     def test_cells(self):
-        data = {"reddit-morphe": {"version": "2026.39.0", "applied": ["Hide ads", "App icon", "hide ads 2"]},
-                "twitter-morphe": {"version": "12.19.1-release.0", "applied": ["Only one"]},
-                "bitget": {"version": "2.94.3", "applied": []}}
+        data = {"reddit-morphe": dict(self.RECORD, version="2026.39.0", applied=["Hide ads", "App icon", "hide ads 2"]),
+                "twitter-morphe": dict(self.RECORD, version="12.19.1-release.0", recommended="12.19.1-release.0", applied=["Only one"], apk_source="apkmirror"),
+                "bitget": {"version": "2.94.3", "applied": [], "has_record": True, "apk_source": "apkmirror"}}
         md = self.section(data)
-        row = {k: next(l for l in md.splitlines() if l.startswith(f"| [![{self.SPECS[k]['display']}]")) for k in ("Reddit", "Twitter", "Truecaller", "Bitget", "Duck-Detector")}
-        # patched app with a build: version shield, sorted dropdown with a count, -O option shown
-        self.assertIn("version-v2026.39.0-FF4500", row["Reddit"])
+        row = {k: self.row(md, k) for k in ("Reddit", "Twitter", "Truecaller", "Bitget", "Duck-Detector")}
+        # patched app with a build: the patches' recommendation and the built version side by side
+        self.assertEqual(row["Reddit"].count("version-v2026.39.0-FF4500"), 2, "Recommended and Built")
         self.assertIn("<summary><b>3 patches</b></summary><br>`App icon`<br>`Hide ads`<br>`hide ads 2`", row["Reddit"])
         self.assertIn("⚙️ appName=Reddit", row["Reddit"])
         self.assertIn("(https://play.google.com/store/apps/details?id=com.reddit.frontpage)", row["Reddit"])
+        # the one source that supplied it, linked to the page the config names - not all of them
+        self.assertIn(f"[Uptodown]({self.SPECS['Reddit']['urls']['uptodown']})", row["Reddit"])
+        self.assertNotIn("[APKMirror](", row["Reddit"])
+        self.assertNotIn("`arm64-v8a`", row["Reddit"], "no arch cell")
         # singular noun, and a dash in the version is escaped so it stays in the message
         self.assertIn("<b>1 patch</b>", row["Twitter"])
         self.assertIn("version-v12.19.1--release.0-000000", row["Twitter"])
-        # no build yet: what the config asks for, and an honest pending marker
+        # no build yet: what the config asks for as the recommendation, honest pending markers elsewhere
         self.assertIn("version-Auto-0080FF", row["Truecaller"])
+        self.assertEqual(row["Truecaller"].count("*(pending)*"), 2, "Built and APK Source")
         self.assertIn("*(Pending first build)*", row["Truecaller"])
-        # stock mirror: no patches by definition; shares the table, not the patch dropdown
-        self.assertIn("*(None - Stock Mirror)*", row["Bitget"])
+        # stock mirror: one version, a source, no patches column at all
         self.assertIn("version-v2.94.3-", row["Bitget"])
+        self.assertIn("[APKMirror](", row["Bitget"])
+        self.assertNotIn("Stock Mirror", row["Bitget"])
         # an app that cannot be a Play listing - a bad package id, or only a GitHub release as its
         # source - links to where the file comes from instead; one with a store source keeps Play
         self.assertIn("play.google.com/store/apps/details?id=com.bitget.exchange", row["Bitget"])
         self.assertNotIn("play.google.com", row["Duck-Detector"])
         self.assertIn("(https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly)", row["Duck-Detector"])
 
-    def test_every_source_is_listed_in_the_engines_order(self):
-        md = self.section(keys=["Instagram"])
-        gh, mirror, uptodown = (md.index(x) for x in ("[GitHub](", "[APKMirror](", "[Uptodown]("))
-        self.assertTrue(gh < mirror < uptodown, "github before apkmirror before uptodown, as DL_SRCS tries them")
+    def test_the_source_cell_cites_only_the_source_used(self):
+        used = {"instagram-morphe": dict(self.RECORD, version="447.0", recommended="447.0", applied=["x"], apk_source="apkmirror")}
+        row = self.row(self.section(used, keys=["Instagram"]), "Instagram")
+        self.assertIn("[APKMirror](", row)
+        self.assertNotIn("[Uptodown](", row)
+        self.assertNotIn("[GitHub](", row)
+        # control: the same app has all three configured, so the single citation is a choice
+        self.assertGreaterEqual(len(self.SPECS["Instagram"]["urls"]), 3)
+        # a source the config has no page for (the cache) is named, not linked; an unknown build says so
+        cached = dict(used["instagram-morphe"], apk_source="cache")
+        self.assertIn("| Cache |", self.row(self.section({"instagram-morphe": cached}, keys=["Instagram"]), "Instagram"))
+        legacy = {"instagram-morphe": {"version": "447.0", "applied": ["x"]}}
+        self.assertIn("*(not recorded)*", self.row(self.section(legacy, keys=["Instagram"]), "Instagram"))
+        self.assertNotIn("[Uptodown](", self.row(self.section(legacy, keys=["Instagram"]), "Instagram"))
+
+    def test_recommended_and_built_versions_are_two_columns(self):
+        differs = {"battery-guru-morphe": dict(self.RECORD, version="2.5.0.2", recommended="2.5.0.6", applied=["P"])}
+        row = self.row(self.section(differs, keys=["Battery-Guru"]), "Battery-Guru")
+        self.assertLess(row.index("version-v2.5.0.6-"), row.index("version-v2.5.0.2-"), "Recommended before Built")
+        # the patches name no version: "Any"; a build before the record existed falls back to the config's ask
+        anyv = {"battery-guru-morphe": dict(self.RECORD, version="1.0", recommended="", applied=["P"])}
+        self.assertIn("version-Any-", self.row(self.section(anyv, keys=["Battery-Guru"]), "Battery-Guru"))
+        old = {"battery-guru-morphe": {"version": "1.0", "applied": ["P"]}}
+        r = self.row(self.section(old, keys=["Battery-Guru"]), "Battery-Guru")
+        self.assertIn("version-Auto-", r)
+        self.assertNotIn("version-Any-", r)
+
+    def test_patches_cell_says_what_was_not_applied(self):
+        bg = dict(self.RECORD, version="2.5.0.2", recommended="2.5.0.6", applied=[],
+                  skipped=[{"name": "Unlock PRO", "reason": "incompatible with com.paget96.batteryguru 2.5.0.2 (supported: com.paget96.batteryguru 2.4.8.1)"}])
+        cell = self.row(self.section({"battery-guru-morphe": bg}, keys=["Battery-Guru"]), "Battery-Guru")
+        self.assertIn("<b>0 patches</b> · ⚠️ 1 not applied", cell)
+        self.assertIn("⚠️ <b>Skipped</b> — `Unlock PRO` (incompatible with v2.5.0.2)", cell)
+        # failed and config-excluded are told apart from skipped
+        mixed = dict(self.RECORD, version="1", applied=["A"], skipped=[{"name": "S", "reason": "incompatible with p 1"}],
+                     failed=["F1", "F2"], excluded=["E"])
+        cell = self.row(self.section({"reddit-morphe": mixed}, keys=["Reddit"]), "Reddit")
+        self.assertIn("<b>1 patch</b> · ⚠️ 3 not applied", cell)
+        self.assertIn("❌ <b>Failed</b> — `F1`, `F2`", cell)
+        self.assertIn("🚫 <b>Excluded by config</b> — `E`", cell)
+        # control: nothing wrong -> no warning at all
+        clean = dict(self.RECORD, version="1", applied=["A"])
+        cell = self.row(self.section({"reddit-morphe": clean}, keys=["Reddit"]), "Reddit")
+        for word in ("not applied", "Skipped", "Failed", "Excluded", "⚠️"):
+            self.assertNotIn(word, cell)
+        # excluding something by choice is not a problem on its own: shown, but not counted as one
+        chosen = dict(self.RECORD, version="1", applied=["A"], excluded=["E"])
+        cell = self.row(self.section({"reddit-morphe": chosen}, keys=["Reddit"]), "Reddit")
+        self.assertIn("Excluded by config", cell)
+        self.assertNotIn("not applied", cell)
 
     def test_pre_release_apps_say_so_until_a_build_names_the_version(self):
         self.assertIn("version-Auto_%28pre--release%29", self.section(keys=["Instagram"]))
         self.assertNotIn("pre--release", self.section(keys=["Reddit"]), "a stable app must not claim to be a pre-release")
-        self.assertIn("version-v450.0-", self.section({"instagram-morphe": {"version": "450.0", "applied": ["x"]}}, keys=["Instagram"]))
+        built = {"instagram-morphe": dict(self.RECORD, version="450.0", recommended="450.0", applied=["x"])}
+        self.assertIn("version-v450.0-", self.section(built, keys=["Instagram"]))
 
     def test_obtainium_link_is_the_full_app_object_in_the_working_format(self):
         md = self.section(keys=["Reddit"])

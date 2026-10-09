@@ -273,30 +273,63 @@ def app_badge(spec):
     return f"[{badge}]({first})" if first else badge
 
 
-def apk_sources(spec):
-    """Where the stock APK comes from: every configured source, in the engine's own order."""
-    if not spec["urls"]:
-        return "N/A"
-    return "<br>".join(f"[{DL_LABEL.get(k, k.title())}]({u})" for k, u in spec["urls"].items())
+def apk_source(spec, data):
+    """Where the stock APK of the latest build came from - the one source that supplied it, linked
+    to the page the config names for it. Not every configured source: those are only fallbacks.
+    Before a build has recorded it, say so rather than list candidates."""
+    d = data.get(spec["prefix"]) or {}
+    used = d.get("apk_source")
+    if not used:
+        return "*(pending)*" if not d else "*(not recorded)*"
+    label = DL_LABEL.get(used, used.replace("_", " ").title())
+    url = spec["urls"].get(used)
+    return f"[{label}]({url})" if url else label
 
 
-def version_label(spec, data):
-    """The version shield: the version last published when a manifest says so, else what the
-    config asks for (Auto / Latest / a pinned version)."""
+def _vlabel(version):
+    """`v` in front of a number only: a nightly's version is the word "nightly"."""
+    return version if version.startswith("v") or not version[:1].isdigit() else f"v{version}"
+
+
+def _version_badge(spec, label):
     color = spec["color"] if re.fullmatch(r"[0-9A-Fa-f]{6}", spec["color"] or "") else "3e9cfb"
-    known = (data.get(spec["prefix"]) or {}).get("version")
-    mode = spec["version_mode"]
-    if known:
-        label = known if known.startswith("v") or not known[:1].isdigit() else f"v{known}"
-    elif mode == "auto":
-        label = "Auto (pre-release)" if spec["prerelease"] else "Auto"
-    elif mode == "latest":
-        label = "Latest (pre-release)" if spec["prerelease"] else "Latest"
-    else:
-        label = mode if not mode[:1].isdigit() else f"v{mode}"
     # _shield_text, not a bare quote(): a dash in the message ("v12.19.1-release.0") would
     # otherwise split it into message and colour in shields.io's path syntax.
     return f"![version](https://img.shields.io/badge/version-{_shield_text(label)}-{color}?logo=android&logoColor=white)"
+
+
+def _configured_version_label(spec):
+    """What the config asks for (Auto / Latest / a pinned version), for an app not built yet."""
+    mode = spec["version_mode"]
+    if mode == "auto":
+        return "Auto (pre-release)" if spec["prerelease"] else "Auto"
+    if mode == "latest":
+        return "Latest (pre-release)" if spec["prerelease"] else "Latest"
+    return mode if not mode[:1].isdigit() else f"v{mode}"
+
+
+def version_label(spec, data):
+    """One version shield: the version last published when a manifest says so, else what the
+    config asks for. Used where there is no patch recommendation to set it against (the mirrors)."""
+    known = (data.get(spec["prefix"]) or {}).get("version")
+    return _version_badge(spec, _vlabel(known) if known else _configured_version_label(spec))
+
+
+def recommended_badge(spec, data):
+    """The version the patches recommend for this app, as the last build saw it ("Any" when they
+    name none). A build that predates the record, or no build yet, falls back to what the config
+    asks for - the nearest honest answer."""
+    d = data.get(spec["prefix"]) or {}
+    if d.get("has_record"):
+        rec = d.get("recommended")
+        return _version_badge(spec, _vlabel(rec) if rec else "Any")
+    return _version_badge(spec, _configured_version_label(spec))
+
+
+def built_badge(spec, data):
+    """The version that was actually built and published."""
+    known = (data.get(spec["prefix"]) or {}).get("version")
+    return _version_badge(spec, _vlabel(known)) if known else "*(pending)*"
 
 
 def patches_cell(spec, data):
@@ -308,13 +341,32 @@ def patches_cell(spec, data):
     options_str = ""
     if options:
         options_str = "<br>⚙️ " + ", ".join(f"{k}={a or b or c}" for k, a, b, c in options)
-    applied = (data.get(spec["prefix"]) or {}).get("applied")
-    if not applied:
+    d = data.get(spec["prefix"]) or {}
+    applied = d.get("applied") or []
+    skipped, failed, excluded = d.get("skipped") or [], d.get("failed") or [], d.get("excluded") or []
+    if not (applied or skipped or failed):
         return f"*(Pending first build)*{options_str}"
     names = sorted(set(applied), key=str.lower)
     noun = "patch" if len(names) == 1 else "patches"
-    listing = "<br>".join(f"`{n}`" for n in names)
-    return f"<details><summary><b>{len(names)} {noun}</b></summary><br>{listing}{options_str}</details>"
+    problems = len(skipped) + len(failed)
+    summary = f"<b>{len(names)} {noun}</b>" + (f" · ⚠️ {problems} not applied" if problems else "")
+    parts = ["<br>".join(f"`{n}`" for n in names)] if names else []
+    # a patch the bundle meant to apply that did not, and why - the point of this column
+    if skipped:
+        parts.append("⚠️ <b>Skipped</b> — " + ", ".join(f"`{x['name']}` ({_short_reason(x.get('reason', ''))})" for x in skipped))
+    if failed:
+        parts.append("❌ <b>Failed</b> — " + ", ".join(f"`{n}`" for n in failed))
+    if excluded:
+        parts.append("🚫 <b>Excluded by config</b> — " + ", ".join(f"`{n}`" for n in excluded))
+    if options_str:
+        parts.append(options_str.removeprefix("<br>"))
+    return f"<details><summary>{summary}</summary><br>{'<br>'.join(parts)}</details>"
+
+
+def _short_reason(reason):
+    """"incompatible with com.pkg 2.5.0.2 (supported: ...)" -> "incompatible with v2.5.0.2"."""
+    m = re.match(r"incompatible with \S+ (\S+)", reason or "")
+    return f"incompatible with {_vlabel(m.group(1))}" if m else (reason or "not applied")[:60]
 
 
 def _source_badge_name(source):
@@ -333,18 +385,27 @@ def _group_header(badge, logo, alt=None):
             f'&logo={logo}&logoColor=white" alt="{alt or badge}">')
 
 
-TABLE_HEAD = ["<div align=\"center\">", "", "| App | Arch | Version | APK Source | Patches | Obtainium |",
-              "|:---|:----:|:-------:|:----------:|:--------|:---------:|"]
+TABLE_HEAD = ["<div align=\"center\">", "", "| App | Recommended | Built | APK Source | Patches | Obtainium |",
+              "|:---|:-----------:|:-----:|:----------:|:--------|:---------:|"]
+MIRROR_HEAD = ["<div align=\"center\">", "", "| App | Version | APK Source | Obtainium |",
+               "|:---|:-------:|:----------:|:---------:|"]
 
 
 def _row(spec, repo, data):
-    return (f"| {app_badge(spec)} | `{spec['arch']}` | {version_label(spec, data)} | {apk_sources(spec)} "
-            f"| {patches_cell(spec, data)} | {obtainium_badge_link(spec, repo)} |")
+    return (f"| {app_badge(spec)} | {recommended_badge(spec, data)} | {built_badge(spec, data)} "
+            f"| {apk_source(spec, data)} | {patches_cell(spec, data)} | {obtainium_badge_link(spec, repo)} |")
+
+
+def _mirror_row(spec, repo, data):
+    return (f"| {app_badge(spec)} | {version_label(spec, data)} | {apk_source(spec, data)} "
+            f"| {obtainium_badge_link(spec, repo)} |")
 
 
 def render_apps_section(specs, repo, data=None):
     """The apps section of the README: one group per patch source (in config order), then the
-    stock mirrors, each a centred table - App, Arch, Version, APK Source, Patches, Obtainium."""
+    stock mirrors, each a centred table. Patched apps: App, Recommended (what the patches target),
+    Built (what was published), APK Source (the one used), Patches (with what was not applied),
+    Obtainium. Mirrors have nothing patched or recommended: App, Version, APK Source, Obtainium."""
     data = data or {}
     groups, mirrors = {}, []
     for spec in specs:
@@ -353,6 +414,10 @@ def render_apps_section(specs, repo, data=None):
         else:
             groups.setdefault((spec["source"], spec["host"]), []).append(spec)
 
+    legend = ("> **Recommended** is the version the patches target; **Built** is the version published "
+              "(they differ when a source no longer offers the recommended one). **APK Source** is where the "
+              "stock APK of that build came from. ⚠️ in **Patches** means a patch the build meant to apply was "
+              "skipped or failed - open the row to see which and why.")
     blocks = []
     # MorpheApp's own bundle first, the others A-Z (the config files are read in file-name order,
     # which would otherwise decide what the reader sees first).
@@ -365,11 +430,11 @@ def render_apps_section(specs, repo, data=None):
         blocks.append("\n".join(lines))
     if mirrors:
         lines = [_group_header("Stock Mirrors / Unpatched APKs", "android"), "",
-                 "> **Source:** Direct stock APK mirrors (Unpatched)", "", *TABLE_HEAD]
-        lines += [_row(m, repo, data) for m in mirrors]
+                 "> **Source:** Direct stock APK mirrors (Unpatched)", "", *MIRROR_HEAD]
+        lines += [_mirror_row(m, repo, data) for m in mirrors]
         lines += ["", "</div>"]
         blocks.append("\n".join(lines))
-    return "\n\n---\n\n".join(blocks)
+    return legend + "\n\n" + "\n\n---\n\n".join(blocks)
 
 
 def load_manifest_data(paths):
@@ -388,7 +453,15 @@ def load_manifest_data(paths):
             key, stamp = entry.get("name") or "", entry.get("publishedAt") or ""
             if key and (key not in best or stamp > best[key][0]):
                 best[key] = (stamp, {"version": entry.get("version") or "",
-                                     "applied": entry.get("appliedPatches") or []})
+                                     "applied": entry.get("appliedPatches") or [],
+                                     # the keys below exist only on builds from 2026-10 on; has_record
+                                     # tells "the build said nothing was recommended" from "no record"
+                                     "has_record": "apkSource" in entry,
+                                     "apk_source": entry.get("apkSource") or "",
+                                     "recommended": entry.get("recommendedVersion") or "",
+                                     "skipped": entry.get("skippedPatches") or [],
+                                     "failed": entry.get("failedPatches") or [],
+                                     "excluded": entry.get("excludedPatches") or []})
     return {k: v for k, (_, v) in best.items()}
 
 
