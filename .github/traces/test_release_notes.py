@@ -77,67 +77,109 @@ class Engine(unittest.TestCase):
 
 
 class Obtainium(unittest.TestCase):
-    def test_deep_link_roundtrip_and_settings(self):
-        entry = obtainium.app_entry("com.x", "X", REPO, obtainium.apk_regex("x-morphe", "arm64-v8a"), prerelease=False)
-        _, got, settings = decode_link(obtainium.redirect_link(entry))
-        self.assertEqual((got["id"], got["url"], got["author"]), ("com.x", f"https://github.com/{REPO}", "softpyscho"))
-        self.assertIs(settings["versionDetection"], False, "release tags are build numbers")
-        self.assertIs(settings["fallbackToOlderReleases"], True)
-        self.assertIs(settings["includePrereleases"], False)
-        self.assertIs(settings["autoApkFilterByArch"], False)
-        # control: the pre-release channel flips exactly that one switch
-        beta = json.loads(obtainium.app_entry("com.x", "X", REPO, "^x$", prerelease=True)["additionalSettings"])
-        self.assertIs(beta["includePrereleases"], True)
+    @staticmethod
+    def url(name, tag="stable"):
+        return f"https://github.com/{REPO}/releases/download/{tag}/{name}"
 
-    def test_each_filter_selects_only_its_own_app(self):
-        """One repository holds every app, so the filter is the whole identification."""
+    def test_deep_link_roundtrip_and_settings(self):
+        lf, ver = obtainium.name_patterns("x-morphe", "arm64-v8a")
+        entry = obtainium.app_entry("com.x", "X", REPO, lf, ver, prerelease=False)
+        _, got, settings = decode_link(obtainium.redirect_link(entry))
+        # HTML source over the rolling archive release: the version is read from the file name,
+        # which the GitHub source (tag or title only) cannot do - it showed the build number
+        self.assertEqual((got["id"], got["author"], got["overrideSource"]), ("com.x", "softpyscho", "HTML"))
+        self.assertEqual(got["url"], f"https://github.com/{REPO}/releases/expanded_assets/stable")
+        self.assertEqual(settings["customLinkFilterRegex"], lf)
+        self.assertEqual((settings["versionExtractionRegEx"], settings["matchGroupToUse"]), (ver, "1"))
+        self.assertIs(settings["versionDetection"], False)
+        self.assertIs(settings["sortByLastLinkSegment"], True, "newest = last by file name")
+        self.assertIs(settings["trackOnly"], False)
+        # control: the pre-release channel changes the page and nothing else
+        beta = obtainium.app_entry("com.x", "X", REPO, lf, ver, prerelease=True)
+        self.assertEqual(beta["url"], f"https://github.com/{REPO}/releases/expanded_assets/beta")
+        self.assertEqual(json.loads(beta["additionalSettings"]), settings)
+
+    def test_each_filter_selects_only_its_own_app_and_reads_its_version(self):
+        """One archive page lists every app, so the filter is the whole identification."""
         specs = obtainium.specs_from_configs(str(CONFIG_PATCHES))
         # add the classic collision: a name that is a prefix of another app's name
         extra = [dict(specs[0], key="WA", prefix="whatsapp", arch="arm64-v8a", mirror=True, keep_filename=False),
                  dict(specs[0], key="WAB", prefix="whatsapp-business", arch="arm64-v8a", mirror=True, keep_filename=False)]
         specs = [s for s in specs if not s["keep_filename"]] + extra
-        files = {s["key"]: f"{s['prefix']}-v1.2.3-{s['arch']}.apk" for s in specs}
+        versions = {s["key"]: f"{i + 1}.2.3-rc.{i}" for i, s in enumerate(specs)}  # dashes and dots in a version
+        files = {s["key"]: self.url(f"{s['prefix']}-v{versions[s['key']]}-{s['arch']}.apk") for s in specs}
         for s in specs:
-            rx = re.compile(obtainium.apk_regex(s["prefix"], s["arch"]))
-            matched = [k for k, f in files.items() if rx.match(f)]
+            lf, ver = obtainium.name_patterns(s["prefix"], s["arch"])
+            matched = [k for k, f in files.items() if re.search(lf, f)]
             self.assertEqual(matched, [s["key"]], f"{s['key']}'s filter matched {matched}")
-        # control: the filter is not simply matching everything / nothing
-        self.assertIsNone(re.compile(obtainium.apk_regex("bitget", "arm64-v8a")).match("bitget-v1-arm-v7a.apk"))
-        self.assertIsNotNone(re.compile(obtainium.apk_regex("bitget", "all")).match("bitget-v1-universal.apk"))
-        self.assertIsNotNone(re.compile(obtainium.exact_regex("Duck.Detector-nightly-all.apk")).match("Duck.Detector-nightly-all.apk"))
-        self.assertIsNone(re.compile(obtainium.exact_regex("Duck.Detector-nightly-all.apk")).match("DuckXDetector-nightly-all.apk"))
+            self.assertEqual(re.search(ver, files[s["key"]]).group(1), versions[s["key"]], s["key"])
+        # controls: the filter is not simply matching everything / nothing
+        lf, _ = obtainium.name_patterns("bitget", "arm64-v8a")
+        self.assertIsNone(re.search(lf, self.url("bitget-v1-arm-v7a.apk")))
+        self.assertIsNone(re.search(lf, self.url("bitget-v1-arm64-v8a.apk.sig")), "anchored at the end")
+        lf, ver = obtainium.name_patterns("bitget", "all")
+        self.assertIsNotNone(re.search(lf, self.url("bitget-v1-universal.apk")))
+        self.assertEqual(re.search(ver, self.url("bitget-v1.5-all.apk")).group(1), "1.5")
+
+    def test_the_newest_file_is_the_one_obtainium_takes(self):
+        """Obtainium sorts the matching links by file name (natural order) and takes the last."""
+        lf, _ = obtainium.name_patterns("xodo-morphe", "arm64-v8a")
+        names = [f"xodo-morphe-v{v}-arm64-v8a.apk" for v in ("9.0.0", "11.2.0", "11.10.0")]
+        def natural(n):
+            return [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", n)]
+        self.assertEqual(sorted(names, key=natural)[-1], "xodo-morphe-v11.10.0-arm64-v8a.apk")
+        self.assertEqual(len([n for n in names if re.search(lf, self.url(n))]), 3)
 
     def test_kept_file_filter_survives_the_next_build(self):
-        """A kept file name embeds a date/hash, so the filter must match the next build's name."""
-        rx = re.compile(obtainium.kept_file_regex("Duck.Detector-2026.10.06-82566ffa96bb.apk"))
-        self.assertIsNotNone(rx.match("Duck.Detector-2026.10.07-0a1b2c3d4e5f.apk"), "next nightly")
-        self.assertIsNone(rx.match("DuckXDetector-2026.10.07-0a1b2c3d4e5f.apk"), "the '.' is literal")
-        self.assertIsNone(rx.match("bitget-v9.1-arm64-v8a.apk"), "another app's file")
-        self.assertIsNone(rx.match("Duck.Detector-2026.10.07-0a1b2c3d4e5f.apk.sig"), "anchored at the end")
-        # control: a name with nothing stable to split on stays exact, so it cannot over-match
-        exact = re.compile(obtainium.kept_file_regex("DuckDetector_nightly_build.apk"))
-        self.assertIsNotNone(exact.match("DuckDetector_nightly_build.apk"))
-        self.assertIsNone(exact.match("DuckDetector_nightly_build2.apk"))
+        """A kept file name embeds a date/hash, so the filter must match the next build's name and
+        read the rest as the version."""
+        lf, ver = obtainium.kept_patterns("Duck.Detector-2026.10.06-82566ffa96bb.apk")
+        nxt = self.url("Duck.Detector-2026.10.07-0a1b2c3d4e5f.apk")
+        self.assertIsNotNone(re.search(lf, nxt), "next nightly")
+        self.assertEqual(re.search(ver, nxt).group(1), "2026.10.07-0a1b2c3d4e5f")
+        self.assertIsNone(re.search(lf, self.url("DuckXDetector-2026.10.07-0a1b2c3d4e5f.apk")), "the '.' is literal")
+        self.assertIsNone(re.search(lf, self.url("bitget-v9.1-arm64-v8a.apk")), "another app's file")
+        self.assertIsNone(re.search(lf, self.url("Duck.Detector-2026.10.07-0a1b2c3d4e5f.apk.sig")), "anchored at the end")
+        # control: a name with nothing stable to split on stays whole, so it cannot over-match, and yields no version
+        lf, ver = obtainium.kept_patterns("DuckDetector_nightly_build.apk")
+        self.assertIsNotNone(re.search(lf, self.url("DuckDetector_nightly_build.apk")))
+        self.assertIsNone(re.search(lf, self.url("DuckDetector_nightly_build2.apk")))
+        self.assertEqual(ver, "")
+        # before the file name is known, the app's own words stand in for the lead
+        lf, ver = obtainium.guessed_kept_patterns("Duck Detector")
+        self.assertEqual(re.search(ver, nxt).group(1), "2026.10.07-0a1b2c3d4e5f")
+        self.assertIsNone(re.search(lf, self.url("bitget-v9.1-arm64-v8a.apk")))
+
+    def test_an_app_that_keeps_its_name_uses_the_published_one_when_known(self):
+        spec = next(s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES)) if s["keep_filename"])
+        known = {spec["prefix"]: {"file": "Odd.Name-2026.10.09-abc.apk"}}
+        lf = json.loads(obtainium.entry_for_spec(spec, REPO, known)["additionalSettings"])["customLinkFilterRegex"]
+        self.assertIsNotNone(re.search(lf, self.url("Odd.Name-2026.10.10-def.apk")))
+        self.assertIsNone(re.search(lf, self.url("Duck.Detector-2026.10.10-def.apk")), "the published name wins over the guess")
+        guess = json.loads(obtainium.entry_for_spec(spec, REPO)["additionalSettings"])["customLinkFilterRegex"]
+        self.assertIsNotNone(re.search(guess, self.url("Duck.Detector-2026.10.10-def.apk")))
 
     def test_release_notes_use_the_stable_filter_for_a_dated_kept_file(self):
         dated = "Duck.Detector-2026.10.06-82566ffa96bb.apk"
         info_map = {"Duck-Detector": dict(FIXTURE["Duck-Detector"], file=dated)}
         md = grn.render(info_map, [dated], ENV)
         link = re.search(r"\((https://apps\.obtainium[^)]+)\)", md).group(1)
-        flt = re.compile(decode_link(link)[2]["apkFilterRegEx"])
-        self.assertIsNotNone(flt.match(dated))
-        self.assertIsNotNone(flt.match("Duck.Detector-2026.10.07-aaaaaaaaaaaa.apk"), "the link must keep working next build")
+        st = decode_link(link)[2]
+        self.assertIsNotNone(re.search(st["customLinkFilterRegex"], self.url(dated)))
+        nxt = self.url("Duck.Detector-2026.10.07-aaaaaaaaaaaa.apk")
+        self.assertIsNotNone(re.search(st["customLinkFilterRegex"], nxt), "the link must keep working next build")
+        self.assertEqual(re.search(st["versionExtractionRegEx"], nxt).group(1), "2026.10.07-aaaaaaaaaaaa")
 
-    def test_beta_pool_apps_include_prereleases(self):
+    def test_beta_pool_apps_read_the_beta_archive(self):
         specs = {s["key"]: s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
         self.assertTrue(specs["Instagram"]["prerelease"])
         # Battery Guru is on the stable patches: the beta line of its source is months behind and
-        # supports no current version, so it must not be offered as a pre-release (controls)
+        # supports no current version, so it is not a pre-release app (controls)
         self.assertFalse(specs["Battery-Guru"]["prerelease"])
         self.assertFalse(specs["Reddit"]["prerelease"])
-        for key in ("Instagram", "Battery-Guru", "Reddit"):
-            _, _, st = decode_link(obtainium.redirect_link(obtainium.entry_for_spec(specs[key], REPO)))
-            self.assertEqual(st["includePrereleases"], specs[key]["prerelease"], key)
+        for key, tag in (("Instagram", "beta"), ("Battery-Guru", "stable"), ("Reddit", "stable")):
+            entry = obtainium.entry_for_spec(specs[key], REPO)
+            self.assertEqual(entry["url"], f"https://github.com/{REPO}/releases/expanded_assets/{tag}", key)
 
     def test_disabled_apps_are_not_offered(self):
         keys = {s["key"] for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
@@ -160,26 +202,31 @@ class ReleaseNotes(unittest.TestCase):
         self.assertIn("* **Reddit** `v2026.40.0`", md)
         self.assertIn("* **Duck Detector** `nightly`", md)  # no "v" in front of a word
         self.assertIn("2 patches applied", md)
-        # every Obtainium link decodes to the right app and a filter matching its release file
+        # every Obtainium link decodes to the right app, a filter matching its release file only,
+        # and a version regex that reads the app's version out of that file's name
         links = re.findall(r"\[[^\]]+\]\((https://apps\.obtainium\.imranr\.dev/redirect\?r=[^)]+)\)", md)
         self.assertEqual(len(links), 4)
         by_id = {}
         for link in links:
             _, entry, st = decode_link(link)
             by_id[entry["id"]] = (entry, st)
-        for pkg, fname in (("com.reddit.frontpage", FIXTURE_FILES[0]), ("com.twitter.android", FIXTURE_FILES[1]),
-                           ("com.bitget.exchange", FIXTURE_FILES[2]), ("com.eltavine.duckdetector", FIXTURE_FILES[3])):
+        for pkg, fname, version in (("com.reddit.frontpage", FIXTURE_FILES[0], "2026.40.0"), ("com.twitter.android", FIXTURE_FILES[1], "11.5"),
+                                    ("com.bitget.exchange", FIXTURE_FILES[2], "9.1"), ("com.eltavine.duckdetector", FIXTURE_FILES[3], "nightly-all")):
             entry, st = by_id[pkg]
-            rx = re.compile(st["apkFilterRegEx"])
-            self.assertEqual([f for f in FIXTURE_FILES if rx.match(f)], [fname], pkg)
-            self.assertIs(st["includePrereleases"], False)
+            urls = [Obtainium.url(f) for f in FIXTURE_FILES]
+            matched = [u for u in urls if re.search(st["customLinkFilterRegex"], u)]
+            self.assertEqual(matched, [Obtainium.url(fname)], pkg)
+            self.assertEqual(entry["overrideSource"], "HTML")
+            self.assertTrue(entry["url"].endswith("/expanded_assets/stable"), entry["url"])
+            if st["versionExtractionRegEx"] and pkg != "com.eltavine.duckdetector":
+                self.assertEqual(re.search(st["versionExtractionRegEx"], Obtainium.url(fname)).group(1), version, pkg)
 
     def test_prerelease_build_is_flagged_and_links_include_prereleases(self):
         md = self.render(env=dict(ENV, IS_PRERELEASE="true"))
         self.assertIn("pre--release", md)
         self.assertIn("[!WARNING]", md)
         link = re.search(r"\((https://apps\.obtainium[^)]+)\)", md).group(1)
-        self.assertIs(decode_link(link)[2]["includePrereleases"], True)
+        self.assertTrue(decode_link(link)[1]["url"].endswith("/expanded_assets/beta"), "a pre-release build reads the beta archive")
         stable = self.render()  # control
         self.assertNotIn("[!WARNING]", stable)
 
@@ -204,9 +251,9 @@ class ReleaseNotes(unittest.TestCase):
         self.assertIn("[arm64](", md)
         self.assertIn("[arm-v7a](", md)
         links = re.findall(r"\((https://apps\.obtainium[^)]+)\)", md)
-        filters = [decode_link(l)[2]["apkFilterRegEx"] for l in links]
+        filters = [decode_link(l)[2]["customLinkFilterRegex"] for l in links]
         self.assertEqual(len(filters), 2)
-        self.assertEqual(sorted(re.compile(f).match(fn) is not None for f in filters for fn in files).count(True), 2)
+        self.assertEqual(sorted(re.search(f, Obtainium.url(fn)) is not None for f in filters for fn in files).count(True), 2)
 
     def test_app_without_files_is_left_out(self):
         md = self.render(FIXTURE, FIXTURE_FILES[:1])
@@ -459,11 +506,12 @@ class AppsSection(unittest.TestCase):
         self.assertEqual(set(entry), {"id", "url", "author", "name", "installedVersion", "latestVersion", "apkUrls", "otherAssetUrls",
                                       "preferredApkIndex", "additionalSettings", "lastUpdateCheck", "pinned", "categories",
                                       "releaseDate", "changeLog", "overrideSource", "allowIdChange", "pendingRepoRenameUrl"})
-        self.assertEqual((entry["id"], entry["url"]), ("com.reddit.frontpage", f"https://github.com/{REPO}"))
+        self.assertEqual((entry["id"], entry["url"]), ("com.reddit.frontpage", f"https://github.com/{REPO}/releases/expanded_assets/stable"))
+        self.assertEqual(entry["overrideSource"], "HTML")
         self.assertIs(settings["versionDetection"], False)
         # parentheses are encoded so they cannot end a Markdown link early - tested on an entry that has
         # some (an `all` arch filter and a name with a bracketed word), since Reddit's has none
-        paren = obtainium.redirect_link(obtainium.app_entry("com.x", "X (beta)", REPO, obtainium.apk_regex("x", "all")))
+        paren = obtainium.redirect_link(obtainium.app_entry("com.x", "X (beta)", REPO, *obtainium.name_patterns("x", "all")))
         self.assertNotIn("(", paren.split("?r=", 1)[1])
         self.assertNotIn(")", paren.split("?r=", 1)[1])
         self.assertEqual(decode_link(paren)[1]["name"], "X (beta)", "and they decode back")
@@ -495,7 +543,8 @@ class SeedConfig(unittest.TestCase):
 
     def test_generated_documents_are_in_sync_with_the_config(self):
         specs = obtainium.specs_from_configs(str(CONFIG_PATCHES))
-        expected_json = json.dumps(obtainium.import_document(specs, REPO), indent=2, ensure_ascii=False) + "\n"
+        data = obtainium.load_manifest_data([str(ROOT / "state" / "archive" / "stable.json"), str(ROOT / "state" / "archive" / "beta.json")])
+        expected_json = json.dumps(obtainium.import_document(specs, REPO, data), indent=2, ensure_ascii=False) + "\n"
         self.assertEqual((ROOT / "obtainium-apps.json").read_text(encoding="utf-8"), expected_json,
                          "obtainium-apps.json is stale: run .github/scripts/obtainium.py (see OBTAINIUM.md footer)")
         self.assertEqual((ROOT / "OBTAINIUM.md").read_text(encoding="utf-8"), obtainium.obtainium_page(specs, REPO),

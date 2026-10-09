@@ -1,29 +1,31 @@
 #!/usr/bin/env python3
 """Obtainium entries for this repository's releases — one definition, three consumers.
 
-Obtainium tracks a GitHub repository, not an app: every app here lives in the same
-repository, so each one needs its own APK filter regex and a few settings that make the
-build-number release tags (`260142`) work. This module is the single place those settings
-and the filter live. It is imported by
+Obtainium tracks a source, not an app: every app here lives in the same repository, so each one
+needs its own link filter and a few settings that make a shared place work. This module is the
+single place those settings live. It is imported by
 
   * generate_release_notes.py  per-app links inside each release body (exact file names)
   * obtainium.py (CLI below)   OBTAINIUM.md, the README app table and the importable
                                obtainium-apps.json (names derived from the TOML config)
 
-Why the settings are what they are:
+Why the entries are what they are:
 
-  versionDetection = false    Release tags are build numbers, not app versions. With
-                              Obtainium's default "compare against the installed
-                              versionName" the two never match, so the app would show an
-                              update forever. Obtainium records the tag it installed and
-                              compares tags instead.
-  fallbackToOlderReleases     A build only contains the apps that changed, so the newest
-                              release usually has no APK for a given app; Obtainium walks
-                              back to the newest release that does.
-  includePrereleases          Only for apps built in the beta pool, whose releases GitHub
-                              marks as pre-releases.
-  apkFilterRegEx              `^<file-prefix>-v.+-<arch>\\.apk$`, the asset grammar
-                              documented in docs/storage-and-branches.md.
+  HTML source on the archive    Obtainium's GitHub source can only call a release by its tag or
+  release's asset list          title, and here those are build numbers (`260035`) - an update
+  (`releases/expanded_assets/   read "260035", not "11.2.0". The HTML source reads the version out
+  stable|beta`)                 of the file name instead. That page is the rolling `stable` /
+                              `beta` archive, which holds the newest files of every app whichever
+                              build made them (a build only contains the apps that changed), and
+                              is plain web HTML with no API rate limit.
+  customLinkFilterRegex       `/<file-prefix>-v[^/]+-<arch>\\.apk$`, the asset grammar documented
+                              in docs/storage-and-branches.md, matched against the whole link.
+  versionExtractionRegEx      `/<file-prefix>-v(.+)-<arch>\\.apk$`, group 1 = the app's version.
+  sortByLastLinkSegment       Obtainium sorts the matching links by file name and takes the last,
+                              i.e. the highest version.
+  versionDetection = false    Obtainium records the version it extracted rather than comparing it
+                              with what the phone reports (a patch may rewrite versionName).
+  `beta` page for 🧪 apps      apps built in the beta pool are archived in the `beta` release.
 
 Stdlib only. The CLI imports compile_patch_configs for the pool routing rules rather than
 re-implementing them.
@@ -52,47 +54,83 @@ def regex_escape(text):
     return re.sub(r"([.^$*+?()\[\]{}|\\])", r"\\\1", text)
 
 
-def apk_regex(prefix, arch):
-    """Filter for `<prefix>-v<version>-<arch>.apk`; `all` also accepts the universal alias."""
-    arch_re = "(all|universal)" if arch in ("all", "universal") else regex_escape(arch)
-    return f"^{regex_escape(prefix)}-v.+-{arch_re}\\.apk$"
+def archive_tag(prerelease):
+    """The rolling archive release an app's newest file lives in: `beta` for the pre-release
+    channel, `stable` otherwise. Each keeps the newest versions of every app, whichever build
+    produced them."""
+    return "beta" if prerelease else "stable"
 
 
-def exact_regex(file_name):
-    """Filter for one file that keeps its source's own name (mirror + keep-filename)."""
-    return f"^{regex_escape(file_name)}$"
+def archive_page(repo, prerelease):
+    """The page Obtainium reads: GitHub's asset list of the archive release (plain HTML, no API
+    token or rate limit; `/releases/expanded_assets/<tag>` is what the release page itself loads)."""
+    return f"https://github.com/{repo}/releases/expanded_assets/{archive_tag(prerelease)}"
 
 
-def kept_file_regex(file_name):
-    """Filter for a file that keeps its source's own name (mirror + keep-filename).
+def _arch_re(arch):
+    return "(all|universal)" if arch in ("all", "universal") else regex_escape(arch)
 
-    Such names usually embed what changes from build to build - a date, a hash, a version
-    (`Duck.Detector-2026.10.06-82566ffa96bb.apk`) - so matching the published name exactly would
-    never match the next build. The stable lead is kept (everything before the first `-` that is
-    followed by a digit) and the rest may vary. A name with no such split stays exact."""
+
+def name_patterns(prefix, arch):
+    """(link filter, version regex) for `<prefix>-v<version>-<arch>.apk`. Both run against the
+    decoded link (the whole URL), so they start at the `/` before the file name; the version
+    regex captures the app's own version out of the file name."""
+    return (f"/{regex_escape(prefix)}-v[^/]+-{_arch_re(arch)}\\.apk$",
+            f"/{regex_escape(prefix)}-v(.+)-{_arch_re(arch)}\\.apk$")
+
+
+def kept_lead(file_name):
+    """The stable lead of a name that keeps its source's own spelling: everything before the first
+    `-` followed by a digit (`Duck.Detector-2026.10.06-82566ffa96bb.apk` -> `Duck.Detector`), or
+    None when the name has nothing to split on."""
     m = re.match(r"^(.+?)-(?=\d)", file_name)
-    if m and file_name.lower().endswith(".apk"):
-        return f"^{regex_escape(m.group(1))}-.+\\.apk$"
-    return exact_regex(file_name)
+    return m.group(1) if m and file_name.lower().endswith(".apk") else None
 
 
-def additional_settings(apk_filter, prerelease):
-    # Every key Obtainium's GitHub source reads is written, so an import is deterministic
-    # instead of inheriting whatever default the installed Obtainium version has.
+def kept_patterns(file_name):
+    """(link filter, version regex) for a file that keeps its source's own name (mirror +
+    keep-filename). Such names embed what changes per build - a date, a hash - so only the lead is
+    matched and the rest is the version. A name with no lead is matched whole and yields no version
+    (Obtainium then falls back to its pseudo-version)."""
+    lead = kept_lead(file_name)
+    if lead:
+        return f"/{regex_escape(lead)}-[^/]+\\.apk$", f"/{regex_escape(lead)}-(.+)\\.apk$"
+    return f"/{regex_escape(file_name)}$", ""
+
+
+def guessed_kept_patterns(name):
+    """Same, before the file name is known: the app's own words with any separator the source may
+    have used between them (`Duck Detector` -> `Duck[._-]?Detector`)."""
+    words = re.findall(r"[A-Za-z0-9]+", name) or [name]
+    lead = "[._-]?".join(regex_escape(w) for w in words)
+    return f"/{lead}-[^/]+\\.apk$", f"/{lead}-(.+)\\.apk$"
+
+
+def html_settings(link_filter, version_re):
+    """Obtainium's HTML-source settings. The GitHub source can only call a release by its tag or
+    title - here a build number (`260035`) - so an update would read "260035". The HTML source
+    reads the version out of the file name instead. Every key it reads is written (a deterministic
+    import) and the shape is the one a working HTML entry of a sibling project carries."""
     return {
-        "includePrereleases": bool(prerelease),
-        "fallbackToOlderReleases": True,
-        "filterReleaseTitlesByRegEx": "",
-        "filterReleaseNotesByRegEx": "",
-        "verifyLatestTag": False,
-        "dontSortReleasesList": False,
-        "useLatestAssetDateAsReleaseDate": False,
+        "intermediateLink": [],
+        "customLinkFilterRegex": link_filter,
+        "filterByLinkText": False,
+        "matchLinksOutsideATags": False,
+        "skipSort": False,
+        "reverseSort": False,
+        "sortByLastLinkSegment": True,
+        "versionExtractWholePage": False,
+        "requestHeader": [{"requestHeader": "User-Agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 "
+                                            "(KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"}],
+        "defaultPseudoVersioningMethod": "partialAPKHash",
         "trackOnly": False,
-        "versionExtractionRegEx": "",
-        "matchGroupToUse": "",
+        "versionExtractionRegEx": version_re,
+        "matchGroupToUse": "1" if version_re else "",
+        # off: the version Obtainium records is the one it extracted, so there is nothing to
+        # reconcile with what the phone reports (a patch may rewrite its versionName)
         "versionDetection": False,
         "useVersionCodeAsOSVersion": False,
-        "apkFilterRegEx": apk_filter,
+        "apkFilterRegEx": "",
         "invertAPKFilter": False,
         "autoApkFilterByArch": False,
         "appName": "",
@@ -106,17 +144,17 @@ def additional_settings(apk_filter, prerelease):
     }
 
 
-def app_entry(package, name, repo, apk_filter, prerelease=False):
+def app_entry(package, name, repo, link_filter, version_re, prerelease=False):
     """One app as Obtainium's own export/deep link spells it.
 
     The whole object is written, not just the fields that matter here: Obtainium reads an app
     back with every one of these keys (latestVersion, apkUrls, pinned, ... are not optional on
-    import), and the shape below is the one a working deep link of a sibling project carries.
-    `additionalSettings` is a JSON *string* inside the JSON, which is how Obtainium stores it."""
+    import). `additionalSettings` is a JSON *string* inside the JSON, which is how Obtainium
+    stores it. `overrideSource: HTML` is what makes the app use the HTML source for a github.com URL."""
     owner = repo.split("/")[0]
     return {
         "id": package,
-        "url": f"https://github.com/{repo}",
+        "url": archive_page(repo, prerelease),
         "author": owner,
         "name": name,
         "installedVersion": "",
@@ -124,13 +162,13 @@ def app_entry(package, name, repo, apk_filter, prerelease=False):
         "apkUrls": "[]",
         "otherAssetUrls": "[]",
         "preferredApkIndex": 0,
-        "additionalSettings": json.dumps(additional_settings(apk_filter, prerelease), separators=(",", ":")),
+        "additionalSettings": json.dumps(html_settings(link_filter, version_re), separators=(",", ":")),
         "lastUpdateCheck": None,
         "pinned": False,
         "categories": [],
         "releaseDate": None,
         "changeLog": None,
-        "overrideSource": None,
+        "overrideSource": "HTML",
         "allowIdChange": False,
         "pendingRepoRenameUrl": None,
     }
@@ -223,18 +261,19 @@ def specs_from_configs(patches_dir):
     return specs
 
 
-def entry_for_spec(spec, repo):
+def entry_for_spec(spec, repo, data=None):
+    """The Obtainium entry of one configured app. `data` (load_manifest_data) supplies the real
+    file name of an app that keeps its source's own - the lead of it is stable across builds."""
     if spec["keep_filename"]:
-        # The asset's own name is only known at build time. Package id first is how the
-        # `github` source selects release files (see dl_github), so it is the best static guess.
-        apk_filter = f"^{regex_escape(spec['package'])}[-._].*\\.apk$"
+        known = ((data or {}).get(spec["prefix"]) or {}).get("file")
+        link_filter, version_re = kept_patterns(known) if known else guessed_kept_patterns(spec["name"])
     else:
-        apk_filter = apk_regex(spec["prefix"], spec["arch"])
-    return app_entry(spec["package"], spec["display"], repo, apk_filter, spec["prerelease"])
+        link_filter, version_re = name_patterns(spec["prefix"], spec["arch"])
+    return app_entry(spec["package"], spec["display"], repo, link_filter, version_re, spec["prerelease"])
 
 
-def import_document(specs, repo):
-    return {"apps": [entry_for_spec(s, repo) for s in specs if s["package"]]}
+def import_document(specs, repo, data=None):
+    return {"apps": [entry_for_spec(s, repo, data) for s in specs if s["package"]]}
 
 
 def _shield_text(text):
@@ -250,9 +289,9 @@ STORE_SOURCES = {"apkmirror", "uptodown", "apkpure", "apkcombo"}  # sources that
 _PLAY_ID = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$")
 
 
-def obtainium_badge_link(spec, repo):
+def obtainium_badge_link(spec, repo, data=None):
     """The purple "Add to Obtainium" badge, linking to this app's redirect link."""
-    return f"[{OBTAINIUM_BADGE}]({redirect_link(entry_for_spec(spec, repo))})"
+    return f"[{OBTAINIUM_BADGE}]({redirect_link(entry_for_spec(spec, repo, data))})"
 
 
 def app_badge(spec):
@@ -393,12 +432,12 @@ MIRROR_HEAD = ["<div align=\"center\">", "", "| App | Version | APK Source | Obt
 
 def _row(spec, repo, data):
     return (f"| {app_badge(spec)} | {versions_cell(spec, data)} "
-            f"| {apk_source(spec, data)} | {patches_cell(spec, data)} | {obtainium_badge_link(spec, repo)} |")
+            f"| {apk_source(spec, data)} | {patches_cell(spec, data)} | {obtainium_badge_link(spec, repo, data)} |")
 
 
 def _mirror_row(spec, repo, data):
     return (f"| {app_badge(spec)} | {version_label(spec, data)} | {apk_source(spec, data)} "
-            f"| {obtainium_badge_link(spec, repo)} |")
+            f"| {obtainium_badge_link(spec, repo, data)} |")
 
 
 def render_apps_section(specs, repo, data=None):
@@ -447,12 +486,13 @@ def load_manifest_data(paths):
                 files = (json.load(f) or {}).get("files") or {}
         except (OSError, ValueError):
             continue
-        for entry in files.values():
+        for file_name, entry in files.items():
             if entry.get("fileType") != "APK":
                 continue
             key, stamp = entry.get("name") or "", entry.get("publishedAt") or ""
             if key and (key not in best or stamp > best[key][0]):
                 best[key] = (stamp, {"version": entry.get("version") or "",
+                                     "file": file_name,
                                      "applied": entry.get("appliedPatches") or [],
                                      # the keys below exist only on builds from 2026-10 on; has_record
                                      # tells "the build said nothing was recommended" from "no record"
@@ -499,7 +539,8 @@ def obtainium_page(specs, repo):
         "",
         "1. Install [Obtainium](https://github.com/ImranR98/Obtainium/releases/latest).",
         "2. Tap the **Add to Obtainium** badge next to an app below (open this page on the phone), then **Add** in Obtainium.",
-        "3. Obtainium installs the newest build of *that app only* and keeps it updated.",
+        "3. Obtainium installs the newest build of *that app only* and keeps it updated, showing the app's own "
+        "version (e.g. `11.2.0`) in its update list.",
         "",
         "Or add everything at once: Obtainium → **Import/Export** → **Import from file**, "
         f"and pick [`obtainium-apps.json`](https://raw.githubusercontent.com/{repo}/main/obtainium-apps.json).",
@@ -511,15 +552,20 @@ def obtainium_page(specs, repo):
         "## What the one-tap links set",
         "",
         "Every app lives in the same repository, so each link carries the settings Obtainium needs to "
-        "tell them apart. You can check or change them under the app's ⚙ settings in Obtainium.",
+        "tell them apart and to read each app's real version. You can check or change them under the "
+        "app's ⚙ settings in Obtainium.",
         "",
         "| Setting | Value | Why |",
         "|:--|:--|:--|",
-        "| Source | GitHub · `https://github.com/" + repo + "` | the numbered releases (`260142`, …) hold the files |",
-        "| APK filter (regex) | `^<app>-v.+-<arch>\\.apk$` | picks one app out of a release that holds many |",
-        "| Standard version detection | **off** | release tags are build numbers, not app versions; with it on, Obtainium would offer the same update forever |",
-        "| Fall back to older releases | on | a build only contains the apps that changed |",
-        "| Include pre-releases | only for 🧪 apps | beta-channel builds are published as GitHub pre-releases |",
+        "| Source | **HTML** · `https://github.com/" + repo + "/releases/expanded_assets/stable` (`beta` for 🧪 apps) | "
+        "the rolling archive release always lists the newest files of *every* app, whichever build made them; "
+        "it is plain web HTML, so there is no API rate limit |",
+        "| Link filter (regex) | `/<app>-v[^/]+-<arch>\\.apk$` | picks one app's file out of the list |",
+        "| Version (regex, group 1) | `/<app>-v(.+)-<arch>\\.apk$` | the version comes from the file name, so the update "
+        "list shows `11.2.0` and not the build number (`260035`) |",
+        "| Sort | by file name | the highest version is taken |",
+        "| Standard version detection | **off** | Obtainium records the version it extracted; a patch may rewrite what "
+        "the phone reports as the app's version |",
         "",
         "## Good to know",
         "",
@@ -532,12 +578,13 @@ def obtainium_page(specs, repo):
         "follow. They only appear in a release when the vendor ships a new version.",
         "- **Stock apps from a store are re-hosted, not re-signed**, unless the store only offers a split bundle; "
         "see [CONFIG.md](CONFIG.md#mirrored-apps).",
-        "- An app that keeps its source's own file name (`keep-filename`) uses a best-guess filter "
-        "(`^<package>[-._].*\\.apk$`) here, because the name is only known once it is built; every release's "
-        "own 🔔 link carries the exact name, and you can adjust the filter in Obtainium.",
+        "- **Only the newest two versions of an app are kept** in the archive, so an app that is rebuilt often "
+        "(a nightly) always has its latest file there. An app whose file name has no version in it "
+        "(`keep-filename`) is matched by the lead of its name and shows the rest (a date and hash) as its version.",
         "",
         "<sub>Regenerate with <code>python3 .github/scripts/obtainium.py --configs configs/patches --repo "
-        + repo + " --page OBTAINIUM.md --json obtainium-apps.json</code></sub>",
+        + repo + " --page OBTAINIUM.md --json obtainium-apps.json --readme README.md "
+        "--manifest state/archive/stable.json --manifest state/archive/beta.json</code></sub>",
         "",
     ]
     return "\n".join(lines)
@@ -572,9 +619,10 @@ def main(argv=None):
     specs = specs_from_configs(args.configs)
     if not specs:
         raise SystemExit(f"no enabled apps found under {args.configs}")
+    data = load_manifest_data(args.manifest)
     if args.json:
         with open(args.json, "w", encoding="utf-8", newline="\n") as f:
-            json.dump(import_document(specs, args.repo), f, indent=2, ensure_ascii=False)
+            json.dump(import_document(specs, args.repo, data), f, indent=2, ensure_ascii=False)
             f.write("\n")
     if args.page:
         with open(args.page, "w", encoding="utf-8", newline="\n") as f:
@@ -583,7 +631,7 @@ def main(argv=None):
         with open(args.readme, encoding="utf-8") as f:
             text = f.read()
         with open(args.readme, "w", encoding="utf-8", newline="\n") as f:
-            f.write(update_readme(text, specs, args.repo, load_manifest_data(args.manifest)))
+            f.write(update_readme(text, specs, args.repo, data))
     print(f"{len(specs)} app(s): " + ", ".join(s["display"] for s in specs))
 
 

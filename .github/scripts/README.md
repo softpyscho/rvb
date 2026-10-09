@@ -32,7 +32,7 @@ Env: `NEXT_VER_CODE` (release tag), `IS_PRERELEASE` (→ channel `beta`/`stable`
 ### `generate_release_notes.py`
 Writes `build.md`, the numbered release's body, from `build.json` + `build/` at the end of
 `build.sh`: apps grouped by patch source (mirrored apps last), per-arch download links, an
-applied-patch list per app and a per-app Obtainium link whose filter selects exactly that file (for an app that keeps its source's own file name, whose name embeds a date or hash, the stable lead of the name plus a wildcard, so the link still matches the next build)
+applied-patch list per app and a per-app Obtainium link (HTML source on the rolling `stable`/`beta` archive page; its link filter selects that app's file and its version regex reads the app's own version out of the file name - for an app that keeps its source's own file name, whose name embeds a date or hash, the stable lead of the name plus a wildcard, so the link still matches the next build)
 (`IS_PRERELEASE=true` marks the beta pool and flips the link's pre-release switch). The same file is
 relayed to Telegram, which keeps only the plain Markdown grammar, so GitHub-only markup sits on lines
 `build_notify_telegram.sh` drops (`<…`, `![`, `> `, any line holding an Obtainium link). Footer links
@@ -47,7 +47,7 @@ the whole deep link percent-encoded once behind `apps.obtainium.imranr.dev/redir
 README's apps section from the TOML config (`--configs configs/patches --repo owner/repo --page … --json …
 --readme … --manifest archive/stable.json`). The apps section reproduces the apkforge layout: one group
 per patch source (MorpheApp's first, the rest A-Z) and a Stock Mirrors group, each a table of App, Arch,
-Version, APK Source, Patches (a dropdown of what the last build applied) and an *Add to Obtainium* badge;
+Version (recommended above built), APK Source (the one used), Patches (a dropdown of what the last build applied, and what it did not) and an *Add to Obtainium* badge;
 the version and patch cells come from the manifests given with `--manifest` and read *Auto* / *Pending
 first build* until a build has published. Pool routing comes from
 `compile_patch_configs.py`; its slug rule is a copy of `resolve_slug` in `utils.sh`, which
