@@ -110,8 +110,7 @@
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/redditinc/reddit",
     "uptodown-dlurl": "https://reddit-official-app.en.uptodown.com/android",
     "included-patches": "'Custom branding name for Reddit'",
-    "patcher-args": "-OappName='Reddit'",
-    "enabled": false
+    "patcher-args": "-OappName='Reddit'"
   },
   "Truecaller": {
     "patches-source": "Paresh-Maheshwari/paresh-patches",
@@ -150,7 +149,8 @@
     "badge-icon": "x",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/x-corp/twitter",
-    "uptodown-dlurl": "https://twitter.en.uptodown.com/android"
+    "uptodown-dlurl": "https://twitter.en.uptodown.com/android",
+    "enabled": false
   },
   "Alarmy": {
     "patches-source": "rabilrbl/fluffy-patches",
