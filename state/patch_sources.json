@@ -1,7 +1,7 @@
 {
   "MorpheApp/morphe-patches": {
-    "beta": "v1.47.0-dev.14",
-    "beta_date": "2026-10-09T23:23:55Z",
+    "beta": "v1.47.0-dev.18",
+    "beta_date": "2026-10-10T10:29:12Z",
     "blocked": false,
     "host": "github",
     "repo": "MorpheApp/morphe-patches",
@@ -27,8 +27,8 @@
     "stable_date": "2026-09-21T00:23:19Z"
   },
   "crimera/piko": {
-    "beta": "v3.10.0-dev.13",
-    "beta_date": "2026-10-09T08:28:33Z",
+    "beta": "v3.10.0-dev.14",
+    "beta_date": "2026-10-10T07:16:09Z",
     "blocked": false,
     "host": "github",
     "repo": "crimera/piko",
