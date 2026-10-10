@@ -4,7 +4,7 @@
   "meta": {
     "build": "beta",
     "channel": "beta",
-    "publishedAt": "2026-10-10T10:53:42Z"
+    "publishedAt": "2026-10-10T14:31:21Z"
   },
   "files": {
     "battery-guru-morphe-v2.5.0.2-beta1-arm64-v8a.apk": {
@@ -101,8 +101,8 @@
         "Unlock developer options",
         "View story mentions"
       ],
-      "originBuild": "260047",
-      "publishedAt": "2026-10-10T10:53:25Z",
+      "originBuild": "260049",
+      "publishedAt": "2026-10-10T14:31:06Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "447.0.0.55.81"
     }
