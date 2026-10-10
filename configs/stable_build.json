@@ -183,7 +183,8 @@
     "badge-icon": "splitwise",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/splitwise/splitwise/",
-    "uptodown-dlurl": "https://splitwise.en.uptodown.com/android"
+    "uptodown-dlurl": "https://splitwise.en.uptodown.com/android",
+    "enabled": false
   },
   "Greenify": {
     "patches-source": "rushiranpise/morphe-patches",
