@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-10T10:55:54Z"
+    "publishedAt": "2026-10-10T17:34:18Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -228,8 +228,8 @@
       "appliedPatches": [
         "Unlock Pro"
       ],
-      "originBuild": "260048",
-      "publishedAt": "2026-10-10T10:55:33Z",
+      "originBuild": "260050",
+      "publishedAt": "2026-10-10T17:33:57Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "26.7.3"
     },
@@ -294,10 +294,10 @@
       "subVariant": null,
       "packageName": "com.twitter.android",
       "patchSources": [
-        "crimera/patches-3.9.0.mpp"
+        "crimera/patches-3.10.0.mpp"
       ],
       "changelogs": [
-        "https://github.com/crimera/piko/releases/tag/v3.9.0"
+        "https://github.com/crimera/piko/releases/tag/v3.10.0"
       ],
       "appliedPatches": [
         "Add ability to copy media link",
@@ -363,6 +363,7 @@
         "Remove premium upsell",
         "Remove search suggestions",
         "Remove view count",
+        "Restore legacy follower lists",
         "Round off numbers",
         "Selectable Text",
         "Share Tweet as Image",
@@ -372,8 +373,8 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260042",
-      "publishedAt": "2026-10-09T21:13:22Z",
+      "originBuild": "260050",
+      "publishedAt": "2026-10-10T17:33:57Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "12.19.1-release.0"
     },
