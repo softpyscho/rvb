@@ -152,8 +152,7 @@
     "badge-icon": "x",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/x-corp/twitter",
-    "uptodown-dlurl": "https://twitter.en.uptodown.com/android",
-    "enabled": false
+    "uptodown-dlurl": "https://twitter.en.uptodown.com/android"
   },
   "Alarmy": {
     "patches-source": "rabilrbl/fluffy-patches",
@@ -188,8 +187,7 @@
     "badge-icon": "splitwise",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/splitwise/splitwise/",
-    "uptodown-dlurl": "https://splitwise.en.uptodown.com/android",
-    "enabled": false
+    "uptodown-dlurl": "https://splitwise.en.uptodown.com/android"
   },
   "Greenify": {
     "patches-source": "rushiranpise/morphe-patches",
