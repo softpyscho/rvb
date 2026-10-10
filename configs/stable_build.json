@@ -86,7 +86,8 @@
     "arch": "arm64-v8a",
     "app-name": "RedotPay",
     "pkg-name": "com.redotpay",
-    "uptodown-dlurl": "https://redotpay.en.uptodown.com/android"
+    "uptodown-dlurl": "https://redotpay.en.uptodown.com/android",
+    "enabled": false
   },
   "Duck-Detector": {
     "mirror": true,
@@ -187,7 +188,8 @@
     "badge-icon": "splitwise",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/splitwise/splitwise/",
-    "uptodown-dlurl": "https://splitwise.en.uptodown.com/android"
+    "uptodown-dlurl": "https://splitwise.en.uptodown.com/android",
+    "enabled": false
   },
   "Greenify": {
     "patches-source": "rushiranpise/morphe-patches",
