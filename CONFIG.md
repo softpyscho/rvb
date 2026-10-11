@@ -193,7 +193,11 @@ github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/t
   on an app that is not mirrored. Keep file-level defaults for patched keys out of a file that
   holds mirrored apps.
 - **File name:** `<app-slug>-v<version>-<arch>.apk`, the same grammar as every other asset, so
-  releases, manifests and Obtainium filters treat it like any build.
+  releases, manifests and Obtainium filters treat it like any build. The `<version>` is what the
+  APK calls itself (its `versionName`), not the source's label, with characters a file name cannot
+  carry turned into `-` (`nightly-209 (#2062)` → `nightly-209-2062`): the phone and Obtainium
+  compare the file's version with the installed app's, and a CI run number would never equal it.
+  An APK that reports no version name keeps the source's; `keep-filename` apps are named by their source.
 - **Signature:** a plain APK is published byte for byte. A bundle (`.xapk`/`.apkm`/`.apks`) source
   is merged into one APK, which re-signs it; prefer a source that serves a plain APK if the
   mirror has to update over a store install.

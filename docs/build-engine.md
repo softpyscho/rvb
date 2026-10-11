@@ -92,7 +92,8 @@ else, which:
    build: valid zip with a manifest, package identity (`_meta_field_of`),
    `verify_downloaded_apk`, and the arch-honesty gate
    ([decisions/0007](decisions/0007-requested-arch-is-a-hard-requirement.md));
-3. publishes `build/<app-slug>-v<version>-<arch>.apk` — the ordinary grammar, with no brand
+3. publishes `build/<app-slug>-v<version>-<arch>.apk` — the ordinary grammar (the version is the APK's own
+   `versionName`, sanitised for a file name, falling back to the source's) — with no brand
    segment — and records a `write_build_info` entry with `brand` `Mirror` (unless named),
    no patch source, and no applied patches.
 

@@ -30,7 +30,7 @@ cat > "$WORK/aapt2" <<'STUB'
 #!/usr/bin/env bash
 case "$1 $2" in
 	"dump packagename") printf '%s\n' "${FAKE_PKG:-}" ;;
-	"dump badging") printf "package: name='%s' versionCode='1' versionName='1'\n" "${FAKE_PKG:-}" ;;
+	"dump badging") printf "package: name='%s' versionCode='1' versionName='%s'\n" "${FAKE_PKG:-}" "${FAKE_VERNAME-}" ;;
 esac
 STUB
 chmod +x "$WORK/aapt2"
@@ -45,6 +45,7 @@ FAKE_VERSIONS=$'1.9.0\n1.10.0\n1.2.3'
 FAKE_ABIS="arm64-v8a"   # ABIs the next fake download carries; "" = arch-agnostic
 FAKE_ASSET="Duck.Detector-nightly-all.apk"
 export FAKE_PKG=""  # read by the aapt2 stub, so it has to be exported
+export FAKE_VERNAME=""  # the versionName the stub reports ("" = none)
 DL_CALLS=0
 mkapk() { # $1=output $2...=ABIs
 	local out=$1 d; shift
@@ -120,6 +121,25 @@ run_mirror
 reset; run_mirror version=1.2.3
 [ -f "$BUILD_DIR/bitget-v1.2.3-arm64-v8a.apk" ] || fail "pinned: got $(built)"
 
+# 3b. the name carries what the APK calls itself, not the source's label: a CI run number is
+#     "2062" to the source and "nightly-209 (#2062)" to the phone, and Obtainium compares those
+reset; FAKE_VERNAME="nightly-209 (#2062)" run_mirror version=2062
+[ -f "$BUILD_DIR/bitget-vnightly-209-2062-arm64-v8a.apk" ] || fail "own versionName: got $(built)"
+[ "$(jq -r '.Bitget.version' "$BUILD_JSON_FILE")" = "nightly-209-2062" ] || fail "recorded version must be the published one: $(jq -c .Bitget "$BUILD_JSON_FILE")"
+# controls: the same versionName as the source's version changes nothing; an APK that reports none
+# keeps the source's; a leading "v" is dropped; a keep-filename app is named by its source, not this
+reset; FAKE_VERNAME="1.2.3" run_mirror version=1.2.3
+[ -f "$BUILD_DIR/bitget-v1.2.3-arm64-v8a.apk" ] || fail "equal versionName: got $(built)"
+reset; FAKE_VERNAME="" run_mirror version=1.2.3
+[ -f "$BUILD_DIR/bitget-v1.2.3-arm64-v8a.apk" ] || fail "no versionName: got $(built)"
+reset; FAKE_VERNAME="v4.5" run_mirror version=1.2.3
+[ -f "$BUILD_DIR/bitget-v4.5-arm64-v8a.apk" ] || fail "leading v: got $(built)"
+reset; FAKE_VERNAME='!!weird//name..' run_mirror version=1.2.3
+[ -f "$BUILD_DIR/bitget-vweird-name..-arm64-v8a.apk" ] || fail "sanitised: got $(built)"
+[ "$(_version_for_file_name 'nightly-209 (#2062)')" = "nightly-209-2062" ] || fail "_version_for_file_name"
+[ -z "$(_version_for_file_name '')" ] || fail "_version_for_file_name of nothing is nothing"
+FAKE_VERNAME=""
+
 # 4. identity gate: wrong package from a store is rejected (control: right one built above)
 reset; FAKE_PKG=com.somebody.else run_mirror
 [ -z "$(built)" ] || fail "wrong package from a store must be rejected, got: $(built)"
@@ -151,6 +171,14 @@ run_mirror table="Duck-Detector" app_name="Duck Detector" pkg_name="Duck.Detecto
 e=$(jq -c '."Duck-Detector"' "$BUILD_JSON_FILE")
 [ "$(jq -r '.file' <<<"$e")" = "Duck.Detector-nightly-all.apk" ] || fail "keep-filename must be recorded: $e"
 [ "$(jq -r '.package_name' <<<"$e")" = "com.eltavine.duckdetector" ] || fail "the id found in the APK is what is published: $e"
+# a kept file is named by its source whatever the APK calls itself
+reset; FAKE_VERNAME="9.9.9" FAKE_PKG=com.eltavine.duckdetector FAKE_ABIS="" run_mirror table="Duck-Detector" app_name="Duck Detector" pkg_name="Duck.Detector" version=nightly arch=all \
+	keep_filename=true uptodown_dlurl="" github_dlurl="https://github.com/o/r/releases/tag/nightly"
+[ -f "$BUILD_DIR/Duck.Detector-nightly-all.apk" ] || fail "keep-filename must ignore the APK's versionName: $(built)"
+FAKE_VERNAME=""
+reset; FAKE_PKG=com.eltavine.duckdetector FAKE_ABIS=""
+run_mirror table="Duck-Detector" app_name="Duck Detector" pkg_name="Duck.Detector" version=nightly arch=all \
+	keep_filename=true uptodown_dlurl="" github_dlurl="https://github.com/o/r/releases/tag/nightly"
 # control: same app without keep-filename uses the grammar
 reset; run_mirror table="Duck-Detector" app_name="Duck Detector" pkg_name="Duck.Detector" version=nightly arch=all \
 	uptodown_dlurl="" github_dlurl="https://github.com/o/r/releases/tag/nightly"

@@ -178,7 +178,8 @@ def render(build_info, built_files, env):
                 links = []
                 for a, raw, _ in app["apks"]:
                     flt, ver = obtainium.kept_patterns(app["exact"]) if app["exact"] else obtainium.name_patterns(app["prefix"], raw)
-                    entry = obtainium.app_entry(app["package"], app["display"], repo, flt, ver, prerelease)
+                    entry = obtainium.app_entry(app["package"], app["display"], repo, flt, ver, prerelease,
+                                                standard_version=group["mirrored"])
                     links.append(f"[{ARCH_LABEL.get(a, raw)}]({obtainium.redirect_link(entry)})")
                 # one line, so Telegram can drop it whole (the links are very long)
                 lines.append("  * 🔔 Add to Obtainium: " + " • ".join(links))

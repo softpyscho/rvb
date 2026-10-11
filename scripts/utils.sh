@@ -3869,6 +3869,16 @@ _resolve_list_and_version() {
 	return 0
 }
 
+# A version string as a file name can carry it: anything outside [A-Za-z0-9._+-] becomes '-'
+# (runs squeezed, none at either end) and a leading "v" before a digit is dropped, since the
+# name already says "-v". "nightly-209 (#2062)" -> "nightly-209-2062". Empty in, empty out.
+_version_for_file_name() {
+	local v=${1-}
+	v=$(printf '%s' "$v" | sed -E 's/[^A-Za-z0-9._+-]+/-/g; s/^-+//; s/-+$//')
+	[[ "$v" =~ ^v[0-9] ]] && v=${v#v}
+	printf '%s' "$v"
+}
+
 # Re-host an app's stock APK unmodified (`mirror = true`), so a phone can track it from this
 # repository's releases like any patched app. Same contract as build_rv: argument is a
 # `declare -p` of the app_args array, an app that cannot be built is logged and skipped
@@ -4046,7 +4056,22 @@ mirror_rv() {
 
 	# 3. Name it and publish. The grammar name is the default; keep-filename opts into the
 	#    source's own, which only a source that reports one (github) can honour.
-	local out_name="${app_name_l}-v${version_f}-${arch_f}.apk" kept_file=""
+	#
+	#    The version in the name is what the APK calls itself (its versionName), not what the
+	#    source labelled it: a phone and Obtainium compare the file's version with the installed
+	#    app's, and a CI run number ("2062") never equals the "nightly-209 (#2062)" the app reports.
+	#    Characters a file name cannot carry become '-', so the words stay the same ones; an APK
+	#    that reports none keeps the source's version.
+	local named_version=$version_f own_version
+	if [ "$keep_filename" != true ]; then
+		own_version=$(_meta_field_of "$stock_apk" versionName 2>/dev/null) || own_version=""
+		own_version=$(_version_for_file_name "$own_version")
+		if [ -n "$own_version" ] && [ "$own_version" != "$version_f" ]; then
+			pr "'${table}' reports itself as v${own_version} (the source said ${version_f}); publishing that"
+			named_version=$own_version
+		fi
+	fi
+	local out_name="${app_name_l}-v${named_version}-${arch_f}.apk" kept_file=""
 	if [ "$keep_filename" = true ]; then
 		if [ -n "$asset_name" ]; then
 			# one path segment, no spaces, always ending in .apk (a merged bundle is one)
@@ -4058,7 +4083,7 @@ mirror_rv() {
 	fi
 	mv -f "$stock_apk" "${BUILD_DIR}/${out_name}"
 	pr "Mirrored ${table} (unmodified, from ${got_from}): '${BUILD_DIR}/${out_name}'"
-	write_build_info "${table% (*}" "${arch_f}" ".apk" "${app_name_l}" "$version_f" "" "" "${downloaded_pkg:-$pkg_name}" "${app_name}" "" "${brand_val}" "" "" "$kept_file" "$got_from" ""
+	write_build_info "${table% (*}" "${arch_f}" ".apk" "${app_name_l}" "$named_version" "" "" "${downloaded_pkg:-$pkg_name}" "${app_name}" "" "${brand_val}" "" "" "$kept_file" "$got_from" ""
 	return 0
 }
 

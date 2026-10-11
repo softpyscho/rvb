@@ -23,8 +23,10 @@ Why the entries are what they are:
   versionExtractionRegEx      `/<file-prefix>-v(.+)-<arch>\\.apk$`, group 1 = the app's version.
   sortByLastLinkSegment       Obtainium sorts the matching links by file name and takes the last,
                               i.e. the highest version.
-  versionDetection = false    Obtainium records the version it extracted rather than comparing it
-                              with what the phone reports (a patch may rewrite versionName).
+  versionDetection            off for a patched app (Obtainium records the version it extracted;
+                              a patch may rewrite versionName), on for a stock mirror (the file is
+                              named by the APK's own versionName, so it is compared with the
+                              installed app's - see mirror_rv).
   `beta` page for 🧪 apps      apps built in the beta pool are archived in the `beta` release.
 
 Stdlib only. The CLI imports compile_patch_configs for the pool routing rules rather than
@@ -106,7 +108,7 @@ def guessed_kept_patterns(name):
     return f"/{lead}-[^/]+\\.apk$", f"/{lead}-(.+)\\.apk$"
 
 
-def html_settings(link_filter, version_re):
+def html_settings(link_filter, version_re, standard_version=False):
     """Obtainium's HTML-source settings. The GitHub source can only call a release by its tag or
     title - here a build number (`260035`) - so an update would read "260035". The HTML source
     reads the version out of the file name instead. Every key it reads is written (a deterministic
@@ -126,9 +128,12 @@ def html_settings(link_filter, version_re):
         "trackOnly": False,
         "versionExtractionRegEx": version_re,
         "matchGroupToUse": "1" if version_re else "",
-        # off: the version Obtainium records is the one it extracted, so there is nothing to
-        # reconcile with what the phone reports (a patch may rewrite its versionName)
-        "versionDetection": False,
+        # Off for a patched app: the version Obtainium records is the one it extracted, with
+        # nothing to reconcile against what the phone reports (a patch may rewrite its versionName).
+        # On for a stock mirror: its APK is unmodified and the file is named by that APK's own
+        # versionName, so Obtainium can compare the file with the installed app and call a build it
+        # already has the same release even where the file name spells it with '-' for ' ' and '#'.
+        "versionDetection": bool(standard_version and version_re),
         "useVersionCodeAsOSVersion": False,
         "apkFilterRegEx": "",
         "invertAPKFilter": False,
@@ -144,7 +149,7 @@ def html_settings(link_filter, version_re):
     }
 
 
-def app_entry(package, name, repo, link_filter, version_re, prerelease=False):
+def app_entry(package, name, repo, link_filter, version_re, prerelease=False, standard_version=False):
     """One app as Obtainium's own export/deep link spells it.
 
     The whole object is written, not just the fields that matter here: Obtainium reads an app
@@ -162,7 +167,7 @@ def app_entry(package, name, repo, link_filter, version_re, prerelease=False):
         "apkUrls": "[]",
         "otherAssetUrls": "[]",
         "preferredApkIndex": 0,
-        "additionalSettings": json.dumps(html_settings(link_filter, version_re), separators=(",", ":")),
+        "additionalSettings": json.dumps(html_settings(link_filter, version_re, standard_version), separators=(",", ":")),
         "lastUpdateCheck": None,
         "pinned": False,
         "categories": [],
@@ -270,7 +275,8 @@ def entry_for_spec(spec, repo, data=None):
         link_filter, version_re = kept_patterns(known) if known else guessed_kept_patterns(spec["name"])
     else:
         link_filter, version_re = name_patterns(spec["prefix"], spec["arch"])
-    return app_entry(spec["package"], spec["display"], repo, link_filter, version_re, spec["prerelease"])
+    return app_entry(spec["package"], spec["display"], repo, link_filter, version_re, spec["prerelease"],
+                     standard_version=spec["mirror"])
 
 
 def import_document(specs, repo, data=None):
@@ -565,8 +571,10 @@ def obtainium_page(specs, repo):
         "| Version (regex, group 1) | `/<app>-v(.+)-<arch>\\.apk$` | the version comes from the file name, so the update "
         "list shows `11.2.0` and not the build number (`260035`) |",
         "| Sort | by file name | the highest version is taken |",
-        "| Standard version detection | **off** | Obtainium records the version it extracted; a patch may rewrite what "
-        "the phone reports as the app's version |",
+        "| Standard version detection | **off** for patched apps, **on** for 📦 mirrors | patched: Obtainium records the "
+        "version it extracted, since a patch may rewrite what the phone reports. Mirrored: the APK is "
+        "unmodified and the file is named by its own version name, so Obtainium compares it with the "
+        "installed app and sees a build it already has as up to date |",
         "",
         "## Good to know",
         "",

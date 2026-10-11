@@ -99,6 +99,30 @@ class Obtainium(unittest.TestCase):
         self.assertEqual(beta["url"], f"https://github.com/{REPO}/releases/expanded_assets/beta")
         self.assertEqual(json.loads(beta["additionalSettings"]), settings)
 
+    def test_standard_version_detection_is_on_for_mirrors_only(self):
+        """A mirrored APK is unmodified and named by its own versionName, so Obtainium can compare
+        it with the installed app; a patched app may have had its versionName rewritten."""
+        specs = {s["key"]: s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
+        det = lambda key: json.loads(obtainium.entry_for_spec(specs[key], REPO)["additionalSettings"])["versionDetection"]
+        self.assertIs(det("Bitget"), True)
+        self.assertIs(det("Oxygen-Customizer"), True)
+        self.assertIs(det("Duck-Detector"), True)
+        self.assertIs(det("Reddit"), False)   # controls: patched apps
+        self.assertIs(det("Xodo"), False)
+        # never on without a version regex: Obtainium would have nothing to compare
+        lf, _ = obtainium.kept_patterns("DuckDetector_nightly_build.apk")
+        e = json.loads(obtainium.app_entry("com.x", "X", REPO, lf, "", standard_version=True)["additionalSettings"])
+        self.assertIs(e["versionDetection"], False)
+
+    def test_release_notes_follow_the_same_rule(self):
+        md = grn.render(FIXTURE, FIXTURE_FILES, ENV)
+        det = {}
+        for link in re.findall(r"\[[^\]]+\]\((https://apps\.obtainium\.imranr\.dev/redirect\?r=[^)]+)\)", md):
+            _, entry, st = decode_link(link)
+            det[entry["id"]] = st["versionDetection"]
+        self.assertIs(det["com.bitget.exchange"], True)
+        self.assertIs(det["com.reddit.frontpage"], False)
+
     def test_each_filter_selects_only_its_own_app_and_reads_its_version(self):
         """One archive page lists every app, so the filter is the whole identification."""
         specs = obtainium.specs_from_configs(str(CONFIG_PATCHES))
