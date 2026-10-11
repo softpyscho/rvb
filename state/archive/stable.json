@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-11T15:00:42Z"
+    "publishedAt": "2026-10-11T17:54:41Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -563,8 +563,8 @@
         "Neutralize third-party SDKs",
         "Truecaller Premium"
       ],
-      "originBuild": "260059",
-      "publishedAt": "2026-10-11T15:00:32Z",
+      "originBuild": "260060",
+      "publishedAt": "2026-10-11T17:54:27Z",
       "apkSource": "archive",
       "recommendedVersion": "26.10.6"
     },
@@ -673,6 +673,50 @@
       "publishedAt": "2026-10-11T09:05:45Z",
       "apkSource": "github",
       "recommendedVersion": null
+    },
+    "reddit-morphe-v2026.41.0-arm64-v8a.apk": {
+      "name": "reddit-morphe",
+      "version": "2026.41.0",
+      "appKey": "reddit",
+      "appName": "Reddit",
+      "arch": "arm64",
+      "fileType": "APK",
+      "brandKey": "morphe",
+      "brandName": "Morphe",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "com.reddit.frontpage",
+      "patchSources": [
+        "MorpheApp/patches-1.47.0.mpp"
+      ],
+      "changelogs": [
+        "https://github.com/MorpheApp/morphe-patches/releases/tag/v1.47.0"
+      ],
+      "appliedPatches": [
+        "App icon",
+        "Custom branding name for Reddit",
+        "Custom font",
+        "Disable modern home",
+        "Disable screenshot popup",
+        "Force system font",
+        "Hide Ask button",
+        "Hide Trending shelves",
+        "Hide ads",
+        "Hide communities shelf",
+        "Hide navigation buttons",
+        "Hide sidebar components",
+        "Open links directly",
+        "Open links externally",
+        "Remove subreddit dialog",
+        "Sanitize sharing links",
+        "Show view count",
+        "Spoof signature",
+        "Start as guest"
+      ],
+      "originBuild": "260060",
+      "publishedAt": "2026-10-11T17:54:27Z",
+      "apkSource": "apkmirror",
+      "recommendedVersion": "2026.41.0"
     }
   }
 }
