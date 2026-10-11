@@ -165,7 +165,7 @@ repository.
 ```toml
 mirror = true            # file-level default for a "stock apps" file
 brand = "Mirror"         # metadata only; a mirrored file name has no brand segment
-version = "latest"       # 'latest' or an explicit version. 'auto', 'exp' and 'beta' are refused: there are no patches to resolve them against
+version = "latest"       # 'latest', 'waenhancer' (WhatsApp / WhatsApp Business only: the newest build the latest Dev4Mod/WaEnhancer release supports) or an explicit version. 'auto', 'exp' and 'beta' are refused: there are no patches to resolve them against
 arch = "arm64-v8a"
 
 [Bitget]

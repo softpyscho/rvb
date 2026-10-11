@@ -3815,6 +3815,40 @@ _resolve_list_and_version() {
 	return 0
 }
 
+# Narrows a version list on stdin to the WhatsApp builds the latest WaEnhancer
+# (Dev4Mod/WaEnhancer) release supports, so `version = "waenhancer"` follows the module rather
+# than WhatsApp itself. The supported set is that release's arrays.xml - the list the module
+# checks at runtime - whose items name a whole minor ("2.26.38.xx") or one build. $1 = package
+# name. Fails loudly when the list cannot be read; empty output means nothing on stdin is
+# supported yet. Shared by mirror_rv and the watcher so both settle on the same version.
+waenhancer_filter_vers() {
+	local arr tag items p re=""
+	case $1 in
+	com.whatsapp) arr=supported_versions_wpp ;;
+	com.whatsapp.w4b) arr=supported_versions_business ;;
+	*) epr "WaEnhancer does not support the package '$1'"; return 1 ;;
+	esac
+	# /releases/latest redirects to the tag: no API call, so no token and no rate limit
+	tag=$(curl -sfI --connect-timeout 10 https://github.com/Dev4Mod/WaEnhancer/releases/latest |
+		sed -n 's;^location:.*/releases/tag/\([^[:space:]]*\).*;\1;Ip') || tag=""
+	if [ -z "$tag" ]; then
+		epr "Could not resolve the latest WaEnhancer release"
+		return 1
+	fi
+	items=$(curl -sf --connect-timeout 10 "https://raw.githubusercontent.com/Dev4Mod/WaEnhancer/${tag}/app/src/main/res/values/arrays.xml" |
+		sed -n "/name=\"${arr}\"/,/<\/string-array>/s;.*<item>[[:space:]]*\([0-9.x]*\)[[:space:]]*</item>.*;\1;p") || items=""
+	if [ -z "$items" ]; then
+		epr "WaEnhancer ${tag} lists no ${arr}"
+		return 1
+	fi
+	pr "WaEnhancer ${tag} supports $1 $(tr '\n' ' ' <<<"$items")"
+	for p in $items; do
+		p=${p%.xx}
+		re+="${re:+|}${p//./\\.}"
+	done
+	grep -E "^(${re})(\.|$)" || true
+}
+
 # Re-host an app's stock APK unmodified (`mirror = true`), so a phone can track it from this
 # repository's releases like any patched app. Same contract as build_rv: argument is a
 # `declare -p` of the app_args array, an app that cannot be built is logged and skipped
@@ -3865,7 +3899,7 @@ mirror_rv() {
 	#    one was pinned. archive/cache_repo are not scraped for a latest version (they only
 	#    hold what an earlier run already stored).
 	local pinned=false dl_p dl_from="" tried_dl=()
-	isoneof "$version_mode" latest || pinned=true
+	isoneof "$version_mode" latest waenhancer || pinned=true
 	for dl_p in "${DL_SRCS[@]}"; do
 		[ -z "${args[${dl_p}_dlurl]:-}" ] && continue
 		if [ "$pinned" = false ] && { [ "$dl_p" = archive ] || [ "$dl_p" = cache_repo ]; }; then continue; fi
@@ -3899,6 +3933,9 @@ mirror_rv() {
 		get_latest_ver=true
 		local pkgvers
 		pkgvers=$(get_"${dl_from}"_vers) || pkgvers=""
+		if [ "$version_mode" = waenhancer ]; then
+			pkgvers=$(waenhancer_filter_vers "$pkg_name" <<<"$pkgvers") || pkgvers=""
+		fi
 		version=$(get_highest_ver <<<"$pkgvers") || version=$(head -1 <<<"$pkgvers")
 	fi
 	if [ -z "$version" ]; then

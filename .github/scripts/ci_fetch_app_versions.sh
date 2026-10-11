@@ -62,9 +62,13 @@ while IFS='|' read -r group app; do
             ($a["apkmirror-dlurl"] // ""),
             ($a["apkpure-dlurl"] // ""),
             ($a["apkcombo-dlurl"] // ""),
-            ($a["github-dlurl"] // "")
+            ($a["github-dlurl"] // ""),
+            ($a.version // ""),
+            ($a["pkg-name"] // "")
         ' "${CONFIG_INPUTS[@]}"
     )
+    version_mode="${_urls[5]:-}"
+    pkg_name="${_urls[6]:-}"
     uptodown_url="${_urls[0]:-}"
     apkmirror_url="${_urls[1]:-}"
     apkpure_url="${_urls[2]:-}"
@@ -116,7 +120,13 @@ while IFS='|' read -r group app; do
                 vers=$(get_github_vers) || { echo "::warning::Failed github vers for $app"; continue; }
                 latest_ver=$(echo "$vers" | get_highest_ver) || true
             fi
-            
+            # Same narrowing mirror_rv applies, so a new WaEnhancer release (or a new build
+            # inside what it supports) is what moves the recorded version and triggers a build.
+            if [ "$version_mode" = waenhancer ]; then
+                vers=$(waenhancer_filter_vers "$pkg_name" <<<"$vers") || { echo "::warning::Failed WaEnhancer versions for $app"; continue; }
+                latest_ver=$(get_highest_ver <<<"$vers") || latest_ver=""
+            fi
+
             if [ -n "$latest_ver" ]; then
                 cached_versions[$dlurl]="$latest_ver"
                 # Sleep to avoid rate limiting only if we actually fetched
