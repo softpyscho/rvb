@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-11T19:50:51Z"
+    "publishedAt": "2026-10-11T20:34:20Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -160,8 +160,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260052",
-      "publishedAt": "2026-10-10T23:29:56Z",
+      "originBuild": "260064",
+      "publishedAt": "2026-10-11T20:33:58Z",
       "apkSource": "uptodown",
       "recommendedVersion": null
     },
@@ -331,8 +331,8 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260062",
-      "publishedAt": "2026-10-11T19:50:14Z",
+      "originBuild": "260064",
+      "publishedAt": "2026-10-11T20:33:58Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "12.19.1-release.0"
     },
@@ -671,8 +671,8 @@
         "Spoof signature",
         "Start as guest"
       ],
-      "originBuild": "260062",
-      "publishedAt": "2026-10-11T19:50:14Z",
+      "originBuild": "260064",
+      "publishedAt": "2026-10-11T20:33:58Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "2026.41.0"
     },
