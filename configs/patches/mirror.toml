@@ -47,3 +47,12 @@ keep-filename = true
 version = "nightly"
 arch = "all"
 github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly"
+
+[Oxygen-Customizer]
+app-name = "Oxygen Customizer"
+pkg-name = "it.dhd.oxygencustomizer"
+arch = "all"
+# The nightly is a workflow artifact (one per push to its beta branch), never a release; the
+# run number is the version. Each run uploads a release and a "... Debug" artifact.
+actions-dlurl = "https://github.com/DHD2280/Oxygen-Customizer/actions/workflows/build_debug.yml"
+actions-artifact = 'Dev \(#[0-9]+\)$'

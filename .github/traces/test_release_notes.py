@@ -526,7 +526,7 @@ class SeedConfig(unittest.TestCase):
     def test_every_configured_app_is_buildable_on_paper(self):
         import compile_patch_configs
         stable, beta = compile_patch_configs.compile_configs(str(CONFIG_PATCHES))  # exits on a duplicate app key
-        self.assertEqual(len(stable) + len(beta), 18)
+        self.assertEqual(len(stable) + len(beta), 19)
         patch_keys = ("patches-source", "cli-source", "included-patches", "excluded-patches", "exclusive-patches",
                       "inclusive-patches", "patcher-args", "patched-pkg-name", "include-stock")
         for pool in (stable, beta):
