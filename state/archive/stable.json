@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-11T05:24:08Z"
+    "publishedAt": "2026-10-11T05:27:56Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -629,8 +629,28 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260053",
-      "publishedAt": "2026-10-11T05:23:55Z",
+      "originBuild": "260054",
+      "publishedAt": "2026-10-11T05:27:43Z",
+      "apkSource": "apkmirror",
+      "recommendedVersion": null
+    },
+    "whatsapp-v2.26.38.74-arm64-v8a.apk": {
+      "name": "whatsapp",
+      "version": "2.26.38.74",
+      "appKey": "whatsapp",
+      "appName": "WhatsApp",
+      "arch": "arm64",
+      "fileType": "APK",
+      "brandKey": "mirror",
+      "brandName": "Mirror",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "com.whatsapp",
+      "patchSources": [],
+      "changelogs": [],
+      "appliedPatches": [],
+      "originBuild": "260054",
+      "publishedAt": "2026-10-11T05:27:43Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null
     }
