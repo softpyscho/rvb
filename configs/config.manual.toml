@@ -14,10 +14,10 @@ arch = "arm64-v8a"
 app-name = "WhatsApp"
 pkg-name = "com.whatsapp"
 version = "waenhancer" # per app: build.sh reads no file-level version from a TOML
-apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp/"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger/"
 
 [WhatsApp-Business]
 app-name = "WhatsApp Business"
 pkg-name = "com.whatsapp.w4b"
 version = "waenhancer"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-business/"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger-business/"

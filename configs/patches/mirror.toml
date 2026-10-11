@@ -57,10 +57,10 @@ github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/t
 app-name = "WhatsApp"
 version = "waenhancer"
 pkg-name = "com.whatsapp"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp/"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger/"
 
 [WhatsApp-Business]
 app-name = "WhatsApp Business"
 version = "waenhancer"
 pkg-name = "com.whatsapp.w4b"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-business/"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger-business/"
