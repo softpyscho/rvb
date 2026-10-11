@@ -103,8 +103,8 @@ class Obtainium(unittest.TestCase):
         """One archive page lists every app, so the filter is the whole identification."""
         specs = obtainium.specs_from_configs(str(CONFIG_PATCHES))
         # add the classic collision: a name that is a prefix of another app's name
-        extra = [dict(specs[0], key="WA", prefix="whatsapp", arch="arm64-v8a", mirror=True, keep_filename=False),
-                 dict(specs[0], key="WAB", prefix="whatsapp-business", arch="arm64-v8a", mirror=True, keep_filename=False)]
+        extra = [dict(specs[0], key="CH", prefix="chat", arch="arm64-v8a", mirror=True, keep_filename=False),
+                 dict(specs[0], key="CHB", prefix="chat-business", arch="arm64-v8a", mirror=True, keep_filename=False)]
         specs = [s for s in specs if not s["keep_filename"]] + extra
         versions = {s["key"]: f"{i + 1}.2.3-rc.{i}" for i, s in enumerate(specs)}  # dashes and dots in a version
         files = {s["key"]: self.url(f"{s['prefix']}-v{versions[s['key']]}-{s['arch']}.apk") for s in specs}
@@ -182,10 +182,13 @@ class Obtainium(unittest.TestCase):
             self.assertEqual(entry["url"], f"https://github.com/{REPO}/releases/expanded_assets/{tag}", key)
 
     def test_disabled_apps_are_not_offered(self):
-        keys = {s["key"] for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
-        self.assertNotIn("WhatsApp", keys)
-        self.assertNotIn("WhatsApp-Business", keys)
-        self.assertIn("Bitget", keys)  # control: enabled mirror apps are
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "mirror.toml").write_text(
+                'mirror = true\n[On]\napp-name = "On"\npkg-name = "a.on"\n'
+                '[Off]\nenabled = false\napp-name = "Off"\npkg-name = "a.off"\n', encoding="utf-8")
+            keys = {s["key"] for s in obtainium.specs_from_configs(d)}
+        self.assertNotIn("Off", keys)
+        self.assertIn("On", keys)  # control: enabled mirror apps are
 
 
 class ReleaseNotes(unittest.TestCase):
@@ -523,7 +526,7 @@ class SeedConfig(unittest.TestCase):
     def test_every_configured_app_is_buildable_on_paper(self):
         import compile_patch_configs
         stable, beta = compile_patch_configs.compile_configs(str(CONFIG_PATCHES))  # exits on a duplicate app key
-        self.assertEqual(len(stable) + len(beta), 18)
+        self.assertEqual(len(stable) + len(beta), 20)
         patch_keys = ("patches-source", "cli-source", "included-patches", "excluded-patches", "exclusive-patches",
                       "inclusive-patches", "patcher-args", "patched-pkg-name", "include-stock")
         for pool in (stable, beta):
@@ -561,7 +564,7 @@ class SeedConfig(unittest.TestCase):
             self.assertIn(f"> **Source:** [`{source}`]", section, f"group for {source} missing")
         self.assertIn("### <img src=\"https://img.shields.io/badge/Stock%20Mirrors", section)
         # control: an app that is not configured is not there, and the comparison can fail
-        self.assertNotIn("![WhatsApp](", section)
+        self.assertNotIn("![Telegram](", section)
         self.assertNotEqual(section, obtainium.render_apps_section(specs[:1], REPO))
 
 

@@ -48,25 +48,19 @@ version = "nightly"
 arch = "all"
 github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly"
 
+# The two WhatsApp apps follow WaEnhancer (Dev4Mod/WaEnhancer): `version = "waenhancer"`
+# mirrors the newest stable build that the latest WaEnhancer release lists as supported, so
+# a new WaEnhancer release moves them. APKMirror only (reached through the CI's Cloudflare
+# solver): the watcher and the build must read the same version list, and whatsapp.com
+# serves only the newest build.
 [WhatsApp]
-# Disabled: the only source reachable from GitHub-hosted runners is whatsapp.com, which
-# serves the newest build only, so the WaEnhancer-supported version this entry is pinned
-# to cannot be fetched. APKMirror and Uptodown do carry older versions but are behind
-# Cloudflare here. Re-enable (and configure a solver/proxy) to resume mirroring.
-enabled = false
 app-name = "WhatsApp"
-version = "2.26.37.xx"
+version = "waenhancer"
 pkg-name = "com.whatsapp"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp/"
-uptodown-dlurl = "https://whatsapp-messenger.en.uptodown.com/android"
 
 [WhatsApp-Business]
-# Disabled: no reachable source. APKMirror serves a Cloudflare managed challenge to
-# GitHub-hosted runners and the Uptodown page below returns HTTP 410 Gone. Re-enable
-# once a source works.
-enabled = false
 app-name = "WhatsApp Business"
-version = "2.26.37.xx"
+version = "waenhancer"
 pkg-name = "com.whatsapp.w4b"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-business/"
-uptodown-dlurl = "https://whatsapp-business.en.uptodown.com/android"
