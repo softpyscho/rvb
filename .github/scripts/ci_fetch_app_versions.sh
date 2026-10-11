@@ -123,7 +123,7 @@ while IFS='|' read -r group app; do
             # Same narrowing mirror_rv applies, so a new WaEnhancer release (or a new build
             # inside what it supports) is what moves the recorded version and triggers a build.
             if [ "$version_mode" = waenhancer ]; then
-                vers=$(waenhancer_filter_vers "$pkg_name" <<<"$vers") || { echo "::warning::Failed WaEnhancer versions for $app"; continue; }
+                vers=$(waenhancer_vers "$source" "$pkg_name") || { echo "::warning::Failed WaEnhancer versions for $app"; continue; }
                 latest_ver=$(get_highest_ver <<<"$vers") || latest_ver=""
             fi
 

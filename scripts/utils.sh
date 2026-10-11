@@ -1573,9 +1573,10 @@ get_apkmirror_resp() {
 	set -u
 }
 
-get_apkmirror_vers() {
-	local vers apkm_resp html=""
-	_cf_get "https://www.apkmirror.com/uploads/?appcategory=${__APKMIRROR_CAT__}" || return 1
+get_apkmirror_vers() { # $1 = uploads page, default 1 (newest)
+	local vers apkm_resp html="" page=${1:-1} uploads="https://www.apkmirror.com/uploads"
+	if [ "$page" != 1 ]; then uploads+="/page/${page}"; fi
+	_cf_get "${uploads}/?appcategory=${__APKMIRROR_CAT__}" || return 1
 	apkm_resp="$html"
 
 	local py_cmd=""
@@ -3815,18 +3816,20 @@ _resolve_list_and_version() {
 	return 0
 }
 
-# Narrows a version list on stdin to the WhatsApp builds the latest WaEnhancer
-# (Dev4Mod/WaEnhancer) release supports, so `version = "waenhancer"` follows the module rather
-# than WhatsApp itself. The supported set is that release's arrays.xml - the list the module
-# checks at runtime - whose items name a whole minor ("2.26.38.xx") or one build. $1 = package
-# name. Fails loudly when the list cannot be read; empty output means nothing on stdin is
-# supported yet. Shared by mirror_rv and the watcher so both settle on the same version.
-waenhancer_filter_vers() {
-	local arr tag items p re=""
-	case $1 in
+# The versions source $1 (whose get_<source>_resp has run) lists that the latest WaEnhancer
+# (Dev4Mod/WaEnhancer) release supports for package $2, so `version = "waenhancer"` follows the
+# module rather than WhatsApp itself. The supported set is that release's arrays.xml - the list
+# the module checks at runtime - whose items name a whole minor ("2.26.38.xx") or one build.
+# APKMirror's uploads list is newest first and WhatsApp ships betas almost daily, so the newest
+# supported stable is often past page one: pages are read until one holds a match.
+# Fails loudly when the list cannot be read; empty output means nothing listed is supported.
+# Shared by mirror_rv and the watcher so both settle on the same version.
+waenhancer_vers() {
+	local src=$1 arr tag items p re="" page vers listed=""
+	case $2 in
 	com.whatsapp) arr=supported_versions_wpp ;;
 	com.whatsapp.w4b) arr=supported_versions_business ;;
-	*) epr "WaEnhancer does not support the package '$1'"; return 1 ;;
+	*) epr "WaEnhancer does not support the package '$2'"; return 1 ;;
 	esac
 	# /releases/latest redirects to the tag: no API call, so no token and no rate limit
 	tag=$(curl -sfI --connect-timeout 10 https://github.com/Dev4Mod/WaEnhancer/releases/latest |
@@ -3841,12 +3844,27 @@ waenhancer_filter_vers() {
 		epr "WaEnhancer ${tag} lists no ${arr}"
 		return 1
 	fi
-	pr "WaEnhancer ${tag} supports $1 $(tr '\n' ' ' <<<"$items")"
+	pr "WaEnhancer ${tag} supports $2 $(tr '\n' ' ' <<<"$items")"
 	for p in $items; do
 		p=${p%.xx}
 		re+="${re:+|}${p//./\\.}"
 	done
-	grep -E "^(${re})(\.|$)" || true
+	# ponytail: 5 pages (~10 s each through the solver); raise if WaEnhancer lags further behind
+	for page in 1 2 3 4 5; do
+		if [ "$src" = apkmirror ]; then
+			vers=$(get_apkmirror_vers "$page") || vers=""
+		else
+			vers=$(get_"${src}"_vers) || vers=""
+		fi
+		listed+="${listed:+ }$(tr '\n' ' ' <<<"$vers")"
+		vers=$(grep -E "^(${re})(\.|$)" <<<"$vers" || true)
+		if [ -n "$vers" ]; then
+			echo "$vers"
+			return 0
+		fi
+		[ "$src" = apkmirror ] || break
+	done
+	wpr "None of the versions ${src} lists is supported by WaEnhancer ${tag}: ${listed}"
 }
 
 # Re-host an app's stock APK unmodified (`mirror = true`), so a phone can track it from this
@@ -3932,9 +3950,10 @@ mirror_rv() {
 	else
 		get_latest_ver=true
 		local pkgvers
-		pkgvers=$(get_"${dl_from}"_vers) || pkgvers=""
 		if [ "$version_mode" = waenhancer ]; then
-			pkgvers=$(waenhancer_filter_vers "$pkg_name" <<<"$pkgvers") || pkgvers=""
+			pkgvers=$(waenhancer_vers "$dl_from" "$pkg_name") || pkgvers=""
+		else
+			pkgvers=$(get_"${dl_from}"_vers) || pkgvers=""
 		fi
 		version=$(get_highest_ver <<<"$pkgvers") || version=$(head -1 <<<"$pkgvers")
 	fi
