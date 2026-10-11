@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-11T17:54:41Z"
+    "publishedAt": "2026-10-11T18:47:25Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -100,8 +100,8 @@
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260059",
-      "publishedAt": "2026-10-11T15:00:32Z",
+      "originBuild": "260061",
+      "publishedAt": "2026-10-11T18:47:02Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "5.1.1"
     },
@@ -140,52 +140,10 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260059",
-      "publishedAt": "2026-10-11T15:00:32Z",
+      "originBuild": "260061",
+      "publishedAt": "2026-10-11T18:47:02Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null
-    },
-    "reddit-morphe-v2026.39.0-arm64-v8a.apk": {
-      "name": "reddit-morphe",
-      "version": "2026.39.0",
-      "appKey": "reddit",
-      "appName": "Reddit",
-      "arch": "arm64",
-      "fileType": "APK",
-      "brandKey": "morphe",
-      "brandName": "Morphe",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "com.reddit.frontpage",
-      "patchSources": [
-        "MorpheApp/patches-1.45.0.mpp"
-      ],
-      "changelogs": [
-        "https://github.com/MorpheApp/morphe-patches/releases/tag/v1.45.0"
-      ],
-      "appliedPatches": [
-        "App icon",
-        "Custom branding name for Reddit",
-        "Custom font",
-        "Disable modern home",
-        "Disable screenshot popup",
-        "Force system font",
-        "Hide Ask button",
-        "Hide Trending shelves",
-        "Hide ads",
-        "Hide communities shelf",
-        "Hide navigation buttons",
-        "Hide sidebar components",
-        "Open links directly",
-        "Open links externally",
-        "Remove subreddit dialog",
-        "Sanitize sharing links",
-        "Show view count",
-        "Spoof signature",
-        "Start as guest"
-      ],
-      "originBuild": "260008",
-      "publishedAt": "2026-10-06T14:45:23Z"
     },
     "redotpay-v3.14.3-arm64-v8a.apk": {
       "name": "redotpay",
@@ -228,8 +186,8 @@
       "appliedPatches": [
         "Unlock Pro"
       ],
-      "originBuild": "260058",
-      "publishedAt": "2026-10-11T11:06:20Z",
+      "originBuild": "260061",
+      "publishedAt": "2026-10-11T18:47:02Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "26.7.3"
     },
@@ -373,8 +331,8 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260056",
-      "publishedAt": "2026-10-11T09:05:45Z",
+      "originBuild": "260061",
+      "publishedAt": "2026-10-11T18:47:02Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "12.19.1-release.0"
     },
@@ -400,8 +358,8 @@
         "Disable Analytics / Telemetry",
         "Spoof WARP+ Unlimited UI"
       ],
-      "originBuild": "260059",
-      "publishedAt": "2026-10-11T15:00:32Z",
+      "originBuild": "260061",
+      "publishedAt": "2026-10-11T18:47:02Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "6.38.9"
     },
@@ -563,8 +521,8 @@
         "Neutralize third-party SDKs",
         "Truecaller Premium"
       ],
-      "originBuild": "260060",
-      "publishedAt": "2026-10-11T17:54:27Z",
+      "originBuild": "260061",
+      "publishedAt": "2026-10-11T18:47:02Z",
       "apkSource": "archive",
       "recommendedVersion": "26.10.6"
     },
@@ -713,10 +671,30 @@
         "Spoof signature",
         "Start as guest"
       ],
-      "originBuild": "260060",
-      "publishedAt": "2026-10-11T17:54:27Z",
+      "originBuild": "260061",
+      "publishedAt": "2026-10-11T18:47:02Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "2026.41.0"
+    },
+    "oxygen-customizer-v2062-all.apk": {
+      "name": "oxygen-customizer",
+      "version": "2062",
+      "appKey": "oxygencustomizer",
+      "appName": "Oxygen Customizer",
+      "arch": "all",
+      "fileType": "APK",
+      "brandKey": "mirror",
+      "brandName": "Mirror",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "it.dhd.oxygencustomizer",
+      "patchSources": [],
+      "changelogs": [],
+      "appliedPatches": [],
+      "originBuild": "260061",
+      "publishedAt": "2026-10-11T18:47:02Z",
+      "apkSource": "actions",
+      "recommendedVersion": null
     }
   }
 }
