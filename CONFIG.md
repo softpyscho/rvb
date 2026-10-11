@@ -97,6 +97,11 @@ apkmirror-dlurl = "https://www.apkmirror.com/apk/inc/app"
 uptodown-dlurl = "https://spotify.en.uptodown.com/android"
 apkpure-dlurl = "https://apkpure.com/some-app/com.some.app"
 apkcombo-dlurl = "https://apkcombo.com/some-app/com.some.app"
+# a GitHub Actions workflow whose artifact is the build (a nightly with no release). the newest successful run that
+# still holds an artifact is downloaded and its run number is the version. needs a GitHub token (CI has one).
+actions-dlurl = "https://github.com/developer/app/actions/workflows/nightly.yml"
+# regex on the artifact name, required when a run uploads more than one artifact; it must match exactly one.
+actions-artifact = 'Dev \(#[0-9]+\)$'
 # github release url or repo url (e.g. 'https://github.com/developer/app', '.../releases/latest', or '.../releases/tag/v1.0').
 github-dlurl = "https://github.com/developer/app"
 # regex used to filter releases when querying a repo url without a fixed tag (e.g. multi-channel repos).

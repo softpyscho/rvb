@@ -105,7 +105,7 @@ download cache (release per package name). Full detail:
 
 Target `versionCode` derives from patch metadata only. Download source order is
 fixed: `cache_repo` → `direct` → `github` → `archive` → `apkmirror` → `uptodown` →
-`apkpure` → `apkcombo`. A download is accepted only if its bytes carry the requested
+`apkpure` → `apkcombo` → `actions`. A download is accepted only if its bytes carry the requested
 arch (or are universal/arch-agnostic); a wrong single ABI falls through to the next
 source and the arch goes unbuilt if none supplies it
 ([decisions/0007](decisions/0007-requested-arch-is-a-hard-requirement.md)).

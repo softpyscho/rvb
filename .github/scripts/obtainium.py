@@ -196,9 +196,10 @@ def _truthy(value):
 
 
 # The engine's download-source order (DL_SRCS in scripts/utils.sh) and how each is named.
-DL_ORDER = ("cache_repo", "direct", "github", "archive", "apkmirror", "uptodown", "apkpure", "apkcombo")
+DL_ORDER = ("cache_repo", "direct", "github", "archive", "apkmirror", "uptodown", "apkpure", "apkcombo", "actions")
 DL_LABEL = {"cache_repo": "Cache", "direct": "Direct", "github": "GitHub", "archive": "Archive",
-            "apkmirror": "APKMirror", "uptodown": "Uptodown", "apkpure": "APKPure", "apkcombo": "APKCombo"}
+            "apkmirror": "APKMirror", "uptodown": "Uptodown", "apkpure": "APKPure", "apkcombo": "APKCombo",
+            "actions": "GitHub Actions"}
 
 
 def _first_source(entry):

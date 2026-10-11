@@ -62,9 +62,14 @@ while IFS='|' read -r group app; do
             ($a["apkmirror-dlurl"] // ""),
             ($a["apkpure-dlurl"] // ""),
             ($a["apkcombo-dlurl"] // ""),
-            ($a["github-dlurl"] // "")
+            ($a["github-dlurl"] // ""),
+            ($a["actions-dlurl"] // ""),
+            ($a["actions-artifact"] // "")
         ' "${CONFIG_INPUTS[@]}"
     )
+    actions_url="${_urls[5]:-}"
+    # get_actions_resp reads its artifact regex from the engine's per-app args
+    declare -A args=([actions_artifact]="${_urls[6]:-}")
     uptodown_url="${_urls[0]:-}"
     apkmirror_url="${_urls[1]:-}"
     apkpure_url="${_urls[2]:-}"
@@ -78,6 +83,7 @@ while IFS='|' read -r group app; do
     [ -n "$apkpure_url" ] && { dlurls+=("$apkpure_url"); sources+=("apkpure"); }
     [ -n "$apkcombo_url" ] && { dlurls+=("$apkcombo_url"); sources+=("apkcombo"); }
     [ -n "$github_url" ] && { dlurls+=("$github_url"); sources+=("github"); }
+    [ -n "$actions_url" ] && { dlurls+=("$actions_url"); sources+=("actions"); }
 
     if [ ${#dlurls[@]} -eq 0 ]; then
         echo "::warning::No dlurl for $app, skipping"
@@ -115,6 +121,9 @@ while IFS='|' read -r group app; do
                 get_github_resp "$dlurl" || { echo "::warning::Failed github resp for $app"; continue; }
                 vers=$(get_github_vers) || { echo "::warning::Failed github vers for $app"; continue; }
                 latest_ver=$(echo "$vers" | get_highest_ver) || true
+            elif [[ "$source" == "actions" ]]; then
+                get_actions_resp "$dlurl" || { echo "::warning::Failed actions resp for $app"; continue; }
+                latest_ver=$(get_actions_vers)
             fi
             
             if [ -n "$latest_ver" ]; then

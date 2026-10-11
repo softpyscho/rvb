@@ -209,6 +209,7 @@ in; the first source that yields a verified artifact **carrying the requested ar
 | 6 | `uptodown` | |
 | 7 | `apkpure` | XAPK handling in `_apkpure_install_xapk` |
 | 8 | `apkcombo` | trusts the served filename over its object key |
+| 9 | `actions` | newest successful run of a workflow (`actions-dlurl`) that still holds an artifact; run number = version, `actions-artifact` picks the artifact, the zip must hold exactly one APK |
 
 Supporting machinery:
 

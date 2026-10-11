@@ -5,7 +5,7 @@ CWD=$(pwd)
 TEMP_DIR="temp"
 BIN_DIR="bin"
 BUILD_DIR="build"
-DL_SRCS=("cache_repo" "direct" "github" "archive" "apkmirror" "uptodown" "apkpure" "apkcombo")
+DL_SRCS=("cache_repo" "direct" "github" "archive" "apkmirror" "uptodown" "apkpure" "apkcombo" "actions")
 BUILD_JSON_FILE="build.json"
 PATCH_OUTPUT=""
 
@@ -3009,6 +3009,60 @@ get_github_pkg_name() {
     elif [ -n "${pkg_name:-}" ]; then
         echo "$pkg_name"
     fi
+}
+
+# -------------------- actions (GitHub Actions artifacts) --------------------
+# For a nightly that is only ever published as a workflow artifact, never as a release.
+# actions-dlurl names the workflow (https://github.com/<owner>/<repo>/actions/workflows/<file>).
+# The newest successful run that still holds artifacts is the build, and its run number is the
+# version, so a newer run is a newer version. When a run uploads several artifacts,
+# actions-artifact (a regex on the artifact name) must pick exactly one; anything else fails.
+get_actions_resp() {
+	local url=$1 repo wf runs run arts names
+	repo=$(cut -d/ -f4-5 <<<"$url")
+	wf=${url%/}
+	wf=${wf##*/}
+	runs=$(gh_req "https://api.github.com/repos/${repo}/actions/workflows/${wf}/runs?status=success&per_page=10" -) || return 1
+	for run in $(jq -r '.workflow_runs[] | "\(.id):\(.run_number)"' <<<"$runs"); do
+		arts=$(gh_req "https://api.github.com/repos/${repo}/actions/runs/${run%%:*}/artifacts" -) || return 1
+		names=$(jq -r '.artifacts[] | select(.expired | not) | .name' <<<"$arts")
+		[ -n "$names" ] || continue
+		if [ -n "${args[actions_artifact]:-}" ]; then
+			names=$(grep -E -- "${args[actions_artifact]}" <<<"$names" || true)
+		fi
+		if [ "$(grep -c . <<<"$names" || true)" != 1 ]; then
+			epr "Run #${run#*:} of ${repo}/${wf} has $(grep -c . <<<"$names" || true) matching artifacts; set actions-artifact to a regex that names exactly one."
+			return 1
+		fi
+		__ACTIONS_VER__=${run#*:}
+		__ACTIONS_ZIP__=$(jq -r --arg n "$names" '.artifacts[] | select(.name == $n) | .archive_download_url' <<<"$arts")
+		pr "Newest ${repo}/${wf} build: run #${__ACTIONS_VER__}, artifact '${names}'"
+		return 0
+	done
+	epr "No successful run of ${repo}/${wf} still holds an artifact"
+	return 1
+}
+get_actions_vers() { echo "$__ACTIONS_VER__"; }
+get_actions_pkg_name() { echo "${pkg_name:-}"; }
+dl_actions() {
+	local url=$1 version=$2 output=$3 zip
+	if [ "$version" != "$__ACTIONS_VER__" ]; then
+		epr "Only the newest run (#${__ACTIONS_VER__}) of a workflow can be downloaded, not '${version}'"
+		return 1
+	fi
+	zip="${output%.apk}.artifact.zip"
+	rm -f "$zip"
+	# the API answers with a redirect to blob storage; curl drops the token on that hop
+	_req "$__ACTIONS_ZIP__" "$zip" -H "$GH_HEADER" || return 1
+	local apks
+	apks=$(unzip -Z1 "$zip" 2>/dev/null | grep -iE '\.apk$' || true)
+	if [ "$(grep -c . <<<"$apks" || true)" != 1 ]; then
+		epr "Artifact of run #${version} holds $(grep -c . <<<"$apks" || true) APKs; expected exactly one"
+		rm -f "$zip"
+		return 1
+	fi
+	unzip -p "$zip" "$apks" >"$output" || { rm -f "$zip" "$output"; return 1; }
+	rm -f "$zip"
 }
 
 # -------------------- cache_repo --------------------
