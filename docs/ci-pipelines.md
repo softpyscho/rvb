@@ -9,7 +9,7 @@ GitHub's limits; notify reports failures.
 | [ci.yml](../.github/workflows/ci.yml) | CI | `schedule` (6 UTC crons: ~4 h windows with randomized minutes), `workflow_dispatch` | `ci` |
 | [build.yml](../.github/workflows/build.yml) | Build | `workflow_call` only — from `ci.yml` (per pool) or `manual-ci.yml` | `build` |
 | [cleanup.yml](../.github/workflows/cleanup.yml) | Cleanup | `workflow_call`, `workflow_dispatch` | `clean` |
-| [manual-ci.yml](../.github/workflows/manual-ci.yml) | Manual CI | `workflow_dispatch` (`all` / one config + optional `remove_apks`), followed by cleanup | `ci` |
+| [manual-ci.yml](../.github/workflows/manual-ci.yml) | Manual CI | `workflow_dispatch` (`all` / one config + optional `remove_apks` / `clean`), followed by cleanup | `ci` |
 | [notify.yml](../.github/workflows/notify.yml) | Notify | `workflow_call`, on `failure()` of the caller | — |
 | [trace-verify.yml](../.github/workflows/trace-verify.yml) | Trace Verify | `push` touching `scripts/build.sh`, `scripts/utils.sh`, `.github/traces/**`, the release-notes / Obtainium / manifest scripts, `configs/patches/**`, or the generated `README.md` / `OBTAINIUM.md` / `obtainium-apps.json` | `trace-verify` |
 
@@ -107,6 +107,12 @@ Everything the job needs to be reproducible lives in that one file, including th
 `PARALLEL_JOBS: "1"` and `UPLOAD_CONCURRENCY: "12"` are workflow env values, not
 repo variables, so they are visible in PRs, survive forks, and carry git history
 (why: [decisions/0005](decisions/0005-tuning-knobs-live-in-the-workflow.md)).
+
+`clean: true` (dispatch only; the watcher never passes it) is a clean build. It skips the
+`temp/apks` Actions cache restore and sets `RVB_CLEAN_BUILD=true`, which keeps `build_rv` from
+adding the `cache_repo` source, so every stock APK is downloaded fresh from the stores. Nothing is
+deleted. The fresh files are still uploaded to the cache repo, and the cache this run saves becomes
+the newest `apks-` entry, which the next run restores.
 
 Step order, with the reason each is where it is:
 

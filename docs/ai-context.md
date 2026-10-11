@@ -69,7 +69,7 @@ Releases, records build metadata in the repository (`state/`), and feeds a stati
 | `.github/workflows/ci.yml` | the watcher: detects changes, regenerates pool configs, decides per-channel build triggers |
 | `.github/workflows/build.yml` | reusable build job; owns tuning env (`PARALLEL_JOBS`, `UPLOAD_CONCURRENCY`), keystore, caches, uploads, branch merges |
 | `.github/workflows/cleanup.yml` | release/asset pruning + `catalog-updated` dispatch to the site |
-| `.github/workflows/manual-ci.yml` | human-triggered single build, including `remove_apks` cache eviction |
+| `.github/workflows/manual-ci.yml` | human-triggered single build, including `remove_apks` cache eviction and a `clean` (cache-free) build |
 | `.github/workflows/trace-verify.yml` | offline regression gate on engine pushes |
 | `.github/scripts/` | CI-side tooling; the [index](../.github/scripts/README.md) describes each script's contract |
 | `.github/traces/` | fixtures + `curl`/`java` stubs + golden argv files; the engine's safety net |

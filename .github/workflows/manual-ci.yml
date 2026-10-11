@@ -18,6 +18,11 @@ on:
         required: false
         type: string
         default: ""
+      clean:
+        description: "Clean build: start from an empty APK cache and skip the cache repo, so every stock APK is downloaded fresh"
+        required: false
+        type: boolean
+        default: false
 
 # The reusable workflows called below ask for these themselves (branch and release writes,
 # workflow-run cleanup). A caller that grants nothing explicit fails at startup on a
@@ -36,6 +41,7 @@ jobs:
     with:
       config_file: ${{ inputs.config_file }}
       remove_apks: ${{ inputs.remove_apks }}
+      clean: ${{ inputs.clean }}
     secrets: inherit
 
   trigger_cleanup:

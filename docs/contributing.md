@@ -48,7 +48,8 @@ Your change takes effect on the next watcher run (every 4 hours): the pool confi
 are regenerated from your TOML and the affected app gets built. To verify
 immediately instead of waiting, run **Manual CI** (`workflow_dispatch`): `all` builds every app
 (stable pool, then beta pool), or pick `configs/config.manual.toml` — a hand-built config that never
-touches the pools. **Build** (`build.yml`) can also be dispatched directly with the same choices;
+touches the pools. Tick `clean` to ignore every cached stock APK and download all of them again.
+**Build** (`build.yml`) can also be dispatched directly with the same choices;
 Manual CI adds the cleanup and failure notification around it.
 
 ## Changing code

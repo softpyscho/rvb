@@ -10,6 +10,10 @@ on:
         required: false
         type: string
         default: ""
+      clean:
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       config_file:
@@ -27,6 +31,11 @@ on:
         required: false
         type: string
         default: ""
+      clean:
+        description: "Clean build: start from an empty APK cache and skip the cache repo, so every stock APK is downloaded fresh"
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: build
@@ -142,7 +151,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/build_resolve_version.sh
 
+      # A clean build starts from an empty temp/apks; the cache it saves at the end is the newest
+      # 'apks-' entry, so the next run restores the clean set and the old entries age out.
       - name: Restore APKs Cache
+        if: ${{ !inputs.clean }}
         uses: actions/cache/restore@v6
         with:
           path: temp/apks
@@ -174,6 +186,7 @@ jobs:
           NEXT_VER_CODE: ${{ steps.version.outputs.NEXT_VER_CODE }}
           IS_PRERELEASE: ${{ steps.context.outputs.IS_PRERELEASE }}
           CF_SOLVER_URL: "http://localhost:8000"
+          RVB_CLEAN_BUILD: ${{ inputs.clean }}
           RVB_MORPHE_PASSTHROUGH: "${{ vars.RVB_MORPHE_PASSTHROUGH || 'true' }}"
           RELEASE_NOTES_TG_LINK: "${{ vars.RELEASE_NOTES_TG_LINK }}"
           RELEASE_NOTES_DONATE_LINK: "${{ vars.RELEASE_NOTES_DONATE_LINK }}"

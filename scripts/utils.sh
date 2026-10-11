@@ -4333,7 +4333,9 @@ build_rv() {
 
 		if [ "$skip_dl_source_check" = false ]; then
 			# 2. Establish dl_from and fetch required HTML responses
-		if [ -n "${UPLOAD_APKS_REPO:-}" ] && [ -n "$pkg_name" ]; then
+		# a clean build (RVB_CLEAN_BUILD=true) re-downloads from the stores; the fresh files are
+		# still uploaded to the cache repo below
+		if [ -n "${UPLOAD_APKS_REPO:-}" ] && [ -n "$pkg_name" ] && [ "${RVB_CLEAN_BUILD:-}" != true ]; then
 			args[cache_repo_dlurl]="https://github.com/${UPLOAD_APKS_REPO}/releases/tag/${pkg_name}"
 		fi
 			for dl_p in "${DL_SRCS[@]}"; do
