@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-11T11:06:31Z"
+    "publishedAt": "2026-10-11T15:00:42Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -100,8 +100,8 @@
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260056",
-      "publishedAt": "2026-10-11T09:05:45Z",
+      "originBuild": "260059",
+      "publishedAt": "2026-10-11T15:00:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "5.1.1"
     },
@@ -140,8 +140,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260056",
-      "publishedAt": "2026-10-11T09:05:45Z",
+      "originBuild": "260059",
+      "publishedAt": "2026-10-11T15:00:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null
     },
@@ -400,8 +400,8 @@
         "Disable Analytics / Telemetry",
         "Spoof WARP+ Unlimited UI"
       ],
-      "originBuild": "260056",
-      "publishedAt": "2026-10-11T09:05:45Z",
+      "originBuild": "260059",
+      "publishedAt": "2026-10-11T15:00:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "6.38.9"
     },
@@ -563,8 +563,8 @@
         "Neutralize third-party SDKs",
         "Truecaller Premium"
       ],
-      "originBuild": "260056",
-      "publishedAt": "2026-10-11T09:05:45Z",
+      "originBuild": "260059",
+      "publishedAt": "2026-10-11T15:00:32Z",
       "apkSource": "archive",
       "recommendedVersion": "26.10.6"
     },
