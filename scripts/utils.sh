@@ -1620,16 +1620,21 @@ get_apkmirror_vers() {
 }
 
 # Stable versions on page $1 (default 1, newest) of the app's own APKMirror listing - the
-# config's apkmirror-dlurl, as given to get_apkmirror_resp - read from its release links
-# ("<path>/whatsapp-messenger-2-26-38-75-release/"). Unlike the uploads feed this needs no
-# category slug, which the URL does not always carry: `?appcategory=whatsapp` returns
-# every app's uploads. A beta's link ends "-beta-release/", so it is not matched.
+# config's apkmirror-dlurl, as given to get_apkmirror_resp. Unlike the uploads feed this needs
+# no category slug, which the URL does not always carry: `?appcategory=whatsapp` returns every
+# app's uploads. Parsed by apkmirror_search.py like the feed: main column only, and a beta is
+# dropped by its title, since its link ("whatsapp-2-25-2-9-release/") does not say beta.
 get_apkmirror_listing_vers() {
-	local page=${1:-1} url=$__APKMIRROR_URL__ html=""
+	local page=${1:-1} url=$__APKMIRROR_URL__ html="" vers
 	if [ "$page" != 1 ]; then url+="/page/${page}"; fi
 	_cf_get "${url}/" || return 1
-	grep -oP "href=\"(https://www\.apkmirror\.com)?${__APKMIRROR_URL__#https://www.apkmirror.com}/[^\"/]*?-\K\d+(-\d+)+(?=-release/\")" <<<"$html" |
-		tr - . | awk '!seen[$0]++'
+	local py_script="${CWD}/scripts/apkmirror_search.py"
+	[ ! -f "$py_script" ] && [ -n "${BASH_SOURCE[0]:-}" ] && py_script="$(dirname "${BASH_SOURCE[0]}")/apkmirror_search.py"
+	if ! vers=$(python3 "$py_script" vers false <<<"$html"); then
+		wpr "No stable version on ${url}/ ($(wc -c <<<"$html") bytes, $(grep -o '<title>[^<]*' <<<"$html" | head -1))"
+		return 1
+	fi
+	echo "$vers"
 }
 
 # Extract the app package name from an arbitrary APKMirror page's HTML
