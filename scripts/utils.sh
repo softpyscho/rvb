@@ -1556,6 +1556,7 @@ _cf_get() {
 # -------------------- apkmirror --------------------
 get_apkmirror_resp() {
 	local url="${1}"
+	__APKMIRROR_URL__="${url%/}"
 	if [ -n "${__DL_RESP_CACHE__["apkmirror_resp_$url"]:-}" ]; then
 		__APKMIRROR_RESP__="${__DL_RESP_CACHE__["apkmirror_resp_$url"]}"
 		__APKMIRROR_CAT__="${__DL_RESP_CACHE__["apkmirror_cat_$url"]}"
@@ -1573,10 +1574,9 @@ get_apkmirror_resp() {
 	set -u
 }
 
-get_apkmirror_vers() { # $1 = uploads page, default 1 (newest)
-	local vers apkm_resp html="" page=${1:-1} uploads="https://www.apkmirror.com/uploads"
-	if [ "$page" != 1 ]; then uploads+="/page/${page}"; fi
-	_cf_get "${uploads}/?appcategory=${__APKMIRROR_CAT__}" || return 1
+get_apkmirror_vers() {
+	local vers apkm_resp html=""
+	_cf_get "https://www.apkmirror.com/uploads/?appcategory=${__APKMIRROR_CAT__}" || return 1
 	apkm_resp="$html"
 
 	local py_cmd=""
@@ -1617,6 +1617,19 @@ get_apkmirror_vers() { # $1 = uploads page, default 1 (newest)
 	else
 		echo "$vers"
 	fi
+}
+
+# Stable versions on page $1 (default 1, newest) of the app's own APKMirror listing - the
+# config's apkmirror-dlurl, as given to get_apkmirror_resp - read from its release links
+# ("<path>/whatsapp-messenger-2-26-38-75-release/"). Unlike the uploads feed this needs no
+# category slug, which the URL does not always carry: `?appcategory=whatsapp` returns
+# every app's uploads. A beta's link ends "-beta-release/", so it is not matched.
+get_apkmirror_listing_vers() {
+	local page=${1:-1} url=$__APKMIRROR_URL__ html=""
+	if [ "$page" != 1 ]; then url+="/page/${page}"; fi
+	_cf_get "${url}/" || return 1
+	grep -oP "href=\"(https://www\.apkmirror\.com)?${__APKMIRROR_URL__#https://www.apkmirror.com}/[^\"/]*?-\K\d+(-\d+)+(?=-release/\")" <<<"$html" |
+		tr - . | awk '!seen[$0]++'
 }
 
 # Extract the app package name from an arbitrary APKMirror page's HTML
@@ -3820,8 +3833,9 @@ _resolve_list_and_version() {
 # (Dev4Mod/WaEnhancer) release supports for package $2, so `version = "waenhancer"` follows the
 # module rather than WhatsApp itself. The supported set is that release's arrays.xml - the list
 # the module checks at runtime - whose items name a whole minor ("2.26.38.xx") or one build.
-# APKMirror's uploads list is newest first and WhatsApp ships betas almost daily, so the newest
-# supported stable is often past page one: pages are read until one holds a match.
+# On APKMirror the app's own listing is read (get_apkmirror_listing_vers). It is newest first,
+# and WaEnhancer trails WhatsApp, so the newest supported build can be past page one: pages are
+# read until one holds a match.
 # Fails loudly when the list cannot be read; empty output means nothing listed is supported.
 # Shared by mirror_rv and the watcher so both settle on the same version.
 waenhancer_vers() {
@@ -3852,7 +3866,7 @@ waenhancer_vers() {
 	# ponytail: 5 pages (~10 s each through the solver); raise if WaEnhancer lags further behind
 	for page in 1 2 3 4 5; do
 		if [ "$src" = apkmirror ]; then
-			vers=$(get_apkmirror_vers "$page") || vers=""
+			vers=$(get_apkmirror_listing_vers "$page") || vers=""
 		else
 			vers=$(get_"${src}"_vers) || vers=""
 		fi
