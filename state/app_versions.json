@@ -3,7 +3,7 @@
     "keys": [
       "Alarmy"
     ],
-    "version": "26.34.1"
+    "version": "26.36.1"
   },
   "Amazon-Prime-Video": {
     "keys": [
@@ -33,13 +33,13 @@
     "keys": [
       "Greenify"
     ],
-    "version": "4.7.5"
+    "version": "5.1.1"
   },
   "Instagram": {
     "keys": [
       "Instagram"
     ],
-    "version": "450.0.0.50.77"
+    "version": "452.0.0.0.16"
   },
   "Mix-Archive": {
     "keys": [
@@ -51,13 +51,13 @@
     "keys": [
       "Mixplorer"
     ],
-    "version": "6.71.15"
+    "version": "6.71.15-API29"
   },
   "Reddit": {
     "keys": [
       "Reddit"
     ],
-    "version": "2026.41.0"
+    "version": "2026.40.0"
   },
   "RedotPay": {
     "keys": [
@@ -69,7 +69,7 @@
     "keys": [
       "Splitwise"
     ],
-    "version": "26.8.3"
+    "version": "26.9.1"
   },
   "Stremio": {
     "keys": [
@@ -87,24 +87,30 @@
     "keys": [
       "Truecaller"
     ],
-    "version": "26.39.6"
+    "version": "15.28.7"
   },
   "Twitter": {
     "keys": [
       "Twitter"
     ],
-    "version": "12.33.1-prod.01"
+    "version": "12.32.0-prod.01"
   },
   "WARP": {
     "keys": [
       "WARP"
     ],
-    "version": "1.1.1.1 + WARP: Safer Internet 6.38.9"
+    "version": "6.38.9"
   },
   "Xodo": {
     "keys": [
       "Xodo"
     ],
     "version": "11.3.1"
+  },
+  "Oxygen-Customizer": {
+    "keys": [
+      "Oxygen-Customizer"
+    ],
+    "version": "2062"
   }
 }

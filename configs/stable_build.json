@@ -65,8 +65,7 @@
     "app-name": "Mixplorer",
     "pkg-name": "com.mixplorer",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/hootan-parsa/mixplorer-hootanparsa/",
-    "uptodown-dlurl": "https://mixplorer.en.uptodown.com/android",
-    "enabled": false
+    "uptodown-dlurl": "https://mixplorer.en.uptodown.com/android"
   },
   "Mix-Archive": {
     "mirror": true,
@@ -99,6 +98,16 @@
     "keep-filename": true,
     "github-dlurl": "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly",
     "enabled": false
+  },
+  "Oxygen-Customizer": {
+    "mirror": true,
+    "brand": "Mirror",
+    "version": "latest",
+    "arch": "all",
+    "app-name": "Oxygen Customizer",
+    "pkg-name": "it.dhd.oxygencustomizer",
+    "actions-dlurl": "https://github.com/DHD2280/Oxygen-Customizer/actions/workflows/build_debug.yml",
+    "actions-artifact": "Dev \\(#[0-9]+\\)$"
   },
   "Reddit": {
     "patches-source": "MorpheApp/morphe-patches",
@@ -150,8 +159,7 @@
     "badge-icon": "x",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/x-corp/twitter",
-    "uptodown-dlurl": "https://twitter.en.uptodown.com/android",
-    "enabled": false
+    "uptodown-dlurl": "https://twitter.en.uptodown.com/android"
   },
   "Alarmy": {
     "patches-source": "rabilrbl/fluffy-patches",
@@ -162,8 +170,7 @@
     "badge-icon": "alarmy",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/sleep-tracker-alarm-clock-by-delightroom/alarmy-challenge-alarm-clock/",
-    "uptodown-dlurl": "https://alarmy.en.uptodown.com/android",
-    "enabled": false
+    "uptodown-dlurl": "https://alarmy.en.uptodown.com/android"
   },
   "WARP": {
     "patches-source": "rushiranpise/morphe-patches",
@@ -174,8 +181,7 @@
     "badge-icon": "cloudflare",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/cloudflare/1-1-1-1-faster-safer-internet",
-    "uptodown-dlurl": "https://1-1-1-1.en.uptodown.com/android",
-    "enabled": false
+    "uptodown-dlurl": "https://1-1-1-1.en.uptodown.com/android"
   },
   "Splitwise": {
     "patches-source": "rushiranpise/morphe-patches",
@@ -186,8 +192,7 @@
     "badge-icon": "splitwise",
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/splitwise/splitwise/",
-    "uptodown-dlurl": "https://splitwise.en.uptodown.com/android",
-    "enabled": false
+    "uptodown-dlurl": "https://splitwise.en.uptodown.com/android"
   },
   "Greenify": {
     "patches-source": "rushiranpise/morphe-patches",
@@ -199,7 +204,6 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/oasisfeng/greenify",
     "github-dlurl": "https://github.com/softpyscho/apkforge/releases/tag/com.oasisfeng.greenify",
-    "uptodown-dlurl": "https://greenify.en.uptodown.com/android",
-    "enabled": false
+    "uptodown-dlurl": "https://greenify.en.uptodown.com/android"
   }
 }
