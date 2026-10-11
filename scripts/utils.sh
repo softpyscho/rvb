@@ -1556,7 +1556,6 @@ _cf_get() {
 # -------------------- apkmirror --------------------
 get_apkmirror_resp() {
 	local url="${1}"
-	__APKMIRROR_URL__="${url%/}"
 	if [ -n "${__DL_RESP_CACHE__["apkmirror_resp_$url"]:-}" ]; then
 		__APKMIRROR_RESP__="${__DL_RESP_CACHE__["apkmirror_resp_$url"]}"
 		__APKMIRROR_CAT__="${__DL_RESP_CACHE__["apkmirror_cat_$url"]}"
@@ -1619,19 +1618,21 @@ get_apkmirror_vers() {
 	fi
 }
 
-# Stable versions on page $1 (default 1, newest) of the app's own APKMirror listing - the
-# config's apkmirror-dlurl, as given to get_apkmirror_resp. Unlike the uploads feed this needs
-# no category slug, which the URL does not always carry: `?appcategory=whatsapp` returns every
-# app's uploads. Parsed by apkmirror_search.py like the feed: main column only, and a beta is
-# dropped by its title, since its link ("whatsapp-2-25-2-9-release/") does not say beta.
+# Stable versions on page $1 (default 1, newest) of the app's APKMirror uploads feed. The app
+# page itself shows only the newest few releases, and its /page/N/ repeats them, so the feed is
+# the only listing that reaches back. Parsed by apkmirror_search.py: main column only, and a beta
+# is dropped by its title, since its link ("whatsapp-2-25-2-9-release/") does not say beta. A
+# dead category (a moved app) makes the feed list every app, so a stale apkmirror-dlurl shows up
+# as unrelated versions here.
 get_apkmirror_listing_vers() {
-	local page=${1:-1} url=$__APKMIRROR_URL__ html="" vers
+	local page=${1:-1} url="https://www.apkmirror.com/uploads" html="" vers
 	if [ "$page" != 1 ]; then url+="/page/${page}"; fi
-	_cf_get "${url}/" || return 1
+	url+="/?appcategory=${__APKMIRROR_CAT__}"
+	_cf_get "$url" || return 1
 	local py_script="${CWD}/scripts/apkmirror_search.py"
 	[ ! -f "$py_script" ] && [ -n "${BASH_SOURCE[0]:-}" ] && py_script="$(dirname "${BASH_SOURCE[0]}")/apkmirror_search.py"
 	if ! vers=$(python3 "$py_script" vers false <<<"$html"); then
-		wpr "No stable version on ${url}/ ($(wc -c <<<"$html") bytes, $(grep -o '<title>[^<]*' <<<"$html" | head -1))"
+		wpr "No stable version on ${url} ($(wc -c <<<"$html") bytes, $(grep -o '<title>[^<]*' <<<"$html" | head -1))"
 		return 1
 	fi
 	echo "$vers"
@@ -3844,7 +3845,7 @@ _resolve_list_and_version() {
 # Fails loudly when the list cannot be read; empty output means nothing listed is supported.
 # Shared by mirror_rv and the watcher so both settle on the same version.
 waenhancer_vers() {
-	local src=$1 arr tag items p re="" page vers listed=""
+	local src=$1 arr tag items p re="" page vers prev="" listed=""
 	case $2 in
 	com.whatsapp) arr=supported_versions_wpp ;;
 	com.whatsapp.w4b) arr=supported_versions_business ;;
@@ -3875,6 +3876,9 @@ waenhancer_vers() {
 		else
 			vers=$(get_"${src}"_vers) || vers=""
 		fi
+		# a page that repeats the last one means the listing has run out
+		if [ "$page" != 1 ] && [ "$vers" = "$prev" ]; then break; fi
+		prev=$vers
 		listed+="${listed:+ }$(tr '\n' ' ' <<<"$vers")"
 		vers=$(grep -E "^(${re})(\.|$)" <<<"$vers" || true)
 		if [ -n "$vers" ]; then
