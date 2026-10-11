@@ -57,13 +57,13 @@
     "keys": [
       "Reddit"
     ],
-    "version": "2026.40.0"
+    "version": "2026.41.0"
   },
   "RedotPay": {
     "keys": [
       "RedotPay"
     ],
-    "version": "3.14.4"
+    "version": "3.14.3"
   },
   "Splitwise": {
     "keys": [
@@ -93,7 +93,7 @@
     "keys": [
       "Twitter"
     ],
-    "version": "12.32.0-prod.01"
+    "version": "12.33.1-prod.01"
   },
   "WARP": {
     "keys": [
