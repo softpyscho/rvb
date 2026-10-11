@@ -64,9 +64,13 @@ while IFS='|' read -r group app; do
             ($a["apkcombo-dlurl"] // ""),
             ($a["github-dlurl"] // ""),
             ($a["actions-dlurl"] // ""),
-            ($a["actions-artifact"] // "")
+            ($a["actions-artifact"] // ""),
+            ($a.version // ""),
+            ($a["pkg-name"] // "")
         ' "${CONFIG_INPUTS[@]}"
     )
+    version_mode="${_urls[7]:-}"
+    pkg_name="${_urls[8]:-}"
     actions_url="${_urls[5]:-}"
     # get_actions_resp reads its artifact regex from the engine's per-app args
     declare -A args=([actions_artifact]="${_urls[6]:-}")
@@ -78,8 +82,16 @@ while IFS='|' read -r group app; do
 
     dlurls=()
     sources=()
-    [ -n "$uptodown_url" ] && { dlurls+=("$uptodown_url"); sources+=("uptodown"); }
-    [ -n "$apkmirror_url" ] && { dlurls+=("$apkmirror_url"); sources+=("apkmirror"); }
+    # `waenhancer` apps ask the sources in the engine's order (APKMirror, then Uptodown), not
+    # the usual Uptodown-first one: the build takes its version from the first source that
+    # lists a supported build, and the version recorded here has to be that one.
+    if [ "$version_mode" = waenhancer ]; then
+        [ -n "$apkmirror_url" ] && { dlurls+=("$apkmirror_url"); sources+=("apkmirror"); }
+        [ -n "$uptodown_url" ] && { dlurls+=("$uptodown_url"); sources+=("uptodown"); }
+    else
+        [ -n "$uptodown_url" ] && { dlurls+=("$uptodown_url"); sources+=("uptodown"); }
+        [ -n "$apkmirror_url" ] && { dlurls+=("$apkmirror_url"); sources+=("apkmirror"); }
+    fi
     [ -n "$apkpure_url" ] && { dlurls+=("$apkpure_url"); sources+=("apkpure"); }
     [ -n "$apkcombo_url" ] && { dlurls+=("$apkcombo_url"); sources+=("apkcombo"); }
     [ -n "$github_url" ] && { dlurls+=("$github_url"); sources+=("github"); }
@@ -96,7 +108,25 @@ while IFS='|' read -r group app; do
         dlurl="${dlurls[$i]}"
         source="${sources[$i]}"
         
-        if [ -n "${cached_versions[$dlurl]:-}" ]; then
+        if [ "$version_mode" = waenhancer ]; then
+            # The newest build the latest WaEnhancer release supports (the same narrowing
+            # mirror_rv applies), so a new WaEnhancer release, or a new build inside what it
+            # supports, is what moves the recorded version and triggers a build. Not cached by
+            # URL: the answer depends on the package, not on the page.
+            if [[ "$source" != "apkmirror" && "$source" != "uptodown" ]]; then continue; fi
+            "get_${source}_resp" "$dlurl" || { echo "::warning::Failed $source resp for $app"; continue; }
+            wae_rc=0
+            vers=$(waenhancer_vers "$source" "$pkg_name") || wae_rc=$?
+            if [ "$wae_rc" -ne 0 ]; then
+                echo "::warning::Cannot read the WaEnhancer support list for $app"
+                break
+            fi
+            latest_ver=$(get_highest_ver <<<"$vers") || latest_ver=""
+            if [ -n "$latest_ver" ]; then
+                sleep $((RANDOM % 5 + 3)) # same politeness as a scrape of any other source
+                break
+            fi
+        elif [ -n "${cached_versions[$dlurl]:-}" ]; then
             latest_ver="${cached_versions[$dlurl]}"
             echo "::notice::Reusing cached version for $app: $latest_ver"
             break

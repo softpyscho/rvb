@@ -351,6 +351,8 @@ def _configured_version_label(spec):
         return "Auto (pre-release)" if spec["prerelease"] else "Auto"
     if mode == "latest":
         return "Latest (pre-release)" if spec["prerelease"] else "Latest"
+    if mode == "waenhancer":
+        return "WaEnhancer"
     return mode if not mode[:1].isdigit() else f"v{mode}"
 
 

@@ -37,7 +37,7 @@ step's output is the next step's input:
 |---|---|---|
 | Compile Base Configs | `compile_patch_configs.py` | every app's pool membership from `configs/patches/*.toml` |
 | Sync Patch Sources | `sync_patch_sources.py` | discovers all `(patches-source, host)` pairs, lists releases on GitHub/GitLab/Codeberg, rewrites `state/patch_sources.json`, prunes sources no config uses, emits `TRIGGER_STABLE`/`TRIGGER_BETA`/`TRIGGER_BLOCKED` and writes `changed_sources.json` |
-| Fetch App Versions | `ci_fetch_app_versions.sh` | scrapes current store versions (honours `"_check_only_listed"` in `state/app_versions.json`) |
+| Fetch App Versions | `ci_fetch_app_versions.sh` | scrapes current store versions (honours `"_check_only_listed"` in `state/app_versions.json`); a `version = "waenhancer"` app is asked APKMirror first, then Uptodown, for the newest build the latest WaEnhancer release supports, so a WaEnhancer release moves the recorded version and triggers its mirror build |
 | Compare App Versions | `compare` step | `TRIGGER_APP_UPDATE` when a tracked app moved |
 | Classify triggers | `ci_trigger_flags.sh` | the two questions everyone else asks: `SOURCES_CHANGED`, `ANYTHING_CHANGED` |
 | Check Patch App Updates | `ci_check_app_patches.py` | only when `SOURCES_CHANGED`: downloads the changed bundles and hashes them (`state/patch_file_hashes.json`) to find which apps the new patches actually cover |

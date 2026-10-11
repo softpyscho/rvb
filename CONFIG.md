@@ -170,7 +170,7 @@ repository.
 ```toml
 mirror = true            # file-level default for a "stock apps" file
 brand = "Mirror"         # metadata only; a mirrored file name has no brand segment
-version = "latest"       # 'latest' or an explicit version. 'auto', 'exp' and 'beta' are refused: there are no patches to resolve them against
+version = "latest"       # 'latest', 'waenhancer' (WhatsApp / WhatsApp Business only: the newest build the latest Dev4Mod/WaEnhancer release supports, see below) or an explicit version. 'auto', 'exp' and 'beta' are refused: there are no patches to resolve them against
 arch = "arm64-v8a"
 
 [Bitget]
@@ -206,6 +206,24 @@ github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/t
   rejection.
 - **When it rebuilds:** only when the app itself updates in a tracked store. A patch release never
   rebuilds a mirrored app.
+- **`version = "waenhancer"`** (`com.whatsapp` and `com.whatsapp.w4b` only; any other package is
+  refused): WaEnhancer only hooks the WhatsApp builds listed in its `arrays.xml`
+  (`2.26.40.xx` names a whole minor) and a newer WhatsApp breaks it, so the mirror takes the highest
+  stable build the **latest** WaEnhancer release supports. The first source (the usual order:
+  `apkmirror`, then `uptodown`) that lists such a build supplies the version; the download then
+  tries the sources in order for exactly that build, so a failed APKMirror download falls back to
+  Uptodown for the same version, never to an older one. A WaEnhancer release that widens its list
+  moves the version the watcher records and so triggers a build; if the list cannot be read the
+  app is not mirrored (nothing is guessed).
+
+  ```toml
+  [WhatsApp]
+  app-name = "WhatsApp"
+  version = "waenhancer"
+  pkg-name = "com.whatsapp"
+  apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger/"
+  uptodown-dlurl = "https://whatsapp-messenger.en.uptodown.com/android"
+  ```
 
 ## Multiple Patch Sources
 

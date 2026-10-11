@@ -1618,6 +1618,26 @@ get_apkmirror_vers() {
 	fi
 }
 
+# Stable versions on page $1 (default 1, newest first) of the app's APKMirror uploads feed. The
+# app page itself shows only the newest few releases and its /page/N/ repeats them, so the feed
+# is the only listing that reaches back. Parsed by apkmirror_search.py: main column only, and a
+# beta is dropped by its title, since its link ("whatsapp-2-25-2-9-release/") does not say beta.
+# The feed filters by the category slug, the last segment of apkmirror-dlurl: a stale URL (an app
+# APKMirror moved) makes the feed list every app, so it shows up as unrelated versions here.
+get_apkmirror_listing_vers() {
+	local page=${1:-1} url="https://www.apkmirror.com/uploads" html="" vers
+	if [ "$page" != 1 ]; then url+="/page/${page}"; fi
+	url+="/?appcategory=${__APKMIRROR_CAT__}"
+	_cf_get "$url" || return 1
+	local py_script="${CWD}/scripts/apkmirror_search.py"
+	[ ! -f "$py_script" ] && [ -n "${BASH_SOURCE[0]:-}" ] && py_script="$(dirname "${BASH_SOURCE[0]}")/apkmirror_search.py"
+	if ! vers=$(python3 "$py_script" vers false <<<"$html"); then
+		wpr "No stable version on ${url} ($(wc -c <<<"$html") bytes, $(grep -o '<title>[^<]*' <<<"$html" | head -1))"
+		return 1
+	fi
+	echo "$vers"
+}
+
 # Extract the app package name from an arbitrary APKMirror page's HTML
 # (release page or category page). Every APKMirror app page embeds a Play
 # Store deep link, so this works on the release page we resolved to as well
@@ -3879,6 +3899,73 @@ _version_for_file_name() {
 	printf '%s' "$v"
 }
 
+# The versions source $1 lists that the latest WaEnhancer (Dev4Mod/WaEnhancer) release supports
+# for package $2, newest first, so `version = "waenhancer"` follows the module rather than
+# WhatsApp itself: a newer WhatsApp breaks the module. The supported set is that release's
+# arrays.xml, the list the module checks at runtime, whose items name a whole minor
+# ("2.26.40.xx") or one build. get_<source>_resp must have run for $1.
+#   - APKMirror: the app page first (already fetched, newest few releases), then its uploads
+#     feed. WaEnhancer trails WhatsApp and WhatsApp posts almost daily, so the newest supported
+#     build can sit past page one: pages are read until one holds a match.
+#   - any other source: the one list it gives.
+# Return 1 when the support list cannot be read or the package is not one WaEnhancer hooks:
+# no source can change that. Return 0 with no output when this source lists no supported build,
+# so the caller can try the next source. Shared by mirror_rv and the watcher so both settle on
+# the same version.
+waenhancer_vers() {
+	local src=$1 arr tag items p re="" page vers prev="" listed=""
+	local py_script="${CWD}/scripts/apkmirror_search.py"
+	[ ! -f "$py_script" ] && [ -n "${BASH_SOURCE[0]:-}" ] && py_script="$(dirname "${BASH_SOURCE[0]}")/apkmirror_search.py"
+	case $2 in
+	com.whatsapp) arr=supported_versions_wpp ;;
+	com.whatsapp.w4b) arr=supported_versions_business ;;
+	*) epr "WaEnhancer does not support the package '$2'"; return 1 ;;
+	esac
+	# /releases/latest redirects to the tag: no API call, so no token and no rate limit
+	tag=$(curl -sfI --retry 2 --connect-timeout 10 https://github.com/Dev4Mod/WaEnhancer/releases/latest |
+		sed -n 's;^location:.*/releases/tag/\([^[:space:]]*\).*;\1;Ip') || tag=""
+	if [ -z "$tag" ]; then
+		epr "Could not resolve the latest WaEnhancer release"
+		return 1
+	fi
+	items=$(curl -sf --retry 2 --connect-timeout 10 "https://raw.githubusercontent.com/Dev4Mod/WaEnhancer/${tag}/app/src/main/res/values/arrays.xml" |
+		sed -n "/name=\"${arr}\"/,/<\/string-array>/s;.*<item>[[:space:]]*\([0-9.x]*\)[[:space:]]*</item>.*;\1;p") || items=""
+	if [ -z "$items" ]; then
+		epr "WaEnhancer ${tag} lists no ${arr}"
+		return 1
+	fi
+	pr "WaEnhancer ${tag} supports $2 $(tr '\n' ' ' <<<"$items")"
+	for p in $items; do
+		p=${p%.xx}
+		re+="${re:+|}${p//./\\.}"
+	done
+	# ponytail: the app page plus 5 feed pages (~10 s each through the solver); raise if
+	# WaEnhancer ever lags further behind
+	for page in 0 1 2 3 4 5; do
+		if [ "$src" = apkmirror ]; then
+			if [ "$page" = 0 ]; then
+				vers=$(python3 "$py_script" vers false <<<"${__APKMIRROR_RESP__:-}" 2>/dev/null) || vers=""
+			else
+				vers=$(get_apkmirror_listing_vers "$page") || vers=""
+				# a page that repeats the last one means the feed has run out
+				if [ "$vers" = "$prev" ]; then break; fi
+			fi
+			prev=$vers
+		else
+			if [ "$page" != 0 ]; then break; fi
+			vers=$(get_"${src}"_vers) || vers=""
+		fi
+		listed+="${listed:+ }$(tr '\n' ' ' <<<"$vers")"
+		vers=$(grep -E "^(${re})(\.|$)" <<<"$vers" || true)
+		if [ -n "$vers" ]; then
+			echo "$vers"
+			return 0
+		fi
+	done
+	wpr "None of the versions ${src} lists is supported by WaEnhancer ${tag}: ${listed:-nothing listed}"
+	return 0
+}
+
 # Re-host an app's stock APK unmodified (`mirror = true`), so a phone can track it from this
 # repository's releases like any patched app. Same contract as build_rv: argument is a
 # `declare -p` of the app_args array, an app that cannot be built is logged and skipped
@@ -3914,7 +4001,7 @@ mirror_rv() {
 	mkdir -p "$apk_dl_dir" "$BUILD_DIR"
 
 	if isoneof "$version_mode" auto exp beta; then
-		epr "'$table' is mirrored, so it has no patches to pick a '$version_mode' version from; use 'latest' or an explicit version."
+		epr "'$table' is mirrored, so it has no patches to pick a '$version_mode' version from; use 'latest', 'waenhancer' (WhatsApp apps) or an explicit version."
 		return 0
 	fi
 	if [ "$arch_f" = auto ]; then
@@ -3928,8 +4015,12 @@ mirror_rv() {
 	# 1. Pick the first source that answers; a version has to be discoverable from it unless
 	#    one was pinned. archive/cache_repo are not scraped for a latest version (they only
 	#    hold what an earlier run already stored).
-	local pinned=false dl_p dl_from="" tried_dl=()
-	isoneof "$version_mode" latest || pinned=true
+	local pinned=false dl_p dl_from="" tried_dl=() waenhancer=false wae_vers="" wae_rc
+	if [ "$version_mode" = waenhancer ]; then
+		waenhancer=true
+	elif ! isoneof "$version_mode" latest; then
+		pinned=true
+	fi
 	for dl_p in "${DL_SRCS[@]}"; do
 		[ -z "${args[${dl_p}_dlurl]:-}" ] && continue
 		if [ "$pinned" = false ] && { [ "$dl_p" = archive ] || [ "$dl_p" = cache_repo ]; }; then continue; fi
@@ -3946,12 +4037,31 @@ mirror_rv() {
 				continue
 			fi
 		fi
+		if [ "$waenhancer" = true ]; then
+			# The version comes from the first source that lists a build WaEnhancer supports; a
+			# source that answers but lists none (or cannot be reached) hands over to the next.
+			# An unreadable WaEnhancer list is no source's fault, so it ends the app here.
+			wae_rc=0
+			wae_vers=$(waenhancer_vers "$dl_p" "$pkg_name") || wae_rc=$?
+			if [ "$wae_rc" != 0 ]; then
+				epr "Cannot mirror '${table}': the builds WaEnhancer supports are unknown."
+				return 0
+			fi
+			if [ -z "$wae_vers" ]; then
+				pr "No WaEnhancer-supported build from '${dl_p}' for ${table}; trying the next source"
+				continue
+			fi
+		fi
 		tried_dl+=("$dl_p")
 		dl_from=$dl_p
 		break
 	done
 	if [ -z "$dl_from" ]; then
-		epr "ERROR: No valid download source found for ${table}."
+		if [ "$waenhancer" = true ]; then
+			epr "ERROR: No source lists a build WaEnhancer supports for ${table}; not mirroring it."
+		else
+			epr "ERROR: No valid download source found for ${table}."
+		fi
 		return 0
 	fi
 	pr "Package name of '${table}' is '$pkg_name'"
@@ -3959,6 +4069,9 @@ mirror_rv() {
 	local version="" get_latest_ver=false
 	if [ "$pinned" = true ]; then
 		version=$version_mode
+	elif [ "$waenhancer" = true ]; then
+		# an exact build, so every source is asked for that one (get_latest_ver stays false)
+		version=$(get_highest_ver <<<"$wae_vers") || version=$(head -1 <<<"$wae_vers")
 	else
 		get_latest_ver=true
 		local pkgvers

@@ -87,7 +87,15 @@ else, which:
 1. picks the first download source that answers (the usual `DL_SRCS` order; `archive` and
    `cache_repo` are skipped when the version has to be discovered), then takes `latest` as
    the highest version that source lists, or the pinned `version` verbatim — `auto`, `exp`
-   and `beta` are refused because there is no patch bundle to resolve them against;
+   and `beta` are refused because there is no patch bundle to resolve them against.
+   `waenhancer` (WhatsApp and WhatsApp Business only) takes the highest listed version the
+   latest Dev4Mod/WaEnhancer release supports (`waenhancer_vers`, which the watcher applies
+   too, so the version it records is the one built). It asks the sources in order and the
+   first one that lists a supported build supplies the version — APKMirror reads the app page
+   and then its uploads feed, as the newest supported build can be past page one; the download
+   loop then asks every source for exactly that build, so Uptodown covers an APKMirror failure
+   without ever substituting an older version. A support list that cannot be read stops that
+   app (nothing is guessed);
 2. downloads through the same `dl_<source>` helpers and applies the same gates as a patched
    build: valid zip with a manifest, package identity (`_meta_field_of`),
    `verify_downloaded_apk`, and the arch-honesty gate
@@ -106,7 +114,7 @@ file, a package-id mismatch is a warning and the id found in the APK is the one 
 (that id is what Obtainium matches against the installed app), while a store scrape still
 rejects a mismatch. The download loop is deliberately a short second copy rather than a flag
 threaded through `build_rv`; a gate added to one belongs in the other. Covered offline by
-`.github/traces/test_mirror.sh`.
+`.github/traces/test_mirror.sh` (and, for `version = "waenhancer"`, `test_waenhancer.sh`).
 
 `keep-filename = true` (mirror only, `github` source only) publishes the release asset under its
 own sanitised name instead of the grammar — for builds like a nightly that have no version

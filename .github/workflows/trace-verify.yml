@@ -46,6 +46,7 @@ jobs:
           bash .github/traces/test_cache_helpers.sh
           bash .github/traces/test_bundle_helpers.sh
           bash .github/traces/test_mirror.sh
+          bash .github/traces/test_waenhancer.sh
           python3 .github/traces/test_release_notes.py
           bash .github/traces/test_ci_app_versions.sh
           bash .github/traces/test_github_versions.sh

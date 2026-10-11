@@ -158,6 +158,7 @@ bash scripts/build.sh configs/config.manual.toml     # real build (network + jav
 bash scripts/build.sh clean                          # reset temp/ build/ build.md
 python3 .github/traces/test_release_notes.py         # release notes, Obtainium links, generated docs in sync
 bash .github/traces/test_mirror.sh                   # mirrored-app engine path
+bash .github/traces/test_waenhancer.sh              # WaEnhancer-pinned WhatsApp mirrors
 python3 .github/scripts/obtainium.py --configs configs/patches --repo softpyscho/rvb \
         --page OBTAINIUM.md --json obtainium-apps.json --readme README.md   # regenerate the app table and Obtainium files
 gh run list --repo nullcpy/rvb                       # what ran and how
