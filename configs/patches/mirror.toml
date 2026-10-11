@@ -47,20 +47,3 @@ keep-filename = true
 version = "nightly"
 arch = "all"
 github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly"
-
-# The two WhatsApp apps follow WaEnhancer (Dev4Mod/WaEnhancer): `version = "waenhancer"`
-# mirrors the newest stable build that the latest WaEnhancer release lists as supported, so
-# a new WaEnhancer release moves them. APKMirror only (reached through the CI's Cloudflare
-# solver): the watcher and the build must read the same version list, and whatsapp.com
-# serves only the newest build.
-[WhatsApp]
-app-name = "WhatsApp"
-version = "waenhancer"
-pkg-name = "com.whatsapp"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger/"
-
-[WhatsApp-Business]
-app-name = "WhatsApp Business"
-version = "waenhancer"
-pkg-name = "com.whatsapp.w4b"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger-business/"

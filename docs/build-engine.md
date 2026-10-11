@@ -86,9 +86,7 @@ else, which:
 
 1. picks the first download source that answers (the usual `DL_SRCS` order; `archive` and
    `cache_repo` are skipped when the version has to be discovered), then takes `latest` as
-   the highest version that source lists (`waenhancer`: the highest one the latest
-   Dev4Mod/WaEnhancer release supports, via `waenhancer_vers`, which the watcher
-   applies too), or the pinned `version` verbatim — `auto`, `exp`
+   the highest version that source lists, or the pinned `version` verbatim — `auto`, `exp`
    and `beta` are refused because there is no patch bundle to resolve them against;
 2. downloads through the same `dl_<source>` helpers and applies the same gates as a patched
    build: valid zip with a manifest, package identity (`_meta_field_of`),
