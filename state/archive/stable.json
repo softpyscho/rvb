@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-11T05:27:56Z"
+    "publishedAt": "2026-10-11T05:43:27Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -228,8 +228,8 @@
       "appliedPatches": [
         "Unlock Pro"
       ],
-      "originBuild": "260052",
-      "publishedAt": "2026-10-10T23:29:56Z",
+      "originBuild": "260055",
+      "publishedAt": "2026-10-11T05:43:08Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "26.7.3"
     },
@@ -373,8 +373,8 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260050",
-      "publishedAt": "2026-10-10T17:33:57Z",
+      "originBuild": "260055",
+      "publishedAt": "2026-10-11T05:43:08Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "12.19.1-release.0"
     },
