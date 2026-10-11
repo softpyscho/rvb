@@ -550,7 +550,7 @@ class SeedConfig(unittest.TestCase):
     def test_every_configured_app_is_buildable_on_paper(self):
         import compile_patch_configs
         stable, beta = compile_patch_configs.compile_configs(str(CONFIG_PATCHES))  # exits on a duplicate app key
-        self.assertEqual(len(stable) + len(beta), 19)
+        self.assertEqual(len(stable) + len(beta), 21)
         patch_keys = ("patches-source", "cli-source", "included-patches", "excluded-patches", "exclusive-patches",
                       "inclusive-patches", "patcher-args", "patched-pkg-name", "include-stock")
         for pool in (stable, beta):
@@ -566,6 +566,12 @@ class SeedConfig(unittest.TestCase):
                     self.assertNotIn("keep-filename", app)
         self.assertEqual(set(beta), {"Instagram"})
         self.assertIn("Battery-Guru", stable)
+        # the WhatsApp mirrors follow WaEnhancer, and name both stores so one can cover the other
+        for key, pkg in (("WhatsApp", "com.whatsapp"), ("WhatsApp-Business", "com.whatsapp.w4b")):
+            self.assertEqual(stable[key]["version"], "waenhancer", key)
+            self.assertEqual(stable[key]["pkg-name"], pkg, key)
+            self.assertTrue(stable[key]["apkmirror-dlurl"] and stable[key]["uptodown-dlurl"], f"{key}: both stores")
+        self.assertEqual(stable["Bitget"]["version"], "latest", "control: other mirrors are not pinned to WaEnhancer")
         self.assertEqual(stable["Reddit"]["included-patches"], "'Custom branding name for Reddit'")
 
     def test_generated_documents_are_in_sync_with_the_config(self):
