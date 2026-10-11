@@ -8,15 +8,16 @@
 # runner (through the Cloudflare solver) at the version the latest WaEnhancer release supports.
 mirror = true
 brand = "Mirror"
-version = "waenhancer"
 arch = "arm64-v8a"
 
 [WhatsApp]
 app-name = "WhatsApp"
 pkg-name = "com.whatsapp"
+version = "waenhancer" # per app: build.sh reads no file-level version from a TOML
 apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp/"
 
 [WhatsApp-Business]
 app-name = "WhatsApp Business"
 pkg-name = "com.whatsapp.w4b"
+version = "waenhancer"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-business/"
