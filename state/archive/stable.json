@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-12T06:28:59Z"
+    "publishedAt": "2026-10-12T12:04:02Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -28,10 +28,11 @@
       "appliedPatches": [
         "Unlock Premium"
       ],
-      "originBuild": "260072",
-      "publishedAt": "2026-10-12T05:55:08Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "uptodown",
-      "recommendedVersion": "26.32.1"
+      "recommendedVersion": "26.32.1",
+      "experimental": false
     },
     "amazon-prime-video-morphe-v3.0.470.1047-arm64-v8a.apk": {
       "name": "amazon-prime-video-morphe",
@@ -56,8 +57,8 @@
         "Rename shared permissions",
         "Skip ads"
       ],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "3.0.470.1047",
       "experimental": false
@@ -101,8 +102,8 @@
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "5.1.1",
       "experimental": false
@@ -122,8 +123,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -143,8 +144,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -190,8 +191,8 @@
       "appliedPatches": [
         "Unlock Pro"
       ],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "26.7.3",
       "experimental": false
@@ -211,8 +212,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": true
@@ -240,8 +241,8 @@
         "Restore reminder alarms",
         "TickTick Premium"
       ],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "8.1.3.3",
       "experimental": false
@@ -338,8 +339,8 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "12.19.1-release.0",
       "experimental": false
@@ -366,8 +367,8 @@
         "Disable Analytics / Telemetry",
         "Spoof WARP+ Unlimited UI"
       ],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "6.38.9",
       "experimental": false
@@ -393,8 +394,8 @@
       "appliedPatches": [
         "Enable Pro"
       ],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "11.2.0",
       "experimental": false
@@ -458,8 +459,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260071",
-      "publishedAt": "2026-10-12T04:37:51Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "uptodown",
       "recommendedVersion": null,
       "resigned": false
@@ -494,8 +495,8 @@
         "Neutralize third-party SDKs",
         "Truecaller Premium"
       ],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "26.10.6",
       "experimental": false
@@ -521,8 +522,8 @@
       "appliedPatches": [
         "Unlock PRO"
       ],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "2.5.0.6",
       "experimental": false
@@ -542,8 +543,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260072",
-      "publishedAt": "2026-10-12T05:55:08Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "uptodown",
       "recommendedVersion": null,
       "resigned": false
@@ -627,8 +628,8 @@
         "Spoof signature",
         "Start as guest"
       ],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "2026.41.0",
       "experimental": true
@@ -668,8 +669,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "github",
       "recommendedVersion": null,
       "resigned": false
@@ -689,8 +690,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "actions",
       "recommendedVersion": null,
       "resigned": false
@@ -730,11 +731,89 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260073",
-      "publishedAt": "2026-10-12T06:28:33Z",
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
+    },
+    "instagram-morphe-v447.0.0.55.81-arm64-v8a.apk": {
+      "name": "instagram-morphe",
+      "version": "447.0.0.55.81",
+      "appKey": "instagram",
+      "appName": "Instagram",
+      "arch": "arm64",
+      "fileType": "APK",
+      "brandKey": "morphe",
+      "brandName": "Morphe",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "com.instagram.android",
+      "patchSources": [
+        "crimera/patches-3.10.0.mpp"
+      ],
+      "changelogs": [
+        "https://github.com/crimera/piko/releases/tag/v3.10.0"
+      ],
+      "appliedPatches": [
+        "Add settings",
+        "Change like animation",
+        "Change version code",
+        "Copy comment",
+        "Custom font",
+        "Custom sharing domain",
+        "Customise story ring size",
+        "Customise story timestamp",
+        "Customize navigation bar",
+        "Disable Reels scrolling",
+        "Disable ads",
+        "Disable comments",
+        "Disable discover people",
+        "Disable double tap like",
+        "Disable explore",
+        "Disable highlights",
+        "Disable stories",
+        "Disable story flipping",
+        "Disable swipe to create",
+        "Disable typing status",
+        "Disable video autoplay",
+        "Download media",
+        "Download voice message",
+        "External downloader",
+        "Filter stories",
+        "Focus Lock",
+        "Friendship status indicator",
+        "Hide Reels follow button",
+        "Hide group creation button on sharesheet",
+        "Hide notes tray",
+        "Hide reshare button",
+        "Hide save buttons",
+        "Hide share button",
+        "Hide stories tray",
+        "Hide suggested content",
+        "Improve image viewing",
+        "Inbox lock",
+        "Limit feed to following profiles",
+        "Loop story",
+        "Mark chat as read manually",
+        "More options on post",
+        "More options on profile",
+        "Open links externally",
+        "Recommended flags",
+        "Remove empty bottom space",
+        "Sanitize share links",
+        "Save Instants",
+        "Save deleted messages",
+        "Save media comment",
+        "Theme",
+        "Unlock developer options",
+        "View story mentions"
+      ],
+      "originBuild": "260075",
+      "publishedAt": "2026-10-12T12:03:32Z",
+      "apkSource": "apkmirror",
+      "recommendedVersion": "447.0.0.55.81",
+      "experimental": false
     }
   }
 }
