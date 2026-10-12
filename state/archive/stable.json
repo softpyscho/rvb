@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-12T02:26:18Z"
+    "publishedAt": "2026-10-12T03:42:41Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -389,24 +389,6 @@
       "apkSource": "apkmirror",
       "recommendedVersion": "11.2.0"
     },
-    "Duck.Detector-2026.10.06-82566ffa96bb.apk": {
-      "name": "duck-detector",
-      "version": "nightly",
-      "appKey": "duckdetector",
-      "appName": "Duck Detector",
-      "arch": "all",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "com.eltavine.duckdetector",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260008",
-      "publishedAt": "2026-10-06T14:45:23Z"
-    },
     "reddit-morphe-v2026.40.0-arm64-v8a.apk": {
       "name": "reddit-morphe",
       "version": "2026.40.0",
@@ -466,29 +448,9 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260062",
-      "publishedAt": "2026-10-11T19:50:14Z",
-      "apkSource": "apkmirror",
-      "recommendedVersion": null
-    },
-    "Duck.Detector-2026.10.09-6125c4271db5.apk": {
-      "name": "duck-detector",
-      "version": "nightly",
-      "appKey": "duckdetector",
-      "appName": "Duck Detector",
-      "arch": "all",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "com.eltavine.duckdetector",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260035",
-      "publishedAt": "2026-10-09T08:41:11Z",
-      "apkSource": "github",
+      "originBuild": "260068",
+      "publishedAt": "2026-10-12T03:42:11Z",
+      "apkSource": "uptodown",
       "recommendedVersion": null
     },
     "truecaller-morphe-v26.10.6-arm64-v8a.apk": {
@@ -610,26 +572,6 @@
       "originBuild": "260054",
       "publishedAt": "2026-10-11T05:27:43Z",
       "apkSource": "apkmirror",
-      "recommendedVersion": null
-    },
-    "Duck.Detector-2026.10.11-78aabb41c513.apk": {
-      "name": "duck-detector",
-      "version": "nightly",
-      "appKey": "duckdetector",
-      "appName": "Duck Detector",
-      "arch": "all",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "com.eltavine.duckdetector",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260056",
-      "publishedAt": "2026-10-11T09:05:45Z",
-      "apkSource": "github",
       "recommendedVersion": null
     },
     "reddit-morphe-v2026.41.0-arm64-v8a.apk": {
