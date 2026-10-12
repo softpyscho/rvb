@@ -12,6 +12,7 @@ version = "auto"
 # APKMirror only. It lists the version the patches target (26.10.6 as of 2026-10-12), reached
 # through the CI's Cloudflare solver; the other stores are not tried.
 apkmirror-dlurl = "https://www.apkmirror.com/apk/true-software-scandinavia-ab/truecaller-caller-id-block/"
+apkpure-dlurl = "https://apkpure.com/truecaller-caller-id-block/com.truecaller"
 
 [TickTick]
 pkg-name = "com.ticktick.task"
@@ -20,3 +21,4 @@ badge-icon = "ticktick"
 version = "auto"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/ticktick-limited/ticktick-to-do-list-with-reminder-day-planner/"
 uptodown-dlurl = "https://ticktick.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/ticktick-to-do-list-calendar/com.ticktick.task"

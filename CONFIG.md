@@ -97,6 +97,8 @@ inclusive-patches = false                                  # the mirror of `excl
 
 apkmirror-dlurl = "https://www.apkmirror.com/apk/inc/app"
 uptodown-dlurl = "https://spotify.en.uptodown.com/android"
+# APKPure is the last-resort store: every store app in configs/ names one, and it is only asked when the sources
+# before it (APKMirror, Uptodown) failed for that version. The slug may be anything; the package id is what counts.
 apkpure-dlurl = "https://apkpure.com/some-app/com.some.app"
 apkcombo-dlurl = "https://apkcombo.com/some-app/com.some.app"
 # a GitHub Actions workflow whose artifact is the build (a nightly with no release). the newest successful run that

@@ -12,6 +12,7 @@ app-name = "Bitget"
 pkg-name = "com.bitget.exchange"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-crypto/"
 uptodown-dlurl = "https://bitget.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/bitget-buy-sell-crypto/com.bitget.exchange"
 
 [Stremio]
 app-name = "Stremio"
@@ -24,24 +25,28 @@ allow-resign = true
 # engine's `direct` source needs a URL that ends in the APK's own file name.
 apkmirror-dlurl = "https://www.apkmirror.com/apk/stremio/stremio-2/"
 uptodown-dlurl = "https://stremio-one.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/stremio/com.stremio.one"
 
 [Mixplorer]
 app-name = "Mixplorer"
 pkg-name = "com.mixplorer"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/hootan-parsa/mixplorer-hootanparsa/"
 uptodown-dlurl = "https://mixplorer.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/mixplorer/com.mixplorer"
 
 [Mix-Archive]
 app-name = "Mix Archive"
 pkg-name = "com.mixplorer.addon.archive"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/hootan-parsa/mix-archive/"
 uptodown-dlurl = "https://mix-archive.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/mix-archive/com.mixplorer.addon.archive"
 
 [RedotPay]
 app-name = "RedotPay"
 pkg-name = "com.redotpay"
 # direct-dlurl = "https://www.redotpay.com/app-download" is not carried over (a web page, see Stremio).
 uptodown-dlurl = "https://redotpay.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/redotpay/com.redotpay"
 
 [Duck-Detector]
 app-name = "Duck Detector"
@@ -73,6 +78,7 @@ version = "waenhancer"
 pkg-name = "com.whatsapp"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger/"
 uptodown-dlurl = "https://whatsapp-messenger.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/whatsapp-messenger/com.whatsapp"
 
 [WhatsApp-Business]
 app-name = "WhatsApp Business"
@@ -82,3 +88,4 @@ apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger
 # Uptodown answered HTTP 410 for this page on 2026-10-11; kept as the fallback because it costs
 # nothing while APKMirror answers.
 uptodown-dlurl = "https://whatsapp-business.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/whatsapp-business/com.whatsapp.w4b"

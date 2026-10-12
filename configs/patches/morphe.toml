@@ -14,6 +14,7 @@ badge-icon = "reddit"
 version = "exp"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit"
 uptodown-dlurl = "https://reddit-official-app.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/reddit/com.reddit.frontpage"
 # 'Custom branding name for Reddit' is opt-in, so it is named in included-patches (the one
 # place patch names are quoted for the CLI) and only its option value rides in patcher-args.
 included-patches = "'Custom branding name for Reddit'"

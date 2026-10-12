@@ -10,6 +10,7 @@ badge-icon = "cloudflare"
 version = "auto"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/cloudflare/1-1-1-1-faster-safer-internet"
 uptodown-dlurl = "https://1-1-1-1.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/1-1-1-1-faster-safer-internet/com.cloudflare.onedotonedotonedotone"
 
 [Splitwise]
 pkg-name = "com.Splitwise.SplitwiseMobile"
@@ -18,6 +19,7 @@ badge-icon = "splitwise"
 version = "auto"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/splitwise/splitwise/"
 uptodown-dlurl = "https://splitwise.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/splitwise/com.Splitwise.SplitwiseMobile"
 
 [Greenify]
 pkg-name = "com.oasisfeng.greenify"
@@ -29,3 +31,4 @@ apkmirror-dlurl = "https://www.apkmirror.com/apk/oasisfeng/greenify"
 # APKMirror stops at 4.7.5 and Uptodown gates the download. Replace the asset when updating.
 github-dlurl = "https://github.com/softpyscho/apkforge/releases/tag/com.oasisfeng.greenify"
 uptodown-dlurl = "https://greenify.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/greenify/com.oasisfeng.greenify"
