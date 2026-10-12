@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-12T04:38:21Z"
+    "publishedAt": "2026-10-12T05:55:33Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -28,8 +28,8 @@
       "appliedPatches": [
         "Unlock Premium"
       ],
-      "originBuild": "260071",
-      "publishedAt": "2026-10-12T04:37:51Z",
+      "originBuild": "260072",
+      "publishedAt": "2026-10-12T05:55:08Z",
       "apkSource": "uptodown",
       "recommendedVersion": "26.32.1"
     },
@@ -100,8 +100,8 @@
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260072",
+      "publishedAt": "2026-10-12T05:55:08Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "5.1.1"
     },
@@ -141,8 +141,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260072",
+      "publishedAt": "2026-10-12T05:55:08Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -188,8 +188,8 @@
       "appliedPatches": [
         "Unlock Pro"
       ],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260072",
+      "publishedAt": "2026-10-12T05:55:08Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "26.7.3"
     },
@@ -361,8 +361,8 @@
         "Disable Analytics / Telemetry",
         "Spoof WARP+ Unlimited UI"
       ],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260072",
+      "publishedAt": "2026-10-12T05:55:08Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "6.38.9"
     },
@@ -533,8 +533,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260071",
-      "publishedAt": "2026-10-12T04:37:51Z",
+      "originBuild": "260072",
+      "publishedAt": "2026-10-12T05:55:08Z",
       "apkSource": "uptodown",
       "recommendedVersion": null,
       "resigned": false
@@ -720,8 +720,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260072",
+      "publishedAt": "2026-10-12T05:55:08Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
