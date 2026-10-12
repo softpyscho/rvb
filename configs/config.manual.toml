@@ -4,37 +4,27 @@
 #   git commit -am "chore(config): ..." && git push
 # and run Manual CI.
 #
-# Currently: the two stable-pool apps that needed a second look - Truecaller (APKMirror and
-# Uptodown refuse a GitHub-hosted runner, so APKPure and APKCombo are tried next) and Duck Detector
-# (its package id is now the APK's own).
-brand = "Morphe"
+# Currently: the two WhatsApp mirrors, to confirm on a GitHub-hosted runner that APKMirror
+# (through the Cloudflare solver), or Uptodown as its fallback, serves the newest build the latest
+# WaEnhancer release supports. Keys sit on each app because build.sh takes no file-level `version`
+# from a TOML it reads directly (only the compiled pool JSON carries file-level keys into an app).
+brand = "Mirror"
 arch = "arm64-v8a"
 
-[Truecaller]
-patches-source = "Paresh-Maheshwari/paresh-patches"
-patches-source-host = "gitlab"
-pkg-name = "com.truecaller"
-version = "auto"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/true-software-scandinavia-ab/truecaller-caller-id-block/"
-uptodown-dlurl = "https://truecaller.en.uptodown.com/android"
-archive-dlurl = "https://archive.org/download/geologically/apks/com.truecaller"
-apkpure-dlurl = "https://apkpure.com/truecaller-caller-id-block/com.truecaller"
-apkcombo-dlurl = "https://apkcombo.com/truecaller-caller-id-block/com.truecaller"
-
-[Duck-Detector]
+[WhatsApp]
 mirror = true
 brand = "Mirror"
-app-name = "Duck Detector"
-pkg-name = "com.eltavine.duckdetector"
-keep-filename = true
-version = "nightly"
-arch = "all"
-github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly"
+app-name = "WhatsApp"
+version = "waenhancer"
+pkg-name = "com.whatsapp"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger/"
+uptodown-dlurl = "https://whatsapp-messenger.en.uptodown.com/android"
 
-[Battery-Guru]
-patches-source = "arandomhooman/hoomans-morphe-patches"
-patches-version = "stable"
-pkg-name = "com.paget96.batteryguru"
-version = "auto"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/paget96/battery-guru-health-saver/"
-uptodown-dlurl = "https://battery-guru.en.uptodown.com/android"
+[WhatsApp-Business]
+mirror = true
+brand = "Mirror"
+app-name = "WhatsApp Business"
+version = "waenhancer"
+pkg-name = "com.whatsapp.w4b"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger-business/"
+uptodown-dlurl = "https://whatsapp-business.en.uptodown.com/android"
