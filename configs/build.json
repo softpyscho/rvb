@@ -95,8 +95,7 @@
     "app-name": "RedotPay",
     "pkg-name": "com.redotpay",
     "uptodown-dlurl": "https://redotpay.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/redotpay/com.redotpay",
-    "enabled": false
+    "apkpure-dlurl": "https://apkpure.com/redotpay/com.redotpay"
   },
   "Duck-Detector": {
     "arch": "all",
@@ -117,7 +116,8 @@
     "app-name": "Oxygen Customizer",
     "pkg-name": "it.dhd.oxygencustomizer",
     "actions-dlurl": "https://github.com/DHD2280/Oxygen-Customizer/actions/workflows/build_debug.yml",
-    "actions-artifact": "Dev \\(#[0-9]+\\)$"
+    "actions-artifact": "Dev \\(#[0-9]+\\)$",
+    "enabled": false
   },
   "WhatsApp": {
     "arch": "arm64-v8a",
