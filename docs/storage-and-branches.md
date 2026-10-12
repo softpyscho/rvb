@@ -12,7 +12,7 @@ human-only; for a single-maintainer fork that cost more than it bought — see
 | Path on `main` | Contents | Sole writer(s) | Readers |
 |---|---|---|---|
 | engine, workflows, scripts, `module/`, `bin/`, `docs/`, `CONFIG.md` | code | maintainer | every CI job |
-| `configs/patches/*.toml`, `configs/config.manual.toml` | **your app configuration** | maintainer (a normal commit) | watcher, builds, `obtainium.py` |
+| `configs/config.toml`, `configs/config.manual.toml` | **your app configuration** | maintainer (a normal commit) | watcher, builds, `obtainium.py` |
 | `configs/{stable,beta}_build.json` | generated pool configs | watcher, via `commit_to_main.sh` | builds |
 | `state/{patch_sources,app_versions,patch_file_hashes}.json` | watcher memory | watcher, via `commit_to_main.sh` | watcher, builds |
 | `state/manifests/<tag>.json`, `state/archive/{stable,beta}.json` | build metadata | `merge_archive_manifest.sh`; pruned by `cleanup_manifests.sh` | `obtainium.py` (README table); a download site, if one exists |

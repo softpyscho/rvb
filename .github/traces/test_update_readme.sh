@@ -14,9 +14,9 @@ git init -q -b main "$WORK/work"
 cd "$WORK/work" || exit 1
 git config user.email t@t; git config user.name t
 git remote add origin "$WORK/origin.git"
-mkdir -p configs/patches .github
+mkdir -p configs .github
 ln -s "$REPO_ROOT/.github/scripts" .github/scripts
-cat > configs/patches/m.toml <<'TOML'
+cat > configs/config.toml <<'TOML'
 patches-source = "MorpheApp/morphe-patches"
 brand = "Morphe"
 arch = "arm64-v8a"

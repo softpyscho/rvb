@@ -4,7 +4,7 @@
     python3 .github/traces/test_release_notes.py
 
 Covers .github/scripts/{generate_release_notes,obtainium,build_make_manifest}.py, the Telegram
-relay of the release body, and the app configuration (configs/patches) they are generated from. No network.
+relay of the release body, and the app configuration (configs/config.toml) they are generated from. No network.
 As everywhere in this repo, an absence assertion is paired with a control that shows the same
 harness producing the thing in the other case.
 """
@@ -21,7 +21,7 @@ from urllib.parse import unquote, urlparse
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / ".github" / "scripts"
-CONFIG_PATCHES = ROOT / "configs" / "patches"
+CONFIG_PATCHES = ROOT / "configs" / "config.toml"  # the one app config (a file)
 REPO = "softpyscho/rvb"
 sys.path.insert(0, str(SCRIPTS))
 
@@ -698,6 +698,7 @@ class SeedConfig(unittest.TestCase):
                     self.assertTrue(app.get("patches-source"), f"{key}: patched apps name their source")
                     self.assertNotIn("keep-filename", app)
         self.assertEqual(set(beta), set(), "every app is on the stable patches; the beta pool is empty until one opts in")
+        self.assertFalse((ROOT / "configs" / "patches").exists(), "the config is one file now, not a directory of per-source files")
         self.assertIn("Instagram", stable)
         self.assertIn("Battery-Guru", stable)
         # APKPure is the last-resort store of every app that has a store page (Duck Detector and Oxygen

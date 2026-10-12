@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """
 compile_patch_configs.py
-Parses all TOML patch configurations in configs/patches/
-and generates config.stable.json and config.beta.json with dynamic pool routing:
+Parses the app configuration, configs/config.toml, and generates config.stable.json and
+config.beta.json with dynamic pool routing:
 - apps with patches-version = "stable" go to stable pool only
 - apps with patches-version = "beta" go to beta pool only
 - apps with patches-version = "both" go to both pools
 - apps with no patches-version inherit the file-level default, which is itself
-  "stable" unless the filename carries .beta. — so such an app lands in
-  one pool, not both. "both" is what opts an app into both.
+  "stable" - so such an app lands in one pool, not both. "both" is what opts an
+  app into both.
 - apps with enabled = false are omitted
+
+The config is one file. A directory of TOML files is read too (tests build small ones), each file
+with its own file-level defaults; an app key must be unique across them.
 
 Which release a channel keyword means is not resolved here: the generated config
 keeps the keyword and the build looks the tag up in state/patch_sources.json. A
@@ -51,14 +54,24 @@ def normalize_channel(val):
     return val.strip()  # Pinned version string like "v1.41.0"
 
 
-def compile_configs(patches_dir="configs/patches"):
+CONFIG_PATH = "configs/config.toml"
+
+
+def toml_sources(path=CONFIG_PATH):
+    """The TOML files behind a config path: the file itself, or the *.toml files of a directory."""
+    if os.path.isdir(path):
+        return sorted(glob.glob(os.path.join(path, "*.toml")))
+    return [path] if os.path.isfile(path) else []
+
+
+def compile_configs(config_path=CONFIG_PATH):
     stable_pool = {}
     beta_pool = {}
 
-    toml_files = sorted(glob.glob(os.path.join(patches_dir, "*.toml")))
+    toml_files = toml_sources(config_path)
     if not toml_files:
         print(
-            f"Warning: No TOML files found in {patches_dir}", file=sys.stderr)
+            f"Warning: No TOML config found at {config_path}", file=sys.stderr)
         return stable_pool, beta_pool
 
     seen_stable = {}
@@ -77,13 +90,9 @@ def compile_configs(patches_dir="configs/patches"):
         file_defaults = {k: v for k,
                          v in data.items() if not isinstance(v, dict)}
 
-        # Resolve file-level channel default (default is "stable" if omitted)
-        file_pv = normalize_channel(file_defaults.get("patches-version"))
-        if not file_pv:
-            # A .beta. filename is the only file-name signal; "dev" is not a channel
-            # spelling any more, and matching on a bare substring would pull in a
-            # source named like devanced.toml.
-            file_pv = "beta" if ".beta." in filename else "stable"
+        # Resolve file-level channel default (default is "stable" if omitted). The channel is a
+        # setting, never read from a file name.
+        file_pv = normalize_channel(file_defaults.get("patches-version")) or "stable"
 
         for app_key, app_table in data.items():
             if not isinstance(app_table, dict):
@@ -151,8 +160,8 @@ def compile_configs(patches_dir="configs/patches"):
 
 
 def main():
-    patches_dir = sys.argv[1] if len(sys.argv) > 1 else "configs/patches"
-    stable_pool, beta_pool = compile_configs(patches_dir)
+    config_path = sys.argv[1] if len(sys.argv) > 1 else CONFIG_PATH
+    stable_pool, beta_pool = compile_configs(config_path)
 
     stable_out = {"patches-version": "stable"}
     stable_out.update(stable_pool)

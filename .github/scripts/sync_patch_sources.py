@@ -2,10 +2,10 @@
 """
 sync_patch_sources.py
 Automated patch sources state manager for CI:
-1. Dynamically discovers all unique (patches-source, patches-source-host) from all .toml patch configs.
+1. Dynamically discovers all unique (patches-source, patches-source-host) from configs/config.toml.
 2. Queries GitHub, GitLab and Codeberg APIs for active releases.
 3. Tracks latest stable and beta releases in state/patch_sources.json (state cache).
-4. Automatically prunes sources no longer used in any TOML config.
+4. Automatically prunes sources no longer used by any app in the config.
 5. Detects changes and emits TRIGGER_STABLE, TRIGGER_BETA, and TRIGGER_BLOCKED.
 6. Writes changed_sources.json: the one canonical "what moved since last run"
     record set that every later step consumes (see derive_source_changes.py).
@@ -13,7 +13,6 @@ Automated patch sources state manager for CI:
 
 import os
 import sys
-import glob
 import json
 import re
 import time
@@ -24,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Sibling module, importable only because of the insert above - keep it after it.
 # isort:skip stops the formatter lifting it back over the path setup.
 import derive_source_changes  # isort:skip  # noqa: E402
+import compile_patch_configs  # isort:skip  # noqa: E402
 
 try:
     import tomllib
@@ -35,7 +35,7 @@ except ImportError:
         sys.exit(1)
 
 
-PATCHES_DIR = "configs/patches"
+CONFIG_PATH = "configs/config.toml"
 STATE_FILE = "state/patch_sources.json"
 
 
@@ -53,10 +53,10 @@ def split_quoted_list(text):
     return items
 
 
-def discover_active_sources(patches_dir=PATCHES_DIR):
-    """Scans all TOML files and returns a dict: repo -> host for all enabled apps."""
+def discover_active_sources(config_path=CONFIG_PATH):
+    """Reads the config and returns a dict: repo -> host for all enabled patched apps."""
     active_sources = {}
-    toml_files = sorted(glob.glob(os.path.join(patches_dir, "*.toml")))
+    toml_files = compile_patch_configs.toml_sources(config_path)
 
     for filepath in toml_files:
         try:

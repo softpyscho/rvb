@@ -35,7 +35,7 @@ step's output is the next step's input:
 
 | Step | Script | What it decides |
 |---|---|---|
-| Compile Base Configs | `compile_patch_configs.py` | every app's pool membership from `configs/patches/*.toml` |
+| Compile Base Configs | `compile_patch_configs.py` | every app's pool membership from `configs/config.toml` |
 | Sync Patch Sources | `sync_patch_sources.py` | discovers all `(patches-source, host)` pairs, lists releases on GitHub/GitLab/Codeberg, rewrites `state/patch_sources.json`, prunes sources no config uses, emits `TRIGGER_STABLE`/`TRIGGER_BETA`/`TRIGGER_BLOCKED` and writes `changed_sources.json` |
 | Fetch App Versions | `ci_fetch_app_versions.sh` | scrapes current store versions (honours `"_check_only_listed"` in `state/app_versions.json`); a `version = "waenhancer"` app is asked APKMirror first, then Uptodown, for the newest build the latest WaEnhancer release supports, so a WaEnhancer release moves the recorded version and triggers its mirror build |
 | Compare App Versions | `compare` step | `TRIGGER_APP_UPDATE` when a tracked app moved |
@@ -92,11 +92,13 @@ forge answers again. The deliberate fail-open inside that check is recorded in
 ## The build job (`build.yml`)
 
 Called once per pool by the watcher with `config_file` (and optional `remove_apks`), or
-dispatched by hand with `config_file: all` (the default), which builds **every app in one run**.
+dispatched by hand with `config_file`: `all` (the default, **every app in one run**), `stable`, `beta`
+(just that channel) or `manual` (`configs/config.manual.toml`).
 A `plan` job (`build_plan_configs.sh`) turns `config_file` into the matrix of the `build` job:
 `all` becomes `all:stable` and then `all:beta` (a pool with no app is left out, neither having one
-is an error), any other value is built as named, and an unknown value fails loudly. An `all:<pool>`
-entry is **compiled fresh from `configs/patches/*.toml`** (`build_prepare_config.sh` →
+is an error), `stable`/`beta` build that one pool (an empty one is an error naming how an app opts
+in), any other value is built as the file it names, and an unknown value fails loudly. An `all:<pool>`
+entry is **compiled fresh from `configs/config.toml`** (`build_prepare_config.sh` →
 `compile_patch_configs.py`), so it holds every enabled app routed to that pool. It deliberately is
 not the watcher's `configs/*_build.json`: those record what the watcher decided to build next, and
 in the beta pool that is nobody unless a source's beta is newer than stable (every app there is
@@ -159,7 +161,7 @@ Step order, with the reason each is where it is:
     [decisions/0002](decisions/0002-manifests-live-on-a-branch.md); why on `main`:
     [decisions/0008](decisions/0008-one-branch.md).
 16. `update_readme.sh` refreshes the README's apps section on `main`: versions and applied
-    patches from `state/archive/*.json`, the app list from `configs/patches/`, both read from
+    patches from `state/archive/*.json`, the app list from `configs/config.toml`, both read from
     `main`'s tip, committed as one `README.md`-only commit built with plumbing on `main`'s own tip
     (`[skip ci]`). `continue-on-error`: it is presentation and must never cost a build its
     release; an unreadable generation fails the step loudly rather than reading as "unchanged".

@@ -73,11 +73,11 @@ Releases, records build metadata in the repository (`state/`), and feeds a stati
 | `.github/workflows/trace-verify.yml` | offline regression gate on engine pushes |
 | `.github/scripts/` | CI-side tooling; the [index](../.github/scripts/README.md) describes each script's contract |
 | `.github/traces/` | fixtures + `curl`/`java` stubs + golden argv files; the engine's safety net |
-| `configs/patches/*.toml` | the actual app configuration — one file per patch-source family |
+| `configs/config.toml` | the actual app configuration — one file, every app |
 | `state/*.json` | watcher memory: patch source tags/blocked flags, app versions, bundle hashes |
 | `state/manifests/`, `state/archive/` | build metadata: one manifest per numbered release + the cumulative `stable`/`beta` archive manifests (schema v1) |
 | `module/` | Magisk/KernelSU module template (scripted `module.prop`, `config`, `service.sh`, `action.sh`, bundled binaries) |
-| `README.md` apps section, `OBTAINIUM.md`, `obtainium-apps.json` | generated from `configs/patches/*.toml` (+ `state/archive/`) by `obtainium.py`; the README section is refreshed by CI after each build |
+| `README.md` apps section, `OBTAINIUM.md`, `obtainium-apps.json` | generated from `configs/config.toml` (+ `state/archive/`) by `obtainium.py`; the README section is refreshed by CI after each build |
 | `bin/` | vendored tools: `aapt2`, `htmlq`, `toml/tq` (per-arch), `apksigner.jar`, `dexlib2.jar`, `paccer.jar` |
 | `temp/`, `build/`, `build.json`, `build.md` | scratch + outputs; all gitignored |
 | `CONFIG.md` | the authoritative TOML key reference |
@@ -139,7 +139,7 @@ source and the arch goes unbuilt if none supplies it
 
 | Task | Files | Verify with |
 |---|---|---|
-| Add/enable/disable an app or patch | `data:configs/patches/*.toml` ([CONFIG.md](../CONFIG.md)) | Manual CI on `configs/config.manual.toml` |
+| Add/enable/disable an app or patch | `data:configs/config.toml` ([CONFIG.md](../CONFIG.md)) | Manual CI on `configs/config.manual.toml` |
 | Fix a scraper / download source | `scripts/utils.sh` (`dl_<source>`, `get_<source>_resp/vers`) | trace harness + a single-app manual build |
 | Debug a cache miss or a vanished stock APK | `dl_cache_repo`, `usage.json` in `nullcpy/apks` | [cache-repo.md](cache-repo.md) debugging checklist |
 | Change patch invocation/flags | `scripts/utils.sh:patch_apk`, `.github/scripts/patchers.sh` | `trace_runner.sh verify` (goldens will diff — read them) |
@@ -159,7 +159,7 @@ bash scripts/build.sh clean                          # reset temp/ build/ build.
 python3 .github/traces/test_release_notes.py         # release notes, Obtainium links, generated docs in sync
 bash .github/traces/test_mirror.sh                   # mirrored-app engine path
 bash .github/traces/test_waenhancer.sh              # WaEnhancer-pinned WhatsApp mirrors
-python3 .github/scripts/obtainium.py --configs configs/patches --repo softpyscho/rvb \
+python3 .github/scripts/obtainium.py --configs configs/config.toml --repo softpyscho/rvb \
         --page OBTAINIUM.md --json obtainium-apps.json --readme README.md   # regenerate the app table and Obtainium files
 gh run list --repo nullcpy/rvb                       # what ran and how
 ```

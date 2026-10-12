@@ -14,8 +14,8 @@ git init -q -b main "$WORK/work"
 cd "$WORK/work" || exit 1
 git config user.email t@t; git config user.name t
 git remote add origin "$WORK/origin.git"
-mkdir -p configs/patches state/manifests
-echo 'a = 1' > configs/patches/app.toml
+mkdir -p configs state/manifests
+echo 'a = 1' > configs/config.toml
 echo '{"v":1}' > configs/stable_build.json
 echo '{"old":true}' > state/manifests/260001.json
 echo '{"keep":true}' > state/manifests/260002.json
@@ -29,7 +29,7 @@ base=$(tip)
 echo '{"v":2}' > configs/stable_build.json            # update
 echo '{"new":true}' > state/app_versions.json         # add
 rm state/manifests/260001.json                        # remove
-echo 'a = 2' > configs/patches/app.toml               # NOT named: must not be committed
+echo 'a = 2' > configs/config.toml               # NOT named: must not be committed
 echo scratch > temp.txt
 out=$(bash "$SCRIPT" "chore: test" configs/stable_build.json state/app_versions.json state/manifests/260001.json state/manifests/never-existed.json 2>&1 | quiet)
 new=$(tip)
@@ -37,14 +37,14 @@ new=$(tip)
 [ "$(files_changed "$base" "$new")" = "configs/stable_build.json state/app_versions.json state/manifests/260001.json " ] || fail "wrong files changed: $(files_changed "$base" "$new")"
 [ "$(git -C "$WORK/origin.git" show main:configs/stable_build.json)" = '{"v":2}' ] || fail "update not applied"
 git -C "$WORK/origin.git" cat-file -e main:state/manifests/260001.json 2>/dev/null && fail "removal not applied"
-[ "$(git -C "$WORK/origin.git" show main:configs/patches/app.toml)" = 'a = 1' ] || fail "an unnamed (dirty) TOML must not be committed"
+[ "$(git -C "$WORK/origin.git" show main:configs/config.toml)" = 'a = 1' ] || fail "an unnamed (dirty) TOML must not be committed"
 git -C "$WORK/origin.git" cat-file -e main:temp.txt 2>/dev/null && fail "scratch must not be committed"
 [ "$(git -C "$WORK/origin.git" log -1 --format=%s main)" = "chore: test [skip ci]" ] || fail "message: $(git -C "$WORK/origin.git" log -1 --format=%s main)"
 [ "$(git -C "$WORK/origin.git" log -1 --format=%an main)" = "github-actions[bot]" ] || fail "author should be the bot"
 [ "$(git -C "$WORK/origin.git" rev-parse main~1)" = "$base" ] || fail "must build on the previous tip"
 # the local branch, index and worktree are untouched
 [ "$(git rev-parse HEAD)" = "$base" ] || fail "local HEAD moved"
-[ "$(cat configs/patches/app.toml)" = 'a = 2' ] || fail "worktree edit lost"
+[ "$(cat configs/config.toml)" = 'a = 2' ] || fail "worktree edit lost"
 git diff --cached --quiet || fail "index touched"
 
 # 2. nothing differs -> no commit (negative control for 1: the commit above was real)

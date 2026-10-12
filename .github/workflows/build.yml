@@ -17,15 +17,15 @@ on:
   workflow_dispatch:
     inputs:
       config_file:
-        description: "Config to build: 'all' = every app (stable pool, then beta pool), or one file"
+        description: "What to build, from configs/config.toml: all = stable then beta apps, stable = the apps on the stable patches, beta = the apps on the beta patches, manual = configs/config.manual.toml"
         required: true
         type: choice
         default: "all"
         options:
           - "all"
-          - "configs/config.manual.toml"
-          - "configs/beta_build.json"
-          - "configs/stable_build.json"
+          - "stable"
+          - "beta"
+          - "manual"
       remove_apks:
         description: "Optional: APKs to remove from cache (space-separated, e.g., com.brave.browser-1.93.138-*.apk)"
         required: false
@@ -42,8 +42,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Which configs this run builds: 'all' expands to every enabled app of configs/patches, as a stable
-  # and a beta pool (an empty pool is left out); anything else is built as named. The pools are
+  # Which configs this run builds: 'all' expands to every enabled app of configs/config.toml, as a stable
+  # and a beta pool (an empty pool is left out); 'stable' and 'beta' build just that pool; 'manual' is
+  # configs/config.manual.toml; any other value is a config path (the watcher's calls). The pools are
   # separate builds - each has its own release tag, channel and archive - so 'all' is a matrix over
   # them, one at a time.
   plan:
@@ -106,7 +107,7 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      # 'all:<pool>' (from a dispatch with config_file: all) is compiled from configs/patches here;
+      # 'all:<pool>' (from a dispatch with config_file: all, stable or beta) is compiled from configs/config.toml here;
       # any other value is the config file itself.
       - name: Prepare config
         id: prepare

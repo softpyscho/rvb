@@ -5,7 +5,7 @@ its own files with `.github/scripts/commit_to_main.sh` (message ends `[skip ci]`
 
 | Path | Written by | Notes |
 |---|---|---|
-| `configs/patches/*.toml` | you | one file per patch source; the real app list |
+| `configs/config.toml` | you | the real app list: every app, every patch source and channel |
 | `configs/config.manual.toml` | you | what Manual CI builds |
 | `configs/{stable,beta}_build.json` | the watcher | generated pool configs, never edit |
 | `state/*.json` | the watcher | patch-source tags, app versions, bundle hashes, never edit |

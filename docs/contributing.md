@@ -5,15 +5,15 @@ in this project comes from the first one, and it needs no code.
 
 | I want to… | Touch | How |
 |---|---|---|
-| add an app, enable/disable a patch, change a variant or channel | a TOML under `configs/patches/` | [below](#changing-app-configurations-the-common-case) |
+| add an app, enable/disable a patch, change a variant or channel | `configs/config.toml` | [below](#changing-app-configurations-the-common-case) |
 | fix a build failure, scraper, uploader, workflow | `main` | [below](#changing-code) |
 | report something | nothing | [issue templates](../.github/ISSUE_TEMPLATE) (yes, website issues are filed here too), or the Telegram group |
 | patch a patch problem | nothing here | the patch author's repository — this builder only assembles what they publish |
 
 ## Changing app configurations (the common case)
 
-Config lives in `configs/patches/*.toml` on `main`, one file per
-patch-source family, with file-level defaults above the first `[table]`.
+Config lives in `configs/config.toml` on `main`: one file for every app, with file-level
+defaults above the first `[table]`.
 Every key is documented in [CONFIG.md](../CONFIG.md); read that rather than
 copying a neighbour's guess. The rules that people get wrong:
 
@@ -35,7 +35,7 @@ copying a neighbour's guess. The rules that people get wrong:
 
 ```bash
 git pull                                             # CI commits generated JSON to main between your edits
-# edit configs/patches/<family>.toml
+# edit configs/config.toml
 git commit -am "feat(config): add Pinterest builds" && git push
 ```
 

@@ -359,20 +359,20 @@ bundle download, for nothing.)
   merge-at-download behavior without a code change. Existing merged-`.apk`
   cache entries keep working for any non-morphe tool.
 
-## Modular Configuration Directory & Dynamic Pool Routing
+## One Config File & Dynamic Pool Routing
 
-Configurations are organized in `configs/patches/*.toml` (e.g. `morphe.toml`, `anddea.toml`, `piko.toml`, `ajstrick81.toml`).
+Every app lives in one file, `configs/config.toml`, whatever its patch source or channel.
 
-You do **not** need separate files for stable and beta:
-- **Single-File Co-existence**: All variants and builds for a brand or patch source can reside in the same `.toml` file.
+There are no separate files for stable and beta - an app's `patches-version` picks its channel:
+- **Single File**: All apps, patch sources and channels sit in `configs/config.toml`; an app that needs another patch source sets its own `patches-source`.
 - **Top-Level Inheritance**: Keys defined at the top of the file before the first `[...]` header (such as `patches-source`, `brand`, `variant`, and `patches-version`) act as file-level defaults. Apps automatically inherit them, keeping app blocks concise and DRY.
 - **Default CLI Engine**: `cli-source` defaults to `"MorpheApp/morphe-desktop"` globally and can be completely omitted unless using alternative tools like `7723mod/NPatch` or `instafel/p-rel`.
 - **Dynamic Pool Routing**:
   - **Stable Only (Default)**: If neither the file-level header nor the app specifies `patches-version`, the app is automatically compiled into the **stable** build pool only.
   - **Both Pools**: Setting `patches-version = "both"` (at the top of the file or in an app block) compiles the app into **both** stable and beta pools.
   - **Beta Only**: Setting `patches-version = "beta"` routes the app exclusively to the beta (pre-release) build pool.
-  - **File-Level Defaults**: Setting `patches-version = "both"` (or `"beta"`) at the top applies that channel to all apps in the file unless individually overridden.
-  - **Filename Inference**: A filename with `.beta.toml` automatically defaults all apps in that file to beta. Renaming to `*.toml` defaults to stable unless `patches-version = "both"` is set. (A legacy `.dev.toml` spelling is no longer recognized — a source named like `devanced.toml` would otherwise be mistaken for one.)
+  - **File-Level Defaults**: Setting `patches-version = "both"` (or `"beta"`) at the top applies that channel to every app unless individually overridden.
+  - **No Filename Inference**: the channel is a setting, never read from a file name. An app without `patches-version` is stable; only `patches-version = "beta"` (or `"both"`) moves it. To follow a patch source's pre-release, set it on that app.
   - **Concrete Version Pins**: A version number instead of a channel (e.g. `patches-version = "v4.8.3"`) pins that exact release — one app when written in an app block, every app in the file when written at the top level. The generated pool config carries it verbatim and nothing rewrites it.
   - **Channel Resolution**: `"stable"` and `"beta"` are the only channel keywords, and they stay as keywords in the generated config; the build resolves each source's keyword against `state/patch_sources.json`, the watcher's record of that source's current release per channel. One source of truth instead of a stamped copy that can go stale, and a build run is consistent with the state it was generated from because `configs/` and `state/` come from the same `main` commit. A source with no release recorded on that channel falls back to listing the releases live. Any other word is treated as a release tag, so a mistyped channel fails on the release lookup rather than building the wrong thing.
   - **Blocked Sources**: when the forge answers `404` (deleted or renamed), `451` (legal takedown) or `403` (private or access refused), the watcher marks that source `blocked` and freezes its last known tags. A build then **skips every app using it** - keyword or pinned version alike - instead of querying the releases endpoint, because neither a retry nor a live listing can recover a repository that is gone. The app is logged as "Could not get prebuilts" and the run moves on; it comes back on its own once the source is reachable again.
@@ -382,7 +382,7 @@ You do **not** need separate files for stable and beta:
 
 > **Where configs and state live:** all on `main`, tracked like code.
 >
-> - `configs/config.manual.toml`, `configs/patches/*.toml` — **yours**: edit and
+> - `configs/config.manual.toml`, `configs/config.toml` — **yours**: edit and
 >   commit them normally.
 > - `configs/stable_build.json`, `configs/beta_build.json` — generated pool
 >   configs, written by the watcher only (`commit_to_main.sh`).
@@ -407,7 +407,7 @@ Patch sources and their release versions in `state/patch_sources.json` are **100
 The CI workflow automatically detects when a new version of an app is released on APKMirror, Uptodown, or Archive.org.
 
 ### How it Works
-1. **Version Fetching**: During the CI run, it reads all enabled apps from the `configs/patches/*.toml` configurations and queries the URLs (`uptodown-dlurl`, `apkmirror-dlurl`, etc.).
+1. **Version Fetching**: During the CI run, it reads all enabled apps from `configs/config.toml` and queries the URLs (`uptodown-dlurl`, `apkmirror-dlurl`, etc.).
 2. **Comparison**: It checks the newly fetched versions against the currently stored versions in `state/app_versions.json`.
 3. **Triggering**: If a new version is detected, the app is added to a temporary `active_apps.json` list, and the CI is triggered to build it.
 ### Tracking File

@@ -1,0 +1,285 @@
+# RVB: the one config for every app.
+#
+# Each app is a [Table]; its keys are documented in CONFIG.md. Keys written here, before the first table,
+# are defaults for every app that does not set them itself.
+#
+# Channel. `patches-version` picks the patch bundle an app is built with: "stable" (the default), "beta"
+# (the source's pre-release line) or a pinned tag. Manual CI and the scheduled run build the apps by
+# channel: `stable`, `beta`, or `all`. An app that names no channel is on stable. The channel of a build
+# is shown in the README's Channel column; whether a *version* is experimental is a different thing,
+# decided by `version` ("auto" = what the patches support, "exp" = their experimental targets).
+#
+# Order matters only for the README: the apps of one patch source are listed in the order they have here.
+# Stock mirrors (`mirror = true`) republish the stock APK and use no patch source.
+#
+# Every store app also names APKPure as the last-resort store: it is only asked when APKMirror and Uptodown
+# failed for that version.
+arch = "arm64-v8a"
+brand = "Morphe"
+
+
+# ----------------------------------------------------------------------------------------------------
+# arandomhooman/hoomans-morphe-patches — Battery Guru, on the stable patches. The source's beta line is
+# months behind (v1.44.0-dev.4 vs v1.53.0) and only knows Battery Guru 2.4.8.1 / 2.5.0.2-beta1: the APK
+# calls itself 2.5.0.2, so no patch applied. The stable bundle supports the current release.
+[Battery-Guru]
+patches-source = "arandomhooman/hoomans-morphe-patches"
+pkg-name = "com.paget96.batteryguru"
+badge-color = "4CAF50"
+badge-icon = "battery_charging_full"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/paget96/battery-guru-health-saver/"
+uptodown-dlurl = "https://battery-guru.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/battery-guru/com.paget96.batteryguru"
+
+# ----------------------------------------------------------------------------------------------------
+# hoo-dles/morphe-patches — Xodo, Prime Video.
+[Xodo]
+patches-source = "hoo-dles/morphe-patches"
+pkg-name = "com.xodo.pdf.reader"
+badge-color = "0078D4"
+badge-icon = "adobeacrobatreader"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/apryse-software-inc/xodo-pdf-reader-editor"
+uptodown-dlurl = "https://xodo-docs.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/xodo-pdf-reader-editor/com.xodo.pdf.reader"
+
+[Amazon-Prime-Video]
+patches-source = "hoo-dles/morphe-patches"
+pkg-name = "com.amazon.avod.thirdpartyclient"
+badge-color = "00A8E1"
+badge-icon = "amazonprimevideo"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/amazon-mobile-llc/amazon-prime-video/"
+apkpure-dlurl = "https://apkpure.com/amazon-prime-video/com.amazon.avod.thirdpartyclient"
+# uptodown-dlurl removed: the page returns HTTP 410 Gone, so it failed on every run.
+
+# ----------------------------------------------------------------------------------------------------
+# Stock APKs re-hosted unmodified, so Obtainium can track apps that publish no GitHub
+# release of their own. `mirror = true` skips the patcher entirely: the engine downloads the
+# stock APK, checks package/signature/arch like any other build, and publishes it as-is.
+# No patch source is involved, so none is set here.
+[Bitget]
+mirror = true
+brand = "Mirror"
+version = "latest"
+app-name = "Bitget"
+pkg-name = "com.bitget.exchange"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-crypto/"
+uptodown-dlurl = "https://bitget.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/bitget-buy-sell-crypto/com.bitget.exchange"
+
+[Stremio]
+mirror = true
+brand = "Mirror"
+version = "latest"
+app-name = "Stremio"
+pkg-name = "com.stremio.one"
+# Both stores serve Stremio only as a split bundle, which cannot be republished without signing it
+# with this repository's key. Stremio has no account to ban, so a re-signed copy is accepted here
+# once no source gives a plain APK; the README says which it is. Uninstall the store copy first.
+allow-resign = true
+# direct-dlurl = "https://www.stremio.com/downloads" is not carried over: it is a web page, and the
+# engine's `direct` source needs a URL that ends in the APK's own file name.
+apkmirror-dlurl = "https://www.apkmirror.com/apk/stremio/stremio-2/"
+uptodown-dlurl = "https://stremio-one.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/stremio/com.stremio.one"
+
+[Mixplorer]
+mirror = true
+brand = "Mirror"
+version = "latest"
+app-name = "Mixplorer"
+pkg-name = "com.mixplorer"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/hootan-parsa/mixplorer-hootanparsa/"
+uptodown-dlurl = "https://mixplorer.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/mixplorer/com.mixplorer"
+
+[Mix-Archive]
+mirror = true
+brand = "Mirror"
+version = "latest"
+app-name = "Mix Archive"
+pkg-name = "com.mixplorer.addon.archive"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/hootan-parsa/mix-archive/"
+uptodown-dlurl = "https://mix-archive.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/mix-archive/com.mixplorer.addon.archive"
+
+[RedotPay]
+mirror = true
+brand = "Mirror"
+version = "latest"
+app-name = "RedotPay"
+pkg-name = "com.redotpay"
+# direct-dlurl = "https://www.redotpay.com/app-download" is not carried over (a web page, see Stremio).
+uptodown-dlurl = "https://redotpay.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/redotpay/com.redotpay"
+
+[Duck-Detector]
+mirror = true
+brand = "Mirror"
+app-name = "Duck Detector"
+pkg-name = "com.eltavine.duckdetector"
+# A nightly build has no version number to put in a file name, so the asset keeps its own.
+keep-filename = true
+version = "nightly"
+arch = "all"
+github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly"
+
+[Oxygen-Customizer]
+mirror = true
+brand = "Mirror"
+version = "latest"
+app-name = "Oxygen Customizer"
+pkg-name = "it.dhd.oxygencustomizer"
+arch = "all"
+# The nightly is a workflow artifact (one per push to its beta branch), never a release; the
+# run number is the version. Each run uploads a release and a "... Debug" artifact.
+actions-dlurl = "https://github.com/DHD2280/Oxygen-Customizer/actions/workflows/build_debug.yml"
+actions-artifact = 'Dev \(#[0-9]+\)$'
+
+# The two WhatsApp apps follow WaEnhancer (Dev4Mod/WaEnhancer): `version = "waenhancer"` mirrors
+# the newest stable build that the latest WaEnhancer release lists as supported (its arrays.xml,
+# e.g. 2.26.40.xx), because a newer WhatsApp breaks the module. A new WaEnhancer release, or a
+# new build inside what it supports, is what moves them.
+# APKMirror is asked first (CI reaches it through the Cloudflare solver sidecar); when it lists
+# no supported build, or its download fails, Uptodown is asked for the same version.
+[WhatsApp]
+mirror = true
+brand = "Mirror"
+app-name = "WhatsApp"
+version = "waenhancer"
+pkg-name = "com.whatsapp"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger/"
+uptodown-dlurl = "https://whatsapp-messenger.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/whatsapp-messenger/com.whatsapp"
+
+[WhatsApp-Business]
+mirror = true
+brand = "Mirror"
+app-name = "WhatsApp Business"
+version = "waenhancer"
+pkg-name = "com.whatsapp.w4b"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger-business/"
+# Uptodown answered HTTP 410 for this page on 2026-10-11; kept as the fallback because it costs
+# nothing while APKMirror answers.
+uptodown-dlurl = "https://whatsapp-business.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/whatsapp-business/com.whatsapp.w4b"
+
+# ----------------------------------------------------------------------------------------------------
+# MorpheApp/morphe-patches — the reference Morphe bundle.
+[Reddit]
+patches-source = "MorpheApp/morphe-patches"
+pkg-name = "com.reddit.frontpage"
+badge-color = "FF4500"
+badge-icon = "reddit"
+# Experimental on purpose: the patches flag Reddit's newest builds (2026.39.0 - 2026.41.0) as
+# experimental and their stable targets stop at 2026.24.0. Naming `exp` makes that choice visible
+# here (and in the README's Channel column) instead of leaving it to `auto`, which only reached
+# an experimental version because `included-patches` is set below.
+version = "exp"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit"
+uptodown-dlurl = "https://reddit-official-app.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/reddit/com.reddit.frontpage"
+# 'Custom branding name for Reddit' is opt-in, so it is named in included-patches (the one
+# place patch names are quoted for the CLI) and only its option value rides in patcher-args.
+included-patches = "'Custom branding name for Reddit'"
+patcher-args = "-OappName='Reddit'"
+
+# ----------------------------------------------------------------------------------------------------
+# Paresh-Maheshwari/paresh-patches (GitLab) — Truecaller, TickTick.
+[Truecaller]
+patches-source = "Paresh-Maheshwari/paresh-patches"
+patches-source-host = "gitlab"
+pkg-name = "com.truecaller"
+badge-color = "0080FF"
+badge-icon = "truecaller"
+version = "auto"
+# APKMirror only. It lists the version the patches target (26.10.6 as of 2026-10-12), reached
+# through the CI's Cloudflare solver; the other stores are not tried.
+apkmirror-dlurl = "https://www.apkmirror.com/apk/true-software-scandinavia-ab/truecaller-caller-id-block/"
+apkpure-dlurl = "https://apkpure.com/truecaller-caller-id-block/com.truecaller"
+
+[TickTick]
+patches-source = "Paresh-Maheshwari/paresh-patches"
+patches-source-host = "gitlab"
+pkg-name = "com.ticktick.task"
+badge-color = "4772FA"
+badge-icon = "ticktick"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/ticktick-limited/ticktick-to-do-list-with-reminder-day-planner/"
+uptodown-dlurl = "https://ticktick.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/ticktick-to-do-list-calendar/com.ticktick.task"
+
+# ----------------------------------------------------------------------------------------------------
+# crimera/piko — X (Twitter) and Instagram.
+[Twitter]
+patches-source = "crimera/piko"
+pkg-name = "com.twitter.android"
+badge-color = "000000"
+badge-icon = "x"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/x-corp/twitter"
+uptodown-dlurl = "https://twitter.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/twitter/com.twitter.android"
+
+[Instagram]
+patches-source = "crimera/piko"
+pkg-name = "com.instagram.android"
+badge-color = "FF0069"
+badge-icon = "instagram"
+version = "auto"
+# Stable patches. It used to follow Piko's beta ("dev") line, but Piko's stable v3.10.0 (published after
+# that beta) supports the same Instagram build (447.0.0.55.81) with the same 62 patches, so nothing here
+# needs a pre-release bundle. To follow the beta line again, set patches-version = "beta" on this app.
+apkmirror-dlurl = "https://www.apkmirror.com/apk/instagram/instagram-instagram"
+uptodown-dlurl = "https://instagram.en.uptodown.com/android"
+github-dlurl = "https://github.com/softpyscho/apkforge/releases/tag/com.instagram.android"
+apkpure-dlurl = "https://apkpure.com/instagram/com.instagram.android"
+
+# ----------------------------------------------------------------------------------------------------
+# rabilrbl/fluffy-patches — Alarmy.
+[Alarmy]
+patches-source = "rabilrbl/fluffy-patches"
+pkg-name = "droom.sleepIfUCan"
+badge-color = "1E88E5"
+badge-icon = "alarmy"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/sleep-tracker-alarm-clock-by-delightroom/alarmy-challenge-alarm-clock/"
+uptodown-dlurl = "https://alarmy.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/alarmy-alarm-clock/droom.sleepIfUCan"
+
+# ----------------------------------------------------------------------------------------------------
+# rushiranpise/morphe-patches — WARP, Splitwise, Greenify.
+[WARP]
+patches-source = "rushiranpise/morphe-patches"
+pkg-name = "com.cloudflare.onedotonedotonedotone"
+badge-color = "F48120"
+badge-icon = "cloudflare"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/cloudflare/1-1-1-1-faster-safer-internet"
+uptodown-dlurl = "https://1-1-1-1.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/1-1-1-1-faster-safer-internet/com.cloudflare.onedotonedotonedotone"
+
+[Splitwise]
+patches-source = "rushiranpise/morphe-patches"
+pkg-name = "com.Splitwise.SplitwiseMobile"
+badge-color = "40B89C"
+badge-icon = "splitwise"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/splitwise/splitwise/"
+uptodown-dlurl = "https://splitwise.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/splitwise/com.Splitwise.SplitwiseMobile"
+
+[Greenify]
+patches-source = "rushiranpise/morphe-patches"
+pkg-name = "com.oasisfeng.greenify"
+badge-color = "43A047"
+badge-icon = "android"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/oasisfeng/greenify"
+# Newest versions are only reachable from the self-hosted release below: the bundle needs 5.x,
+# APKMirror stops at 4.7.5 and Uptodown gates the download. Replace the asset when updating.
+github-dlurl = "https://github.com/softpyscho/apkforge/releases/tag/com.oasisfeng.greenify"
+uptodown-dlurl = "https://greenify.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/greenify/com.oasisfeng.greenify"

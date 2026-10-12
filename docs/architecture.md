@@ -52,7 +52,7 @@ and recorded state sit in separate directories with separate writers:
 | On `main` | Contains | Sole writer | Read by |
 |---|---|---|---|
 | engine, workflows, scripts, `module/`, `bin/`, docs | code | maintainer | every job |
-| `configs/patches/*.toml`, `configs/config.manual.toml` | the app configuration | maintainer | watcher, builds |
+| `configs/config.toml`, `configs/config.manual.toml` | the app configuration | maintainer | watcher, builds |
 | `configs/{stable,beta}_build.json`, `state/*.json` | generated pool configs, watcher memory | watcher (`commit_to_main.sh`) | watcher, builds |
 | `state/manifests/<tag>.json`, `state/archive/{stable,beta}.json` | build metadata | `merge_archive_manifest.sh` (build), `cleanup_manifests.sh` (prune) | `obtainium.py`; a catalogue site, if any |
 
@@ -183,7 +183,7 @@ only fires on `failure()`.
 
 | Question | Authoritative source |
 |---|---|
-| Which apps exist, with which patches, on which channel | `configs/patches/*.toml` |
+| Which apps exist, with which patches, on which channel | `configs/config.toml` |
 | Which pool an app lands in | that TOML's `patches-version`, resolved by `build.sh` |
 | What version a patch source is on | `state/patch_sources.json` (watcher-written) |
 | Which app versions are current in the stores | scraped live; `state/app_versions.json` only tracks what a CLI cannot report |

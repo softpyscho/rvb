@@ -262,7 +262,7 @@ This repository is a fork of [nullcpy/rvb](https://github.com/nullcpy/rvb) tuned
 # fork it, then: Actions → CI → Run workflow   (no setup branches: everything lives on `main`)
 ```
 
-Add or change apps by editing one TOML file per patch source under `configs/patches/` and committing it. Step by step, with every setting: [**docs/fork-setup.md**](docs/fork-setup.md).
+Add or change apps by editing `configs/config.toml` and committing it. Step by step, with every setting: [**docs/fork-setup.md**](docs/fork-setup.md).
 
 ---
 

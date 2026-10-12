@@ -4,7 +4,7 @@ set -euo pipefail
 # Turn one matrix value of build.yml into the config file the build reads, and write it to
 # $GITHUB_OUTPUT as `config=<path>`.
 #
-#   all:stable | all:beta   -> compile configs/patches/*.toml (compile_patch_configs.py) and use the
+#   all:stable | all:beta   -> compile configs/config.toml (compile_patch_configs.py) and use the
 #                              channel's pool, config.stable.json / config.beta.json: every enabled
 #                              app routed to that pool, no watcher decision involved. The file name
 #                              keeps "beta" in it, which is how build_resolve_context.sh tells a
@@ -26,7 +26,7 @@ case "$CONFIG_FILE" in
 			echo "::error::no enabled app is routed to the $channel pool." >&2
 			exit 1
 		fi
-		echo "Compiled $napps app(s) for the $channel pool from configs/patches/." >&2
+		echo "Compiled $napps app(s) for the $channel pool from configs/config.toml." >&2
 		;;
 	all:*)
 		echo "::error::unknown pool '$CONFIG_FILE' (expected all:stable or all:beta)." >&2

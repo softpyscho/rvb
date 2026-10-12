@@ -259,10 +259,10 @@ def spec_from_entry(key, entry, prerelease):
     }
 
 
-def specs_from_configs(patches_dir):
-    """Enabled apps from configs/patches/*.toml, routed exactly like the watcher does."""
+def specs_from_configs(config_path):
+    """Enabled apps from configs/config.toml, routed exactly like the watcher does."""
     import compile_patch_configs  # imported here so --help works without tomllib
-    stable, beta = compile_patch_configs.compile_configs(patches_dir)
+    stable, beta = compile_patch_configs.compile_configs(config_path)
     specs = [spec_from_entry(k, v, False) for k, v in stable.items()]
     specs += [spec_from_entry(k, v, True) for k, v in beta.items() if k not in stable]
     return specs
@@ -641,7 +641,7 @@ def obtainium_page(specs, repo):
         "(a nightly) always has its latest file there. An app whose file name has no version in it "
         "(`keep-filename`) is matched by the lead of its name and shows the rest (a date and hash) as its version.",
         "",
-        "<sub>Regenerate with <code>python3 .github/scripts/obtainium.py --configs configs/patches --repo "
+        "<sub>Regenerate with <code>python3 .github/scripts/obtainium.py --configs configs/config.toml --repo "
         + repo + " --page OBTAINIUM.md --json obtainium-apps.json --readme README.md "
         "--manifest state/archive/stable.json --manifest state/archive/beta.json</code></sub>",
         "",
@@ -665,7 +665,7 @@ def update_readme(readme_text, specs, repo, data=None):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Generate Obtainium artifacts from the TOML app config.")
-    ap.add_argument("--configs", default="configs/patches", help="directory of per-source TOMLs")
+    ap.add_argument("--configs", default="configs/config.toml", help="the app config (a file, or a directory of TOMLs)")
     ap.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY", ""), help="owner/repo that hosts the releases")
     ap.add_argument("--json", help="write the Obtainium import file here")
     ap.add_argument("--page", help="write OBTAINIUM.md here")

@@ -9,11 +9,11 @@ pipeline's records (`state/`). Fork, adjust settings, run.
 
 ```bash
 git clone https://github.com/<you>/rvb && cd rvb
-$EDITOR configs/patches/*.toml          # your app list; keys in CONFIG.md
+$EDITOR configs/config.toml            # your app list; keys in CONFIG.md
 git commit -am "feat(config): my apps" && git push
 ```
 
-- `configs/patches/*.toml` is the app list; `configs/config.manual.toml` is what Manual CI builds.
+- `configs/config.toml` is the app list; `configs/config.manual.toml` is what Manual CI builds.
 - `configs/*_build.json` and `state/` are machine-written; the first watcher run fills them in.
 - `update` is the only other branch that can ever appear: the first build that produces a module
   zip creates it, and an APK-only fork never does.

@@ -44,7 +44,7 @@ The one definition of an Obtainium entry for this repository (the complete app o
 back, filter regex, version-detection off, fall-back to older releases, pre-release switch; the link is
 the whole deep link percent-encoded once behind `apps.obtainium.imranr.dev/redirect?r=`) — imported by
 `generate_release_notes.py` and used as a CLI to regenerate `OBTAINIUM.md`, `obtainium-apps.json` and the
-README's apps section from the TOML config (`--configs configs/patches --repo owner/repo --page … --json …
+README's apps section from the TOML config (`--configs configs/config.toml --repo owner/repo --page … --json …
 --readme … --manifest archive/stable.json`). The apps section reproduces the apkforge layout: one group
 per patch source (MorpheApp's first, the rest A-Z) and a Stock Mirrors group, each a table of App, Arch,
 Version (recommended above built), APK Source (the one used), Patches (a dropdown of what the last build applied, and what it did not) and an *Add to Obtainium* badge;

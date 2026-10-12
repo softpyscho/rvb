@@ -14,7 +14,7 @@ on:
       - ".github/scripts/update_readme.sh"
       - ".github/scripts/patchers.py"
       - ".github/scripts/build_make_manifest.py"
-      - "configs/patches/**"
+      - "configs/config.toml"
       - ".github/scripts/commit_to_main.sh"
       - ".github/scripts/build_plan_configs.sh"
       - ".github/scripts/build_prepare_config.sh"

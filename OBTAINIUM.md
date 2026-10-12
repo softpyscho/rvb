@@ -64,4 +64,4 @@ Every app lives in the same repository, so each link carries the settings Obtain
 - **Stock apps from a store are re-hosted, not re-signed**, unless the store only offers a split bundle; see [CONFIG.md](CONFIG.md#mirrored-apps).
 - **Only the newest two versions of an app are kept** in the archive, so an app that is rebuilt often (a nightly) always has its latest file there. An app whose file name has no version in it (`keep-filename`) is matched by the lead of its name and shows the rest (a date and hash) as its version.
 
-<sub>Regenerate with <code>python3 .github/scripts/obtainium.py --configs configs/patches --repo softpyscho/rvb --page OBTAINIUM.md --json obtainium-apps.json --readme README.md --manifest state/archive/stable.json --manifest state/archive/beta.json</code></sub>
+<sub>Regenerate with <code>python3 .github/scripts/obtainium.py --configs configs/config.toml --repo softpyscho/rvb --page OBTAINIUM.md --json obtainium-apps.json --readme README.md --manifest state/archive/stable.json --manifest state/archive/beta.json</code></sub>
