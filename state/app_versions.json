@@ -3,7 +3,7 @@
     "keys": [
       "Alarmy"
     ],
-    "version": "26.34.1"
+    "version": "26.36.1"
   },
   "Amazon-Prime-Video": {
     "keys": [
@@ -33,13 +33,13 @@
     "keys": [
       "Greenify"
     ],
-    "version": "4.7.5"
+    "version": "5.1.1"
   },
   "Instagram": {
     "keys": [
       "Instagram"
     ],
-    "version": "450.0.0.50.77"
+    "version": "452.0.0.0.16"
   },
   "Mix-Archive": {
     "keys": [
@@ -51,7 +51,7 @@
     "keys": [
       "Mixplorer"
     ],
-    "version": "6.71.15"
+    "version": "6.71.15-API29"
   },
   "Reddit": {
     "keys": [
@@ -63,13 +63,13 @@
     "keys": [
       "RedotPay"
     ],
-    "version": "3.14.3"
+    "version": "3.14.4"
   },
   "Splitwise": {
     "keys": [
       "Splitwise"
     ],
-    "version": "26.8.3"
+    "version": "26.9.1"
   },
   "Stremio": {
     "keys": [
@@ -99,7 +99,7 @@
     "keys": [
       "WARP"
     ],
-    "version": "1.1.1.1 + WARP: Safer Internet 6.38.9"
+    "version": "6.38.9"
   },
   "Xodo": {
     "keys": [
@@ -112,5 +112,17 @@
       "Oxygen-Customizer"
     ],
     "version": "2062"
+  },
+  "WhatsApp": {
+    "keys": [
+      "WhatsApp"
+    ],
+    "version": "2.26.40.72"
+  },
+  "WhatsApp-Business": {
+    "keys": [
+      "WhatsApp-Business"
+    ],
+    "version": "2.26.39.72"
   }
 }
