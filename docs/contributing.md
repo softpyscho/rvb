@@ -85,7 +85,7 @@ describing it. `bash scripts/build.sh clean` resets.
 |---|---|---|
 | Patcher/tool decisions in the engine | `bash .github/traces/trace_runner.sh verify` | offline; stubbed `curl`/`java` + fixtures; runs on push to `build.sh`/`utils.sh`. After an *intentional* argv change: `… capture`, read the diff, commit the goldens |
 | Cache / bundle helpers | `bash .github/traces/test_cache_helpers.sh`, `bash .github/traces/test_bundle_helpers.sh` | same job |
-| Mirrored apps (`mirror_rv`, `mirror`/`keep-filename` parsing) | `bash .github/traces/test_mirror.sh` | same job; fake downloads and a stub `aapt2`, every rejection paired with an accepting control |
+| Mirrored apps (`mirror_rv`, `mirror`/`keep-filename` parsing; no re-signing: `test_mirror_signature.sh`) | `bash .github/traces/test_mirror.sh` | same job; fake downloads and a stub `aapt2`, every rejection paired with an accepting control |
 | `version = "waenhancer"` (`waenhancer_vers`, source fallback, the watcher's order) | `bash .github/traces/test_waenhancer.sh`, `test_ci_app_versions.sh` | same job; fake `curl`, stores and downloads; the real arrays.xml and listing parsers |
 | APKMirror release-page lookup (`dl_apkmirror`) | `bash .github/traces/test_apkmirror_resolve.sh` | same job; a fake page fetcher serving crafted pages, every refusal paired with an accepting control |
 | Archive pruning (`cleanup-archive-assets.py`) | `python3 .github/traces/test_cleanup_archive_assets.py` | same job; `plan_prune` on fixture assets and manifests |

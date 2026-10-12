@@ -107,9 +107,12 @@ else, which:
 
 What differs from `build_rv`, on purpose: no stock-APK cache (the Actions cache and the cache
 repo are not consulted or fed — a mirror downloads once per new upstream version and the
-release is the store); a bundle source is merged to one APK by the `dl_*` helper, which
-**re-signs** it, so a plain-APK source is preferable and a signed-bundle mirror cannot update
-over a store install; and for `github`/`direct` sources, where the config names the exact
+release is the store); a split bundle is **never merged**: merging re-signs the APK with
+this repository's key, which cannot update over a store install and so is not a mirror
+(`build_rv` sets `__MIRROR_NO_RESIGN__`, `_merge_splits_locked` refuses, the source is skipped and the
+next one is asked for the same version; nothing is published if all serve bundles; a bundle that is
+really one APK, or holds only `base.apk`, is extracted unchanged, covered by
+`.github/traces/test_mirror_signature.sh`); and for `github`/`direct` sources, where the config names the exact
 file, a package-id mismatch is a warning and the id found in the APK is the one published
 (that id is what Obtainium matches against the installed app), while a store scrape still
 rejects a mismatch. The download loop is deliberately a short second copy rather than a flag

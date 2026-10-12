@@ -198,9 +198,13 @@ github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/t
   carry turned into `-` (`nightly-209 (#2062)` → `nightly-209-2062`): the phone and Obtainium
   compare the file's version with the installed app's, and a CI run number would never equal it.
   An APK that reports no version name keeps the source's; `keep-filename` apps are named by their source.
-- **Signature:** a plain APK is published byte for byte. A bundle (`.xapk`/`.apkm`/`.apks`) source
-  is merged into one APK, which re-signs it; prefer a source that serves a plain APK if the
-  mirror has to update over a store install.
+- **Signature:** a mirror is published exactly as its publisher signed it, never re-signed. A plain
+  APK is published byte for byte. A split bundle (`.xapk`/`.apkm`/`.apks`) cannot be turned into one
+  APK without signing the result with this repository's key, so a mirror **skips that source** and asks
+  the next one for the same version (a bundle that is really one APK, or holds only `base.apk`, is
+  extracted unchanged). If every source serves a split bundle nothing is published and the log says
+  so. Give a mirrored app a store that serves a plain APK (`apkmirror-dlurl` and `uptodown-dlurl`
+  are both worth setting).
 - **Identity:** the APK's real package id is what gets published. For `github`/`direct` sources a
   `pkg-name` that differs from it is a warning (you named the file); for a store scrape it is a
   rejection.

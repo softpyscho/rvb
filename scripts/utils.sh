@@ -1454,6 +1454,14 @@ _merge_splits_locked() {
 		mv -f "${output}-merge-tmp" "$output"
 		return 0
 	fi
+	# A mirror re-hosts the app as its publisher signed it. Merging splits means signing the
+	# result with this repository's key, which makes a different app as far as an update over the
+	# store install goes, so a mirror refuses the merge and the source is skipped.
+	if [ "${__MIRROR_NO_RESIGN__:-false}" = true ]; then
+		__MIRROR_RESIGN_REFUSED__=true
+		wpr "This download is a split bundle: merging it would re-sign it with this repository's key, which a mirror never does. Skipping this source."
+		return 1
+	fi
 	pr "Merging splits"
 	get_apkeditor || return 1
 	# write to temp siblings and rename atomically: a concurrent process may
@@ -4022,9 +4030,11 @@ waenhancer_vers() {
 #   - no patch bundle, so no version-compatibility gate and `auto` is not a valid version;
 #   - no stock-APK cache (neither the Actions cache nor the cache repo): a mirror downloads once
 #     per new upstream version and the release itself is the store;
-#   - a bundle (.xapk/.apkm/.apks) is merged to one APK by the dl_* helper, as in a
-#     non-passthrough build. A merged APK is re-signed, so it cannot update over the store
-#     install; a plain APK source is therefore preferable and is not altered at all;
+#   - a bundle (.xapk/.apkm/.apks) is never merged: merging re-signs the APK with this
+#     repository's key, which cannot update over a store install and so is not a mirror
+#     (build_rv sets __MIRROR_NO_RESIGN__, merge_splits refuses, the source is skipped and
+#     the next one is asked for the same version). A bundle that is really one APK is
+#     extracted unchanged. A plain APK is published byte for byte;
 #   - the identity gate is strict for a store scrape, but for `github`/`direct` - where the
 #     config names the exact file - a package-id mismatch is a warning, and the id actually
 #     found in the APK is what gets published, because that is what a phone tracks.
@@ -4051,6 +4061,7 @@ mirror_rv() {
 	# Nothing here is patched, and every write_build_info field below is named explicitly:
 	# clear what a previous patched build in this shell left behind so it cannot leak in.
 	PATCH_OUTPUT="" PATCH_RESULT_FILE=""
+	__MIRROR_RESIGN_REFUSED__=false
 
 	# 1. Pick the first source that answers; a version has to be discoverable from it unless
 	#    one was pinned. archive/cache_repo are not scraped for a latest version (they only
@@ -4202,7 +4213,11 @@ mirror_rv() {
 		break
 	done
 	if [ -z "$got_from" ]; then
-		epr "Mirroring '${table}' failed: no source supplied a valid ${arch} APK for v${version_f}."
+		if [ "${__MIRROR_RESIGN_REFUSED__:-false}" = true ]; then
+			epr "Mirroring '${table}' failed: no source supplied a plain ${arch} APK for v${version_f}; the ones that answered are split bundles, which could only be published re-signed with this repository's key. A mirror keeps the publisher's signature, so nothing was published."
+		else
+			epr "Mirroring '${table}' failed: no source supplied a valid ${arch} APK for v${version_f}."
+		fi
 		rm -f "$stock_apk" "${stock_apk%.apk}".* "${stock_apk}".*
 		return 0
 	fi
@@ -4243,7 +4258,7 @@ mirror_rv() {
 build_rv() {
 	eval "declare -A args=${1#*=}"
 	if [ "${args[mirror]:-false}" = true ]; then
-		mirror_rv "$1"
+		__MIRROR_NO_RESIGN__=true mirror_rv "$1"
 		return
 	fi
 	local version="${args[version]:-}" pkg_name="${args[pkg_name]:-}"
