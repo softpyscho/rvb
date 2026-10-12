@@ -16,6 +16,10 @@ uptodown-dlurl = "https://bitget.en.uptodown.com/android"
 [Stremio]
 app-name = "Stremio"
 pkg-name = "com.stremio.one"
+# Both stores serve Stremio only as a split bundle, which cannot be republished without signing it
+# with this repository's key. Stremio has no account to ban, so a re-signed copy is accepted here
+# once no source gives a plain APK; the README says which it is. Uninstall the store copy first.
+allow-resign = true
 # direct-dlurl = "https://www.stremio.com/downloads" is not carried over: it is a web page, and the
 # engine's `direct` source needs a URL that ends in the APK's own file name.
 apkmirror-dlurl = "https://www.apkmirror.com/apk/stremio/stremio-2/"

@@ -345,6 +345,22 @@ class MirrorManifest(unittest.TestCase):
         self.assertNotIn("Duck.Detector-nightly-all.apk", files)
 
 
+    def test_resigned_is_recorded_for_mirrors_only(self):
+        """true / false are written as they are; None (a patched app, or a build before it was
+        recorded) writes no key at all, so readers can tell 'original' from 'unknown'."""
+        build = {k: dict(v) for k, v in FIXTURE.items()}
+        build["Bitget"]["resigned"] = True
+        build["Duck-Detector"]["resigned"] = False
+        build["Reddit"]["resigned"] = None
+        files = self.run_manifest(build, FIXTURE_FILES)
+        self.assertIs(files["bitget-v9.1-arm64-v8a.apk"]["resigned"], True)
+        self.assertIs(files["Duck.Detector-nightly-all.apk"]["resigned"], False)
+        self.assertNotIn("resigned", files["reddit-morphe-v2026.40.0-arm64-v8a.apk"])
+        # control: a record with no such key (an older build) also writes none
+        old = self.run_manifest(FIXTURE, FIXTURE_FILES)
+        self.assertNotIn("resigned", old["bitget-v9.1-arm64-v8a.apk"])
+
+
 class AppsSection(unittest.TestCase):
     """The README's apps section: the apkforge layout, filled from the build manifests."""
 
@@ -393,7 +409,8 @@ class AppsSection(unittest.TestCase):
         self.assertIn("| App | Version | APK Source | Patches | Obtainium |", md)
         self.assertIn("|:---|:-------:|:----------:|:--------|:---------:|", md)
         self.assertNotIn("| Recommended |", md, "recommended and built share the Version column")
-        self.assertIn("| App | Version | APK Source | Obtainium |", md, "the mirrors have no patches column")
+        self.assertIn("| App | Version | APK Source | Signature | Obtainium |", md, "the mirrors have no patches column, but say how they are signed")
+        self.assertIn("|:---|:-------:|:----------:|:---------:|:---------:|", md)
         self.assertNotIn("| Arch |", md, "no Arch column anywhere")
         self.assertEqual(md.count("**Version** shows"), 1, "one legend, above the tables")
         self.assertLess(md.index("**Version** shows"), md.index("| App |"))
@@ -544,6 +561,59 @@ class AppsSection(unittest.TestCase):
         self.assertEqual(decode_link(paren)[1]["name"], "X (beta)", "and they decode back")
         # control: the same entry with its object cut down is what we must not produce
         self.assertNotEqual(set(entry), {"id", "url", "author", "name", "preferredApkIndex", "additionalSettings"})
+
+
+class MirrorSignature(unittest.TestCase):
+    """The README says, per stock mirror, whether the file is as its publisher signed it or was signed
+    with this repository's key; the release notes flag a re-signed one."""
+
+    SPECS = {s["key"]: s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
+
+    def cell(self, key, entry):
+        spec = self.SPECS[key]
+        return obtainium.signature_cell(spec, {spec["prefix"]: entry} if entry is not None else {})
+
+    def test_the_cell_reports_only_what_the_build_recorded(self):
+        self.assertEqual(self.cell("Bitget", {"resigned": False}), "✅ original")
+        self.assertEqual(self.cell("Bitget", {"resigned": True}), "⚠️ re-signed")
+        self.assertEqual(self.cell("Bitget", {"resigned": None}), "*(not recorded)*", "built before it was recorded: unknown, not 'original'")
+        self.assertEqual(self.cell("Bitget", None), "*(pending)*")
+
+    def test_an_app_that_may_be_re_signed_says_so_even_when_it_was_not(self):
+        self.assertTrue(self.SPECS["Stremio"]["allow_resign"])
+        self.assertFalse(self.SPECS["Bitget"]["allow_resign"], "control: it is an explicit opt-in per app")
+        self.assertIn("re-sign allowed", self.cell("Stremio", {"resigned": False}))
+        self.assertNotIn("re-sign allowed", self.cell("Bitget", {"resigned": False}))
+
+    def test_the_mirror_table_carries_a_signature_cell_per_row(self):
+        specs = [self.SPECS["Bitget"], self.SPECS["Stremio"]]
+        data = {self.SPECS["Bitget"]["prefix"]: {"version": "2.94.4", "resigned": False, "apk_source": "uptodown"},
+                self.SPECS["Stremio"]["prefix"]: {"version": "2.4.0", "resigned": True, "apk_source": "apkmirror"}}
+        md = obtainium.render_apps_section(specs, REPO, data)
+        bitget = next(l for l in md.splitlines() if l.startswith("| [![Bitget]"))
+        stremio = next(l for l in md.splitlines() if l.startswith("| [![Stremio]"))
+        self.assertIn("✅ original", bitget)
+        self.assertNotIn("re-signed", bitget)
+        self.assertIn("⚠️ re-signed", stremio)
+        self.assertEqual(bitget.count("|"), stremio.count("|"), "every mirror row has the same cells")
+
+    def test_the_manifest_loader_keeps_the_flag_and_old_entries_have_none(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "m.json"
+            path.write_text(json.dumps({"files": {
+                "a-v1-arm64-v8a.apk": {"name": "a", "fileType": "APK", "version": "1", "publishedAt": "2026-10-12T00:00:00Z", "apkSource": "x", "resigned": True},
+                "b-v1-arm64-v8a.apk": {"name": "b", "fileType": "APK", "version": "1", "publishedAt": "2026-10-12T00:00:00Z", "apkSource": "x", "resigned": False},
+                "c-v1-arm64-v8a.apk": {"name": "c", "fileType": "APK", "version": "1", "publishedAt": "2026-10-12T00:00:00Z"}}}))
+            data = obtainium.load_manifest_data([str(path)])
+        self.assertEqual((data["a"]["resigned"], data["b"]["resigned"], data["c"]["resigned"]), (True, False, None))
+
+    def test_release_notes_flag_a_re_signed_mirror_only(self):
+        files = {"Stremio": info("stremio", "Stremio", "com.stremio.one", version="2.4.0", brand="Mirror", resigned=True),
+                 "Bitget": info("bitget", "Bitget", "com.bitget.exchange", version="9.1", brand="Mirror", resigned=False)}
+        md = grn.render(files, ["stremio-v2.4.0-arm64-v8a.apk", "bitget-v9.1-arm64-v8a.apk"], ENV)
+        self.assertIn("* **Stremio** `v2.4.0` ⚠️ *re-signed with this repository's key*", md)
+        self.assertIn("* **Bitget** `v9.1`\n", md, "control: an original mirror carries no flag")
+        self.assertIn("cannot update over a store install", md)
 
 
 class SeedConfig(unittest.TestCase):

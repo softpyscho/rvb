@@ -112,7 +112,9 @@ this repository's key, which cannot update over a store install and so is not a 
 (`build_rv` sets `__MIRROR_NO_RESIGN__`, `_merge_splits_locked` refuses, the source is skipped and the
 next one is asked for the same version; nothing is published if all serve bundles; a bundle that is
 really one APK, or holds only `base.apk`, is extracted unchanged, covered by
-`.github/traces/test_mirror_signature.sh`); and for `github`/`direct` sources, where the config names the exact
+`.github/traces/test_mirror_signature.sh`). `allow-resign = true` adds a second pass, only after every source
+failed to give a plain APK: it accepts the merge, and the record carries `resigned: true`
+(`__LAST_DL_RESIGNED__`, set by the merge itself, so it is per file and not per setting); and for `github`/`direct` sources, where the config names the exact
 file, a package-id mismatch is a warning and the id found in the APK is the one published
 (that id is what Obtainium matches against the installed app), while a store scrape still
 rejects a mismatch. The download loop is deliberately a short second copy rather than a flag

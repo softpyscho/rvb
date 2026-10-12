@@ -120,6 +120,11 @@ def main():
                 files[fname]["apkSource"] = (info.get("apk_source") or "").strip() or None
                 # a bundle can tie several versions; the first listed is the newest, the one the build takes
                 files[fname]["recommendedVersion"] = ((info.get("recommended_version") or "").strip().splitlines() or [""])[0].strip() or None
+            # resigned (a mirror only): true when the published file was signed with this repository's
+            # key (a merged split bundle), false when it is as its publisher signed it. Absent for a
+            # patched app (always our key) and for builds from before it was recorded.
+            if info.get("resigned") is not None:
+                files[fname]["resigned"] = bool(info["resigned"])
             for rec_key, out_key in (("skipped_patches", "skippedPatches"), ("failed_patches", "failedPatches"),
                                      ("excluded_patches", "excludedPatches")):
                 if info.get(rec_key):

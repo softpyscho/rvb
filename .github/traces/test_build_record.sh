@@ -16,8 +16,8 @@ TEMP_DIR="$WORK/temp"; BUILD_JSON_FILE="$WORK/build.json"; mkdir -p "$TEMP_DIR"
 declare -A args=([arch]="arm64-v8a" [patches_src]="x/y" [brand]="Morphe" [variant]="" [sub_variant]="" [included_patches]="" [excluded_patches]="")
 PATCHER_FLOW=cli-patch; PATCHER_KIND=morphe
 
-record() { # key pkg source recommended
-	write_build_info "$1" "arm64-v8a" ".apk" "$(tr 'A-Z' 'a-z' <<<"$1")-morphe" "2.5.0.2" "x/patches-1.0.mpp" "" "$2" "$1" "x/y" "Morphe" "" "" "" "$3" "$4"
+record() { # key pkg source recommended [resigned]
+	write_build_info "$1" "arm64-v8a" ".apk" "$(tr 'A-Z' 'a-z' <<<"$1")-morphe" "2.5.0.2" "x/patches-1.0.mpp" "" "$2" "$1" "x/y" "Morphe" "" "" "" "$3" "$4" "${5:-}"
 }
 
 # 1. Battery Guru as it really failed: one patch skipped as incompatible, none applied
@@ -45,6 +45,11 @@ PATCH_OUTPUT='INFO: Applied: Only patch'
 PATCH_RESULT_FILE="$WORK/ok.json"; echo '{"appliedPatches":["Only patch"],"failedPatches":[]}' > "$PATCH_RESULT_FILE"
 record Plain com.plain cache "" >/dev/null 2>&1
 
+# 4. the signature of a mirror: true / false as given, null for a patched app (the 17th argument is
+# empty there), and nothing else turns into a boolean
+record Resigned com.resigned apkmirror "" true >/dev/null 2>&1
+record Original com.original uptodown "" false >/dev/null 2>&1
+
 merge_build_info >/dev/null 2>&1
 [ -s "$BUILD_JSON_FILE" ] || fail "no merged build record"
 q() { jq -c "$1" "$BUILD_JSON_FILE"; }
@@ -60,19 +65,23 @@ jq -e '.["Battery-Guru"].skipped_patches[0].reason | test("incompatible with com
 [ "$(q '.Truecaller.excluded_patches')" = '["Telemetry","Update check"]' ] || fail "excluded: $(q '.Truecaller.excluded_patches')"
 [ "$(q '.Truecaller.skipped_patches')" = '[]' ] || fail "nothing skipped there (control)"
 
+[ "$(q '.Resigned.resigned')" = 'true' ] && [ "$(q '.Original.resigned')" = 'false' ] || fail "resigned: $(q '[.Resigned.resigned, .Original.resigned]')"
+[ "$(q '.Plain.resigned')" = 'null' ] || fail "a patched app records null, got: $(q '.Plain.resigned')"
 # negative control: a clean app carries empty lists, not leftovers from the app before it
 [ "$(q '.Plain | [.skipped_patches, .failed_patches, .excluded_patches]')" = '[[],[],[]]' ] || fail "leak into a clean app: $(q '.Plain')"
 [ "$(q '.Plain.recommended_version')" = '""' ] || fail "no recommendation is the empty string"
 
 # the manifest: additive keys, lists only when non-empty
 mkdir -p "$WORK/mf/build" "$WORK/mf/temp" && cp "$BUILD_JSON_FILE" "$WORK/mf/build.json"
-for f in tied-morphe-v2.5.0.2-arm64-v8a.apk battery-guru-morphe-v2.5.0.2-arm64-v8a.apk truecaller-morphe-v2.5.0.2-arm64-v8a.apk plain-morphe-v2.5.0.2-arm64-v8a.apk; do : > "$WORK/mf/build/$f"; done
+for f in resigned-morphe-v2.5.0.2-arm64-v8a.apk original-morphe-v2.5.0.2-arm64-v8a.apk tied-morphe-v2.5.0.2-arm64-v8a.apk battery-guru-morphe-v2.5.0.2-arm64-v8a.apk truecaller-morphe-v2.5.0.2-arm64-v8a.apk plain-morphe-v2.5.0.2-arm64-v8a.apk; do : > "$WORK/mf/build/$f"; done
 ( cd "$WORK/mf" && NEXT_VER_CODE=260100 IS_PRERELEASE=false python3 "$REPO_ROOT/.github/scripts/build_make_manifest.py" >/dev/null 2>&1 ) || fail "build_make_manifest.py failed"
 M="$WORK/mf/temp/manifest/build.json"
 mq() { jq -c "$1" "$M"; }
 [ "$(mq '.files["battery-guru-morphe-v2.5.0.2-arm64-v8a.apk"] | [.apkSource, .recommendedVersion, (.skippedPatches|map(.name))]')" = '["uptodown","2.5.0.6",["Unlock PRO"]]' ] || fail "manifest battery guru: $(mq '.files')"
 [ "$(mq '.files["truecaller-morphe-v2.5.0.2-arm64-v8a.apk"] | [.apkSource, .failedPatches, .excludedPatches, has("skippedPatches")]')" = '["archive",["Flaky patch"],["Telemetry","Update check"],false]' ] || fail "manifest truecaller"
 [ "$(mq '.files["plain-morphe-v2.5.0.2-arm64-v8a.apk"] | [.apkSource, .recommendedVersion, has("skippedPatches"), has("failedPatches")]')" = '["cache",null,false,false]' ] || fail "manifest plain: $(mq '.files')"
+[ "$(mq '.files["resigned-morphe-v2.5.0.2-arm64-v8a.apk"].resigned')" = 'true' ] && [ "$(mq '.files["original-morphe-v2.5.0.2-arm64-v8a.apk"].resigned')" = 'false' ] || fail "manifest resigned: $(mq '.files')"
+[ "$(mq '.files["plain-morphe-v2.5.0.2-arm64-v8a.apk"] | has("resigned")')" = 'false' ] || fail "a patched app writes no resigned key"
 
 [ "$(mq '.files["tied-morphe-v2.5.0.2-arm64-v8a.apk"].recommendedVersion')" = '"2026.40.0"' ] || fail "a tie must collapse to the first version: $(mq '.files["tied-morphe-v2.5.0.2-arm64-v8a.apk"].recommendedVersion')"
 

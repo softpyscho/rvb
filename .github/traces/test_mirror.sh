@@ -227,6 +227,10 @@ rc=$(run_build $'[A]\nmirror = true\nbuild-mode = "module"\nuptodown-dlurl = "ht
 [ "$rc" != 0 ] && grep -q "build-mode 'module'" "$SANDBOX/out.log" || fail "module build-mode on a mirror must abort"
 rc=$(run_build $'[A]\nkeep-filename = true\nuptodown-dlurl = "https://u/android"')
 [ "$rc" != 0 ] && grep -q "keep-filename only applies to mirrored apps" "$SANDBOX/out.log" || fail "keep-filename on a patched app must abort"
+rc=$(run_build $'[A]\nallow-resign = true\nuptodown-dlurl = "https://u/android"')
+[ "$rc" != 0 ] && grep -q "allow-resign only applies to mirrored apps" "$SANDBOX/out.log" || fail "allow-resign on a patched app must abort (rc=$rc): $(tail -3 "$SANDBOX/out.log")"
+rc=$(run_build $'[A]\nmirror = true\nallow-resign = "sometimes"\nuptodown-dlurl = "https://u/android"')
+[ "$rc" != 0 ] && grep -q "'sometimes' is not a valid option for 'allow-resign'" "$SANDBOX/out.log" || fail "a non-boolean allow-resign must abort"
 rc=$(run_build $'[A]\nmirror = "maybe"\nuptodown-dlurl = "https://u/android"')
 [ "$rc" != 0 ] && grep -q "'maybe' is not a valid option for 'mirror'" "$SANDBOX/out.log" || fail "a non-boolean mirror must abort"
 # an explicit `false` on the two boolean patch keys is not a configuration (control for the aborts above)
@@ -234,6 +238,9 @@ rc=$(run_build $'[A]\nmirror = true\nexclusive-patches = false\ninclusive-patche
 if grep -q "is set for 'A'" "$SANDBOX/out.log"; then fail "a spelled-out false must not be refused: $(tail -3 "$SANDBOX/out.log")"; fi
 rc=$(run_build $'[A]\nmirror = true\nexclusive-patches = true\nuptodown-dlurl = "https://u/android"')
 [ "$rc" != 0 ] && grep -q "exclusive-patches' is set for 'A'" "$SANDBOX/out.log" || fail "exclusive-patches = true on a mirror must abort"
+# control: allow-resign on a mirror is accepted at parse time (the aborts above are about where it is set)
+rc=$(run_build $'[A]\nmirror = true\nallow-resign = true\npkg-name = "com.a"\nversion = "1.0"\narch = "arm64-v8a"\nuptodown-dlurl = "https://127.0.0.1:9/android"')
+if grep -q "allow-resign" "$SANDBOX/out.log"; then fail "control: allow-resign on a mirror must not be rejected: $(grep allow-resign "$SANDBOX/out.log" | head -2)"; fi
 # control: a clean mirror config gets past parsing (it then fails to download - no network, and
 # no source answers - which is a per-app failure, not a parse abort)
 rc=$(run_build $'[A]\nmirror = true\npkg-name = "com.a"\nversion = "1.0"\narch = "arm64-v8a"\nuptodown-dlurl = "https://127.0.0.1:9/android"')

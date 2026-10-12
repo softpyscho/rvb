@@ -51,6 +51,7 @@ enabled = true       # whether to build the app. default: true
 build-mode = "both"  # 'both', 'apk' or 'module'. default: apk
 mirror = false       # true: publish the stock APK unmodified instead of patching it (see "Mirrored apps"). default: false
 keep-filename = false # mirror + github source only: publish the release asset under its own name (see "Mirrored apps"). default: false
+allow-resign = false  # mirror only: when no source gives a plain APK, accept a split bundle merged and signed with THIS repository's key (see "Mirrored apps"). default: false
 badge-color = "FF4500"  # presentation only (README / Obtainium tooling read it; the build ignores it): hex colour, no '#'
 badge-icon = "reddit"   # presentation only: a simple-icons slug for the README badge
 arch = "both"        # 'both', 'auto', 'all', 'arm64-v8a', 'arm-v7a', 'x86_64', or 'x86'. default: both
@@ -205,6 +206,15 @@ github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/t
   extracted unchanged). If every source serves a split bundle nothing is published and the log says
   so. Give a mirrored app a store that serves a plain APK (`apkmirror-dlurl` and `uptodown-dlurl`
   are both worth setting).
+- **`allow-resign = true`** (per app, default `false`, rejected on a patched app) is the opt-in for an app
+  that has no plain-APK source at all. Only after every source has been asked for a plain APK does a
+  second pass accept a split bundle, merge it and sign it with this repository's key. Such a file is
+  **not** the publisher's app as far as updates go: it cannot update over the store install (and the store
+  cannot update it), so the store copy has to be uninstalled first, and an app that checks its own
+  signature or account integrity (a messenger, an exchange) may refuse it or flag the account. Use it only
+  for an app where that does not matter. The build records whether each file was re-signed
+  (`resigned` in the manifest), the release notes flag it with ⚠️, and the README's **Signature** column
+  for the stock mirrors shows ✅ original or ⚠️ re-signed per app.
 - **Identity:** the APK's real package id is what gets published. For `github`/`direct` sources a
   `pkg-name` that differs from it is a warning (you named the file); for a store scrape it is a
   rejection.

@@ -246,6 +246,7 @@ def spec_from_entry(key, entry, prerelease):
         "mirror": mirror,
         "prerelease": prerelease,
         "keep_filename": keep,
+        "allow_resign": _truthy(entry.get("allow-resign", False)),
         "arch": arch,
         "prefix": prefix,
         "color": str(entry.get("badge-color") or "").lstrip("#"),
@@ -330,6 +331,21 @@ def apk_source(spec, data):
     label = DL_LABEL.get(used, used.replace("_", " ").title())
     url = spec["urls"].get(used)
     return f"[{label}]({url})" if url else label
+
+
+def signature_cell(spec, data):
+    """Whether the newest published file of a mirror is as its publisher signed it, or was signed with
+    this repository's key (a merged split bundle, which cannot update over the store install). Only
+    what the build recorded is shown; an app built before the signature was recorded says so."""
+    d = data.get(spec["prefix"]) or {}
+    if not d:
+        return "*(pending)*"
+    resigned = d.get("resigned")
+    if resigned is True:
+        return "⚠️ re-signed"
+    if resigned is False:
+        return "✅ original" + (" · *re-sign allowed*" if spec.get("allow_resign") else "")
+    return "*(not recorded)*"
 
 
 def _vlabel(version):
@@ -435,8 +451,8 @@ def _group_header(badge, logo, alt=None):
 
 TABLE_HEAD = ["<div align=\"center\">", "", "| App | Version | APK Source | Patches | Obtainium |",
               "|:---|:-------:|:----------:|:--------|:---------:|"]
-MIRROR_HEAD = ["<div align=\"center\">", "", "| App | Version | APK Source | Obtainium |",
-               "|:---|:-------:|:----------:|:---------:|"]
+MIRROR_HEAD = ["<div align=\"center\">", "", "| App | Version | APK Source | Signature | Obtainium |",
+               "|:---|:-------:|:----------:|:---------:|:---------:|"]
 
 
 def _row(spec, repo, data):
@@ -446,14 +462,15 @@ def _row(spec, repo, data):
 
 def _mirror_row(spec, repo, data):
     return (f"| {app_badge(spec)} | {version_label(spec, data)} | {apk_source(spec, data)} "
-            f"| {obtainium_badge_link(spec, repo, data)} |")
+            f"| {signature_cell(spec, data)} | {obtainium_badge_link(spec, repo, data)} |")
 
 
 def render_apps_section(specs, repo, data=None):
     """The apps section of the README: one group per patch source (in config order), then the
     stock mirrors, each a centred table. Patched apps: App, Version (what the patches recommend and
     what was built, two badges in the one column), APK Source (the one used), Patches (with what was
-    not applied), Obtainium. Mirrors have nothing patched or recommended: App, Version, APK Source, Obtainium."""
+    not applied), Obtainium. Mirrors have nothing patched or recommended: App, Version, APK Source,
+    Signature (original, or re-signed with this repository's key), Obtainium."""
     data = data or {}
     groups, mirrors = {}, []
     for spec in specs:
@@ -465,7 +482,10 @@ def render_apps_section(specs, repo, data=None):
     legend = ("> **Version** shows the version the patches *recommend* above the version that was *built* "
               "(they differ when a source no longer offers the recommended one). **APK Source** is where the "
               "stock APK of that build came from. ⚠️ in **Patches** means a patch the build meant to apply was "
-              "skipped or failed - open the row to see which and why.")
+              "skipped or failed - open the row to see which and why. For the stock mirrors, **Signature** says whether "
+              "the file is exactly as its publisher signed it (✅ original, so it updates over the store install) or "
+              "was signed with this repository's key (⚠️ re-signed: a merged split bundle, which cannot update over "
+              "the store install and needs an uninstall first).")
     blocks = []
     # MorpheApp's own bundle first, the others A-Z (the config files are read in file-name order,
     # which would otherwise decide what the reader sees first).
@@ -508,6 +528,8 @@ def load_manifest_data(paths):
                                      "has_record": "apkSource" in entry,
                                      "apk_source": entry.get("apkSource") or "",
                                      "recommended": entry.get("recommendedVersion") or "",
+                                     # True / False / None (None = built before it was recorded)
+                                     "resigned": entry.get("resigned"),
                                      "skipped": entry.get("skippedPatches") or [],
                                      "failed": entry.get("failedPatches") or [],
                                      "excluded": entry.get("excludedPatches") or []})

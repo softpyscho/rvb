@@ -1480,6 +1480,8 @@ _merge_splits_locked() {
 	fi
 	mv -f "${output}-merge-tmp" "$output" || return 1
 	rm "${output}.idsig" "${output}-merge-tmp.unsigned" 2>/dev/null || :
+	# the file is now signed with this repository's key, not its publisher's: a mirror records it
+	__LAST_DL_RESIGNED__=true
 	return 0
 }
 
@@ -3526,6 +3528,9 @@ write_build_info() {
 	# build actually saw them, so the README can say what was used instead of what is configured.
 	local apk_source=${15:-}
 	local recommended=${16:-}
+	# "true" when a mirror was signed with this repository's key (a merged split bundle), "false"
+	# when it is as its publisher signed it, "" for a patched app (always signed with our key).
+	local resigned=${17:-}
 	local arch_orig="${args[arch]// /}"
 	if [ "$arch_orig" != "auto" ]; then ext="${arch}${ext}"; arch=""; fi
 	# Applied patches: morphe's -r summary when we have one (it lists every patch
@@ -3619,6 +3624,7 @@ write_build_info() {
 		--arg file "$file" \
 		--arg apk_source "$apk_source" \
 		--arg recommended "$recommended" \
+		--arg resigned "$resigned" \
 		--argjson applied "$applied_json" \
 		--argjson skipped "$skipped_json" \
 		--argjson failed "$failed_json" \
@@ -3639,6 +3645,7 @@ write_build_info() {
 			file: $file,
 			apk_source: $apk_source,
 			recommended_version: $recommended,
+			resigned: (if $resigned == "true" then true elif $resigned == "false" then false else null end),
 			applied_patches: $applied,
 			skipped_patches: $skipped,
 			failed_patches: $failed,
@@ -4043,7 +4050,7 @@ mirror_rv() {
 	local table=${args[table]} app_name=${args[app_name]} pkg_name=${args[pkg_name]:-}
 	local version_mode=${args[version]:-latest} arch=${args[arch]}
 	local arch_f="${arch// /}" keep_filename=${args[keep_filename]:-false}
-	local brand_val=${args[brand]:-Mirror}
+	local brand_val=${args[brand]:-Mirror} allow_resign=${args[allow_resign]:-false}
 	local app_name_l
 	app_name_l=$(resolve_slug "$app_name")
 	[ -z "$app_name_l" ] && { app_name_l=${app_name,,}; app_name_l=${app_name_l// /-}; }
@@ -4140,7 +4147,20 @@ mirror_rv() {
 	# 2. Download from the first source that yields a file passing every gate.
 	local stock_apk="${apk_dl_dir}/mirror-${pkg_name}-${version_f}-${arch_f}.apk"
 	rm -f "$stock_apk" "${stock_apk%.apk}".* "${stock_apk}".*
-	local got_from="" asset_name="" downloaded_pkg
+	local got_from="" asset_name="" downloaded_pkg _pass
+	__LAST_DL_RESIGNED__=false
+	# Two passes at most. The first never re-signs: a source that only serves a split bundle is
+	# skipped, and the next one is asked for the same version. Only when no source gave a plain APK,
+	# and the config says `allow-resign = true` for this app, does the second pass accept a merged
+	# bundle - signed with this repository's key, and recorded as such.
+	for _pass in strict relaxed; do
+	if [ "$_pass" = relaxed ]; then
+		if [ "$allow_resign" != true ] || [ "${__MIRROR_RESIGN_REFUSED__:-false}" != true ]; then break; fi
+		wpr "No source supplied a plain APK for '${table}' and allow-resign is set: a split bundle will be merged and signed with this repository's key."
+		__MIRROR_NO_RESIGN__=false
+	else
+		__MIRROR_NO_RESIGN__=true
+	fi
 	for dl_p in "${DL_SRCS[@]}"; do
 		[ -z "${args[${dl_p}_dlurl]:-}" ] && continue
 		if [ "$pinned" = false ] && { [ "$dl_p" = archive ] || [ "$dl_p" = cache_repo ]; }; then continue; fi
@@ -4164,6 +4184,7 @@ mirror_rv() {
 				args[github_regex]="^$(sed -E 's/[][\\.^$*+?(){}|]/\\&/g' <<<"$_apk_assets")\$"
 			fi
 		fi
+		__LAST_DL_RESIGNED__=false
 		if ! dl_${dl_p} "${args[${dl_p}_dlurl]}" "$version" "$stock_apk" "$arch" "${args[dpi]:-}" "$get_latest_ver" ""; then
 			pr "ERROR: Could not download '${table}' from '${dl_p}' with version '${version}', arch '${arch}'"
 			rm -f "$stock_apk" "${stock_apk%.apk}".* "${stock_apk}".*
@@ -4212,9 +4233,11 @@ mirror_rv() {
 		got_from=$dl_p
 		break
 	done
+	if [ -n "$got_from" ]; then break; fi
+	done
 	if [ -z "$got_from" ]; then
 		if [ "${__MIRROR_RESIGN_REFUSED__:-false}" = true ]; then
-			epr "Mirroring '${table}' failed: no source supplied a plain ${arch} APK for v${version_f}; the ones that answered are split bundles, which could only be published re-signed with this repository's key. A mirror keeps the publisher's signature, so nothing was published."
+			epr "Mirroring '${table}' failed: no source supplied a plain ${arch} APK for v${version_f}; the ones that answered are split bundles, which could only be published re-signed with this repository's key. A mirror keeps the publisher's signature, so nothing was published (set allow-resign = true for this app to accept a re-signed copy)."
 		else
 			epr "Mirroring '${table}' failed: no source supplied a valid ${arch} APK for v${version_f}."
 		fi
@@ -4251,7 +4274,7 @@ mirror_rv() {
 	fi
 	mv -f "$stock_apk" "${BUILD_DIR}/${out_name}"
 	pr "Mirrored ${table} (unmodified, from ${got_from}): '${BUILD_DIR}/${out_name}'"
-	write_build_info "${table% (*}" "${arch_f}" ".apk" "${app_name_l}" "$named_version" "" "" "${downloaded_pkg:-$pkg_name}" "${app_name}" "" "${brand_val}" "" "" "$kept_file" "$got_from" ""
+	write_build_info "${table% (*}" "${arch_f}" ".apk" "${app_name_l}" "$named_version" "" "" "${downloaded_pkg:-$pkg_name}" "${app_name}" "" "${brand_val}" "" "" "$kept_file" "$got_from" "" "${__LAST_DL_RESIGNED__:-false}"
 	return 0
 }
 

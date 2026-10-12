@@ -79,7 +79,10 @@ record of where it came from); `recommendedVersion` — the version the patch bu
 the app (`null`: it names none); and, only when non-empty, `skippedPatches[]` (`{name, reason}`:
 the patcher declined it, typically because it does not support the version that was built),
 `failedPatches[]`, and `excludedPatches[]` (excluded by the config). The README's apps table is the
-reader of these.
+reader of these. Added 2026-10-12, for a mirror only: `resigned` — `true` when the published file was
+signed with this repository's key (a merged split bundle, allowed only by `allow-resign`), `false`
+when it is exactly as its publisher signed it; absent for a patched app (always our key) and for a
+file built before it was recorded. The README's Signature column reads it.
 
 The `<arch>` token in an asset filename is frozen grammar (parse it only through
 `.github/scripts/naming.py`). A manifest records exactly the arches a build

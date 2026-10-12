@@ -83,7 +83,7 @@ def collect(build_info, built_files, base_url):
         exact = (info.get("file") or "").strip()
         app = {"display": display_name, "version": version, "package": (info.get("package_name") or "").strip(),
                "apks": [], "modules": [], "applied": info.get("applied_patches") or [], "prefix": info.get("name") or "",
-               "exact": exact}
+               "exact": exact, "resigned": info.get("resigned") is True}
         for fname in built_files:
             lower = fname.lower()
             if exact:
@@ -169,7 +169,9 @@ def render(build_info, built_files, env):
             # "v" only in front of a number: a nightly's version is the word "nightly"
             v = app["version"]
             ver = f" `{'v' if v[:1].isdigit() else ''}{v}`" if v else ""
-            lines.append(f"* **{app['display']}**{ver}")
+            # a mirror signed with this repository's key (a merged split bundle) is not the publisher's file
+            flag = " ⚠️ *re-signed with this repository's key*" if app["resigned"] else ""
+            lines.append(f"* **{app['display']}**{ver}{flag}")
             if app["apks"]:
                 lines.append("  * APK: " + " • ".join(f"[{ARCH_LABEL.get(a, raw)}]({u})" for a, raw, u in app["apks"]))
             if app["modules"]:
@@ -196,7 +198,9 @@ def render(build_info, built_files, env):
             "• Use [Zygisk Detach](https://github.com/j-hc/zygisk-detach) to stop Play Store from updating Modules.  ",
         ]
     if any(groups[k]["mirrored"] for k in order):
-        lines.append("• 📦 Mirrored apps are the vendor's own APK, republished as-is so they can be tracked here.  ")
+        lines.append("• 📦 Mirrored apps are the vendor's own APK, republished as-is so they can be tracked here. "
+                     "⚠️ marks one that could only be had as a split bundle and was re-signed with this repository's key "
+                     "(it cannot update over a store install).  ")
     lines.append("")
     footer = []
     if repo:

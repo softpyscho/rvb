@@ -191,6 +191,14 @@ for table_name in $(toml_get_table_names); do
 	if [ "${app_args[mirror]}" = false ] && [ "${app_args[keep_filename]}" = true ]; then
 		abort "ERROR: keep-filename only applies to mirrored apps; '$table_name' is patched (set mirror = true or drop it)"
 	fi
+	# allow-resign: a mirror normally refuses a source that only serves split bundles, because
+	# merging them signs the result with this repository's key. true lets one app fall back to that
+	# after every source failed to give a plain APK. Never a default: it is a decision per app.
+	app_args[allow_resign]=$(toml_get "$t" allow-resign) || app_args[allow_resign]=false
+	vtf "${app_args[allow_resign]}" "allow-resign"
+	if [ "${app_args[mirror]}" = false ] && [ "${app_args[allow_resign]}" = true ]; then
+		abort "ERROR: allow-resign only applies to mirrored apps; '$table_name' is patched (patched apps are always signed with this repository's key)"
+	fi
 	if [ "${app_args[mirror]}" = true ]; then
 		for mirror_bad in patches-source cli-source excluded-patches included-patches exclusive-patches inclusive-patches patcher-args patched-pkg-name include-stock; do
 			if mirror_val=$(toml_get "$t" "$mirror_bad"); then
