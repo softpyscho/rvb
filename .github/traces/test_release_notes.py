@@ -195,15 +195,24 @@ class Obtainium(unittest.TestCase):
         self.assertEqual(re.search(st["versionExtractionRegEx"], nxt).group(1), "2026.10.07-aaaaaaaaaaaa")
 
     def test_beta_pool_apps_read_the_beta_archive(self):
-        specs = {s["key"]: s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
-        self.assertTrue(specs["Instagram"]["prerelease"])
-        # Battery Guru is on the stable patches: the beta line of its source is months behind and
-        # supports no current version, so it is not a pre-release app (controls)
-        self.assertFalse(specs["Battery-Guru"]["prerelease"])
-        self.assertFalse(specs["Reddit"]["prerelease"])
-        for key, tag in (("Instagram", "beta"), ("Battery-Guru", "stable"), ("Reddit", "stable")):
+        # no app of the real config is on the beta patches now (Piko's stable supports Instagram's build
+        # too), so the beta pool is exercised with a config written for the test
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "c.toml").write_text(
+                'patches-source = "o/r"\n[Beta-App]\npkg-name = "a.beta"\npatches-version = "beta"\napkpure-dlurl = "https://apkpure.com/x/a.beta"\n'
+                '[Stable-App]\npkg-name = "a.stable"\napkpure-dlurl = "https://apkpure.com/y/a.stable"\n', encoding="utf-8")
+            specs = {s["key"]: s for s in obtainium.specs_from_configs(d)}
+        self.assertTrue(specs["Beta-App"]["prerelease"])
+        self.assertFalse(specs["Stable-App"]["prerelease"], "control: a default app is not a pre-release")
+        for key, tag in (("Beta-App", "beta"), ("Stable-App", "stable")):
             entry = obtainium.entry_for_spec(specs[key], REPO)
             self.assertEqual(entry["url"], f"https://github.com/{REPO}/releases/expanded_assets/{tag}", key)
+
+    def test_the_real_config_has_no_beta_app(self):
+        specs = {s["key"]: s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
+        for key in ("Instagram", "Battery-Guru", "Reddit"):
+            self.assertFalse(specs[key]["prerelease"], key)
+            self.assertEqual(obtainium.entry_for_spec(specs[key], REPO)["url"], f"https://github.com/{REPO}/releases/expanded_assets/stable", key)
 
     def test_disabled_apps_are_not_offered(self):
         with tempfile.TemporaryDirectory() as d:
@@ -688,8 +697,16 @@ class SeedConfig(unittest.TestCase):
                 else:
                     self.assertTrue(app.get("patches-source"), f"{key}: patched apps name their source")
                     self.assertNotIn("keep-filename", app)
-        self.assertEqual(set(beta), {"Instagram"})
+        self.assertEqual(set(beta), set(), "every app is on the stable patches; the beta pool is empty until one opts in")
+        self.assertIn("Instagram", stable)
         self.assertIn("Battery-Guru", stable)
+        # APKPure is the last-resort store of every app that has a store page (Duck Detector and Oxygen
+        # Customizer come from GitHub)
+        for key, app in stable.items():
+            if key in ("Duck-Detector", "Oxygen-Customizer"):
+                self.assertNotIn("apkpure-dlurl", app, key)
+            else:
+                self.assertIn(f"/{app['pkg-name']}", app.get("apkpure-dlurl", ""), f"{key}: apkpure-dlurl names its package")
         # the WhatsApp mirrors follow WaEnhancer, and name both stores so one can cover the other
         for key, pkg in (("WhatsApp", "com.whatsapp"), ("WhatsApp-Business", "com.whatsapp.w4b")):
             self.assertEqual(stable[key]["version"], "waenhancer", key)
