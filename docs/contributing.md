@@ -87,6 +87,7 @@ describing it. `bash scripts/build.sh clean` resets.
 | Cache / bundle helpers | `bash .github/traces/test_cache_helpers.sh`, `bash .github/traces/test_bundle_helpers.sh` | same job |
 | Mirrored apps (`mirror_rv`, `mirror`/`keep-filename` parsing) | `bash .github/traces/test_mirror.sh` | same job; fake downloads and a stub `aapt2`, every rejection paired with an accepting control |
 | `version = "waenhancer"` (`waenhancer_vers`, source fallback, the watcher's order) | `bash .github/traces/test_waenhancer.sh`, `test_ci_app_versions.sh` | same job; fake `curl`, stores and downloads; the real arrays.xml and listing parsers |
+| APKMirror release-page lookup (`dl_apkmirror`) | `bash .github/traces/test_apkmirror_resolve.sh` | same job; a fake page fetcher serving crafted pages, every refusal paired with an accepting control |
 | Archive pruning (`cleanup-archive-assets.py`) | `python3 .github/traces/test_cleanup_archive_assets.py` | same job; `plan_prune` on fixture assets and manifests |
 | What a build records about itself (stock-APK source, recommended version, skipped / failed / excluded patches) and how it reaches the manifest | `bash .github/traces/test_build_record.sh` | same job; the real `write_build_info` over a Morphe-shaped log and result file |
 | Which configs a build run covers (`all` → both pools, empty pool left out, typo rejected) | `bash .github/traces/test_build_plan.sh` | same job; offline, jq only |

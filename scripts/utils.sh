@@ -1814,6 +1814,11 @@ dl_apkmirror() {
 	fi
 
 	local resp release_url=""
+	# Every release page of this app lives under the app's own path
+	# (/apk/<developer>/<app>/<release>/). A link anywhere else is another app's, however well
+	# its version matches, so the fallback searches below only ever take links under it.
+	local app_path="${url#$base_url}"
+	app_path="${app_path%/}/"
 
 	if [ -n "${__APKMIRROR_EXAMPLE_URL__:-}" ]; then
 		local example_path="${__APKMIRROR_EXAMPLE_URL__#$base_url}"
@@ -1843,7 +1848,11 @@ dl_apkmirror() {
 		release_url="${url%/}/${apkmname}-${search_version}-release/"
 		__SILENT_CF_GET__=true _cf_get "$release_url" || true
 		resp="$html"
-		if [[ "$resp" == *"Page Not Found"* ]] || [[ "$resp" == *"404 Whoops"* ]] || [ -z "$resp" ]; then
+		if [ -z "$resp" ]; then
+			wpr "APKMirror: no answer for the expected release page ${release_url} (blocked or unreachable); searching for it"
+			release_url=""
+		elif [[ "$resp" == *"Page Not Found"* ]] || [[ "$resp" == *"404 Whoops"* ]]; then
+			pr "APKMirror: ${release_url} does not exist; searching for ${version}"
 			release_url=""
 		fi
 	fi
@@ -1858,10 +1867,10 @@ dl_apkmirror() {
 			local s_flat=$(echo "$html" | tr -d '\n\r')
 			local s_split="${s_flat//<\/a>/<\/a>
 }"
-			local s_links=$(echo "$s_split" | grep -oP 'href="\K/apk/[^"]+')
+			local s_links=$(echo "$s_split" | grep -oP 'href="\K/apk/[^"]+' | grep -F -- "$app_path" || true)
 			version_href=$(echo "$s_links" | grep -F "$search_version-release" | head -1) || true
 			if [ -z "$version_href" ]; then
-				version_href=$(echo "$s_split" | grep -F "$version" | grep -oP 'href="\K/apk/[^"]+' | grep -F -- '-release/' | head -1) || true
+				version_href=$(echo "$s_split" | grep -F "$version" | grep -oP 'href="\K/apk/[^"]+' | grep -F -- "$app_path" | grep -F -- '-release/' | head -1) || true
 			fi
 			if [ -n "$version_href" ]; then
 				release_url="$base_url$version_href"
@@ -1881,19 +1890,19 @@ dl_apkmirror() {
 			local html_split="${html_flat//<\/a>/<\/a>
 }"
 
-			local all_links=$(echo "$html_split" | grep -oP 'href="\K/apk/[^"]+')
+			local all_links=$(echo "$html_split" | grep -oP 'href="\K/apk/[^"]+' | grep -F -- "$app_path" || true)
 			
 			# 1. Exact URL match (strict)
 			version_href=$(echo "$all_links" | grep -F "$search_version-release" | head -1) || true
 			
 			# 2. Exact text match
 			if [ -z "$version_href" ]; then
-				version_href=$(echo "$html_split" | grep -F "$version" | grep -oP 'href="\K[^"]+' | head -1) || true
+				version_href=$(echo "$html_split" | grep -F "$version" | grep -oP 'href="\K[^"]+' | grep -F -- "$app_path" | head -1) || true
 			fi
 			
 			# 3. Clean text match
 			if [ -z "$version_href" ] && [ -n "$clean_version" ] && [ "$clean_version" != "$version" ]; then
-				version_href=$(echo "$html_split" | grep -F "$clean_version" | grep -oP 'href="\K[^"]+' | head -1) || true
+				version_href=$(echo "$html_split" | grep -F "$clean_version" | grep -oP 'href="\K[^"]+' | grep -F -- "$app_path" | head -1) || true
 			fi
 
 			# 4. Clean URL match
@@ -1901,9 +1910,11 @@ dl_apkmirror() {
 				version_href=$(echo "$all_links" | grep -E "${clean_search_version}(-[a-z0-9]+)*-release" | head -1) || true
 			fi
 
-			# 5. Safe Short URL match (for grouped versions)
+			# 5. Short URL match (for grouped versions): the release slug is the version with its
+			#    last part dropped ("11-2-release" for 11.2.0). Exact only: an optional extra digit
+			#    here once let "26-10-9-release" answer for 26.10.6, a different version.
 			if [ -z "$version_href" ] && [ -n "$short_search_version" ] && [ "$short_search_version" != "$clean_search_version" ]; then
-				version_href=$(echo "$all_links" | grep -E "${short_search_version}(-[0-9])?-release/?$" | head -1) || true
+				version_href=$(echo "$all_links" | grep -E "${short_search_version}-release/?$" | head -1) || true
 			fi
 
 				if [ -n "$version_href" ]; then
@@ -1915,6 +1926,31 @@ dl_apkmirror() {
 			done
 		fi
 		
+		# The app page lists only its newest releases and its /page/N/ repeats them, so an older
+		# version is out of reach there. The app's uploads feed reaches back, newest first; a page
+		# that repeats the last one means it has run out.
+		if [ -z "$release_url" ]; then
+			local feed_prev="" feed_url feed_links
+			for page_num in $(seq 1 8); do
+				feed_url="${base_url}/uploads/"
+				[[ $page_num -gt 1 ]] && feed_url+="page/${page_num}/"
+				feed_url+="?appcategory=${__APKMIRROR_CAT__}"
+				__SILENT_CF_GET__=true _cf_get "$feed_url" || break
+				[ -z "$html" ] && break
+				[ "$html" = "$feed_prev" ] && break
+				feed_prev="$html"
+				feed_links=$(echo "$html" | tr -d '\n\r' | sed 's#</a>#</a>\n#g' | grep -oP 'href="\K/apk/[^"]+' | grep -F -- "$app_path" || true)
+				version_href=$(echo "$feed_links" | grep -F "$search_version-release" | head -1) || true
+				if [ -n "$version_href" ]; then
+					release_url="$base_url$version_href"
+					pr "APKMirror: found ${version} in the uploads feed (page ${page_num})"
+					_cf_get "$release_url" || return 1
+					resp="$html"
+					break
+				fi
+			done
+		fi
+
 		# Fallback to direct search if not found on first 5 pages
 		if [ -z "$release_url" ]; then
 			local search_list_url="https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=${__APKMIRROR_CAT__}+${version}"
@@ -1922,7 +1958,9 @@ dl_apkmirror() {
 			if [ -n "$html" ] && [ "$html" != "null" ]; then
 				local search_links=""
 				if [[ "$html" != *"No results found matching your query"* ]]; then
-					search_links=$($HTMLQ --attribute href "div.appRow h5 a" <<<"$html")
+					# only this app's own pages: the search is site-wide, and another app's
+					# release of the same version number matches just as well
+					search_links=$($HTMLQ --attribute href "div.appRow h5 a" <<<"$html" | grep -F -- "$app_path" || true)
 				fi
 				
 				# Try to find exact version match first to be safe
@@ -1940,7 +1978,9 @@ dl_apkmirror() {
 		fi
 
 		if [ -z "$release_url" ]; then
-			epr "Could not find version $version on APKMirror"
+			local listed_vers
+			listed_vers=$(python3 "$(dirname "${BASH_SOURCE[0]}")/apkmirror_search.py" vers true <<<"$__APKMIRROR_RESP__" 2>/dev/null | head -8 | tr '\n' ' ') || listed_vers=""
+			epr "Could not find version $version under ${app_path} on APKMirror (the app page lists: ${listed_vers:-nothing readable})"
 			return 1
 		fi
 	fi

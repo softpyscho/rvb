@@ -214,7 +214,7 @@ in; the first source that yields a verified artifact **carrying the requested ar
 | 2 | `direct` | a straight file URL in the config |
 | 3 | `github` | release assets, filtered by `github-release-regex` / `github-regex`, arch-mapped |
 | 4 | `archive` | `archive.org` item, the long-term fallback for delisted versions |
-| 5 | `apkmirror` | universal-bundle strategy; package/version read from the HTML |
+| 5 | `apkmirror` | universal-bundle strategy; package/version read from the HTML. The release page is the app's own path + `<title slug>-<version>-release/`; failing that the app page, its uploads feed (which reaches back further) and the site search are read, and only links **under the app's own path** are ever followed, with the version matched exactly (a grouped slug is the version minus its last part) |
 | 6 | `uptodown` | |
 | 7 | `apkpure` | XAPK handling in `_apkpure_install_xapk` |
 | 8 | `apkcombo` | trusts the served filename over its object key |
