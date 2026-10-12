@@ -661,7 +661,7 @@ class SeedConfig(unittest.TestCase):
     def test_every_configured_app_is_buildable_on_paper(self):
         import compile_patch_configs
         stable = compile_patch_configs.compile_configs(str(CONFIG_PATCHES))  # exits on a duplicate app key
-        self.assertEqual(len(stable), 21)
+        self.assertEqual(len(stable), 20)
         patch_keys = ("patches-source", "cli-source", "included-patches", "excluded-patches", "exclusive-patches",
                       "inclusive-patches", "patcher-args", "patched-pkg-name", "include-stock")
         for pool in (stable,):
@@ -687,8 +687,9 @@ class SeedConfig(unittest.TestCase):
                 self.assertNotIn("apkpure-dlurl", app, key)
             else:
                 self.assertIn(f"/{app['pkg-name']}", app.get("apkpure-dlurl", ""), f"{key}: apkpure-dlurl names its package")
-        # the WhatsApp mirrors follow WaEnhancer, and name both stores so one can cover the other
-        for key, pkg in (("WhatsApp", "com.whatsapp"), ("WhatsApp-Business", "com.whatsapp.w4b")):
+        self.assertNotIn("WhatsApp-Business", stable, "dropped: no source offers a plain APK")
+        # the WhatsApp mirror follows WaEnhancer, and name both stores so one can cover the other
+        for key, pkg in (("WhatsApp", "com.whatsapp"),):
             self.assertEqual(stable[key]["version"], "waenhancer", key)
             self.assertEqual(stable[key]["pkg-name"], pkg, key)
             self.assertTrue(stable[key]["apkmirror-dlurl"] and stable[key]["uptodown-dlurl"], f"{key}: both stores")

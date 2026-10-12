@@ -137,10 +137,11 @@ arch = "all"
 actions-dlurl = "https://github.com/DHD2280/Oxygen-Customizer/actions/workflows/build_debug.yml"
 actions-artifact = 'Dev \(#[0-9]+\)$'
 
-# The two WhatsApp apps follow WaEnhancer (Dev4Mod/WaEnhancer): `version = "waenhancer"` mirrors
+# WhatsApp follows WaEnhancer (Dev4Mod/WaEnhancer): `version = "waenhancer"` mirrors
 # the newest stable build that the latest WaEnhancer release lists as supported (its arrays.xml,
 # e.g. 2.26.40.xx), because a newer WhatsApp breaks the module. A new WaEnhancer release, or a
-# new build inside what it supports, is what moves them.
+# new build inside what it supports, is what moves it. WhatsApp Business was dropped on 2026-10-12: no
+# source offers it as a plain APK, only as split bundles, which a mirror may not re-sign.
 # APKMirror is asked first (CI reaches it through the Cloudflare solver sidecar); when it lists
 # no supported build, or its download fails, Uptodown is asked for the same version.
 [WhatsApp]
@@ -152,18 +153,6 @@ pkg-name = "com.whatsapp"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger/"
 uptodown-dlurl = "https://whatsapp-messenger.en.uptodown.com/android"
 apkpure-dlurl = "https://apkpure.com/whatsapp-messenger/com.whatsapp"
-
-[WhatsApp-Business]
-mirror = true
-brand = "Mirror"
-app-name = "WhatsApp Business"
-version = "waenhancer"
-pkg-name = "com.whatsapp.w4b"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger-business/"
-# Uptodown answered HTTP 410 for this page on 2026-10-11; kept as the fallback because it costs
-# nothing while APKMirror answers.
-uptodown-dlurl = "https://whatsapp-business.en.uptodown.com/android"
-apkpure-dlurl = "https://apkpure.com/whatsapp-business/com.whatsapp.w4b"
 
 # ----------------------------------------------------------------------------------------------------
 # MorpheApp/morphe-patches — the reference Morphe bundle.
