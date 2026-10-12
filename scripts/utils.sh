@@ -4273,7 +4273,11 @@ mirror_rv() {
 		fi
 	fi
 	mv -f "$stock_apk" "${BUILD_DIR}/${out_name}"
-	pr "Mirrored ${table} (unmodified, from ${got_from}): '${BUILD_DIR}/${out_name}'"
+	if [ "${__LAST_DL_RESIGNED__:-false}" = true ]; then
+		wpr "Mirrored ${table} from ${got_from}, RE-SIGNED with this repository's key (a merged split bundle; it cannot update over the store install): '${BUILD_DIR}/${out_name}'"
+	else
+		pr "Mirrored ${table} (unmodified, from ${got_from}): '${BUILD_DIR}/${out_name}'"
+	fi
 	write_build_info "${table% (*}" "${arch_f}" ".apk" "${app_name_l}" "$named_version" "" "" "${downloaded_pkg:-$pkg_name}" "${app_name}" "" "${brand_val}" "" "" "$kept_file" "$got_from" "" "${__LAST_DL_RESIGNED__:-false}"
 	return 0
 }

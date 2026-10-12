@@ -121,6 +121,8 @@ reset; APKM_KIND=bundle UPT_KIND=plain; run
 [ -f "$BUILD_DIR/bitget-v2.94.4-arm64-v8a.apk" ] || fail "4: expected the plain APK from the next source, got: $(built)"
 [ "$(jq -r '.Bitget.apk_source' "$BUILD_JSON_FILE")" = uptodown ] || fail "4: source '$(jq -r '.Bitget.apk_source' "$BUILD_JSON_FILE")'"
 [ "$CALLS" = "apkmirror uptodown " ] || fail "4: both sources must be asked in order, got: $CALLS"
+logged "unmodified, from uptodown" || fail "4: a plain APK is logged as unmodified, log: $(tail -3 "$LOG")"
+logged "RE-SIGNED" && fail "4: and not as re-signed"
 logged "REACHED-MERGE" && fail "4: nothing may be merged"
 
 # 5. control: when the first source serves a plain APK it is used and the second is not asked
@@ -143,6 +145,8 @@ reset; APKM_KIND=bundle UPT_KIND=bundle; ALLOW=true; MERGE_OK=true; run
 [ -f "$BUILD_DIR/bitget-v2.94.4-arm64-v8a.apk" ] || fail "8: with allow-resign and only bundles the merged file is published, got: $(built)"
 [ "$(jq -r '.Bitget.resigned' "$BUILD_JSON_FILE")" = true ] || fail "8: the file must be recorded as re-signed, got: $(jq -c '.Bitget.resigned' "$BUILD_JSON_FILE")"
 [ "$CALLS" = "apkmirror uptodown apkmirror " ] || fail "8: both sources are asked strictly first, then the merge is accepted, got: $CALLS"
+logged "RE-SIGNED with this repository's key" || fail "8: the log must say the file was re-signed, log: $(tail -3 "$LOG")"
+logged "(unmodified" && fail "8: a re-signed file is not 'unmodified'"
 
 # 9. control: allow-resign set but a plain APK exists on a later source: it wins, nothing is merged
 reset; APKM_KIND=bundle UPT_KIND=plain; ALLOW=true; MERGE_OK=true; run
