@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-12T05:55:33Z"
+    "publishedAt": "2026-10-12T06:28:59Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -56,10 +56,11 @@
         "Rename shared permissions",
         "Skip ads"
       ],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
-      "recommendedVersion": "3.0.470.1047"
+      "recommendedVersion": "3.0.470.1047",
+      "experimental": false
     },
     "bitget-v2.94.3-arm64-v8a.apk": {
       "name": "bitget",
@@ -100,10 +101,11 @@
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260072",
-      "publishedAt": "2026-10-12T05:55:08Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
-      "recommendedVersion": "5.1.1"
+      "recommendedVersion": "5.1.1",
+      "experimental": false
     },
     "mix-archive-v3.24-arm64-v8a.apk": {
       "name": "mix-archive",
@@ -120,8 +122,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -141,8 +143,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260072",
-      "publishedAt": "2026-10-12T05:55:08Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -188,10 +190,11 @@
       "appliedPatches": [
         "Unlock Pro"
       ],
-      "originBuild": "260072",
-      "publishedAt": "2026-10-12T05:55:08Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
-      "recommendedVersion": "26.7.3"
+      "recommendedVersion": "26.7.3",
+      "experimental": false
     },
     "stremio-v2.4.0-arm64-v8a.apk": {
       "name": "stremio",
@@ -208,8 +211,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": true
@@ -237,10 +240,11 @@
         "Restore reminder alarms",
         "TickTick Premium"
       ],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
-      "recommendedVersion": "8.1.3.3"
+      "recommendedVersion": "8.1.3.3",
+      "experimental": false
     },
     "twitter-morphe-v12.19.1-release.0-arm64-v8a.apk": {
       "name": "twitter-morphe",
@@ -334,10 +338,11 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
-      "recommendedVersion": "12.19.1-release.0"
+      "recommendedVersion": "12.19.1-release.0",
+      "experimental": false
     },
     "warp-morphe-v6.38.9-arm64-v8a.apk": {
       "name": "warp-morphe",
@@ -361,10 +366,11 @@
         "Disable Analytics / Telemetry",
         "Spoof WARP+ Unlimited UI"
       ],
-      "originBuild": "260072",
-      "publishedAt": "2026-10-12T05:55:08Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
-      "recommendedVersion": "6.38.9"
+      "recommendedVersion": "6.38.9",
+      "experimental": false
     },
     "xodo-morphe-v11.2.0-arm64-v8a.apk": {
       "name": "xodo-morphe",
@@ -387,10 +393,11 @@
       "appliedPatches": [
         "Enable Pro"
       ],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
-      "recommendedVersion": "11.2.0"
+      "recommendedVersion": "11.2.0",
+      "experimental": false
     },
     "reddit-morphe-v2026.40.0-arm64-v8a.apk": {
       "name": "reddit-morphe",
@@ -487,10 +494,11 @@
         "Neutralize third-party SDKs",
         "Truecaller Premium"
       ],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
-      "recommendedVersion": "26.10.6"
+      "recommendedVersion": "26.10.6",
+      "experimental": false
     },
     "battery-guru-morphe-v2.5.0.6-arm64-v8a.apk": {
       "name": "battery-guru-morphe",
@@ -513,10 +521,11 @@
       "appliedPatches": [
         "Unlock PRO"
       ],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
-      "recommendedVersion": "2.5.0.6"
+      "recommendedVersion": "2.5.0.6",
+      "experimental": false
     },
     "redotpay-v3.14.4-arm64-v8a.apk": {
       "name": "redotpay",
@@ -618,10 +627,11 @@
         "Spoof signature",
         "Start as guest"
       ],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
-      "recommendedVersion": "2026.41.0"
+      "recommendedVersion": "2026.41.0",
+      "experimental": true
     },
     "oxygen-customizer-v2062-all.apk": {
       "name": "oxygen-customizer",
@@ -658,8 +668,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "github",
       "recommendedVersion": null,
       "resigned": false
@@ -679,8 +689,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260069",
-      "publishedAt": "2026-10-12T04:23:03Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "actions",
       "recommendedVersion": null,
       "resigned": false
@@ -720,8 +730,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260072",
-      "publishedAt": "2026-10-12T05:55:08Z",
+      "originBuild": "260073",
+      "publishedAt": "2026-10-12T06:28:33Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
