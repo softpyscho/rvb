@@ -4,14 +4,36 @@
 #   git commit -am "chore(config): ..." && git push
 # and run Manual CI.
 #
-# Currently: Truecaller from APKMirror alone (no archive.org, Uptodown or APKPure), to see
-# whether the store the other apps use serves the version the patches target.
-brand = "Morphe"
+# Currently: the mirrors that were published re-signed with this repository's key because their
+# source served a split bundle (Bitget, Stremio, WhatsApp Business), to see which source gives each
+# a plain APK now that a mirror refuses the merge. Keys sit on each app because build.sh takes no
+# file-level `version` from a TOML it reads directly.
+brand = "Mirror"
 arch = "arm64-v8a"
 
-[Truecaller]
-patches-source = "Paresh-Maheshwari/paresh-patches"
-patches-source-host = "gitlab"
-pkg-name = "com.truecaller"
-version = "auto"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/true-software-scandinavia-ab/truecaller-caller-id-block/"
+[Bitget]
+mirror = true
+brand = "Mirror"
+version = "latest"
+app-name = "Bitget"
+pkg-name = "com.bitget.exchange"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-crypto/"
+uptodown-dlurl = "https://bitget.en.uptodown.com/android"
+
+[Stremio]
+mirror = true
+brand = "Mirror"
+version = "latest"
+app-name = "Stremio"
+pkg-name = "com.stremio.one"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/stremio/stremio-2/"
+uptodown-dlurl = "https://stremio-one.en.uptodown.com/android"
+
+[WhatsApp-Business]
+mirror = true
+brand = "Mirror"
+version = "waenhancer"
+app-name = "WhatsApp Business"
+pkg-name = "com.whatsapp.w4b"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger-business/"
+uptodown-dlurl = "https://whatsapp-business.en.uptodown.com/android"
