@@ -169,7 +169,7 @@ Cloudflare-bypass sidecar service on `:8000`:
 
 1. `ophub/delete-releases-workflows` deletes old releases/tags, keeping the
    newest 98 and anything matching `stable`/`beta`.
-2. `cleanup-archive-assets.py` prunes archive assets to 2 versions per app+arch.
+2. `cleanup-archive-assets.py` prunes archive assets to 2 versions per app+arch (1 for files that keep their source's own name).
 3. `cleanup_update_branch.sh` and `cleanup_manifests.sh` drop pointers and
    manifests whose releases are gone.
 4. A `catalog-updated` `repository_dispatch` pings the website repo, which

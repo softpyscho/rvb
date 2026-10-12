@@ -109,9 +109,14 @@ Regression tests: `.github/traces/test_manifest_scripts.sh` (stubbed `gh`, local
 ## Archive maintenance
 
 ### `cleanup-archive-assets.py`
-Prunes old assets from the archive releases (size caps). The merge script's
-live-asset filter automatically drops manifest entries whose files were
-pruned, so the cumulative manifest tracks what is actually downloadable.
+Prunes old assets from the archive releases (size caps): the 2 newest versions per
+app + arch for names the grammar covers; for an asset that keeps its source's own name
+(mirror `keep-filename`) only the newest upload, grouped through `state/archive/<tag>.json` on
+`main` (app + arch) and ordered by upload time, never by name - two nightlies from one day differ
+only by a hash. An asset the manifest does not know is left alone, as is everything when the
+manifest cannot be read. The merge script's live-asset filter automatically drops manifest entries
+whose files were pruned, so the cumulative manifest tracks what is actually downloadable.
+Test: `.github/traces/test_cleanup_archive_assets.py`.
 
 ### `cleanup_manifests.sh`
 Runs in `cleanup.yml` after release deletion: removes `state/manifests/<tag>.json`

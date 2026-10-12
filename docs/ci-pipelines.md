@@ -171,7 +171,10 @@ Step order, with the reason each is where it is:
    **98** and anything matching the keyword `stable`/`beta` — that keyword list is
    the only thing protecting the archive releases from deletion.
 2. `cleanup-archive-assets.py` prunes each archive to the **2 newest versions per
-   app + architecture** (grouping by `<app>-<arch>.<ext>`, newest by `created_at`).
+   app + architecture** (grouping by `<app>-<arch>.<ext>`, newest by `created_at`); an asset
+   that keeps its source's own name (a mirrored nightly) is grouped through the archive
+   manifest and only the **newest upload** stays, since a client sorting by name cannot tell
+   which of two same-day files is newer.
 3. `cleanup_update_branch.sh` drops update pointers and changelogs whose release is
    gone — and does nothing, successfully, when the `update` branch does not exist (an
    apk-only repository never builds a module, which is what creates it; an unreachable

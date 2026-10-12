@@ -10,6 +10,7 @@ on:
       - ".github/scripts/obtainium.py"
       - ".github/scripts/ci_fetch_app_versions.sh"
       - ".github/scripts/cleanup_update_branch.sh"
+      - ".github/scripts/cleanup-archive-assets.py"
       - ".github/scripts/update_readme.sh"
       - ".github/scripts/patchers.py"
       - ".github/scripts/build_make_manifest.py"
@@ -51,6 +52,7 @@ jobs:
           bash .github/traces/test_ci_app_versions.sh
           bash .github/traces/test_github_versions.sh
           bash .github/traces/test_cleanup_update_branch.sh
+          python3 .github/traces/test_cleanup_archive_assets.py
           bash .github/traces/test_update_readme.sh
           bash .github/traces/test_build_plan.sh
           bash .github/traces/test_build_record.sh
