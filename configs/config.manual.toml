@@ -4,27 +4,14 @@
 #   git commit -am "chore(config): ..." && git push
 # and run Manual CI.
 #
-# Currently: the two WhatsApp mirrors, to confirm on a GitHub-hosted runner that APKMirror
-# (through the Cloudflare solver), or Uptodown as its fallback, serves the newest build the latest
-# WaEnhancer release supports. Keys sit on each app because build.sh takes no file-level `version`
-# from a TOML it reads directly (only the compiled pool JSON carries file-level keys into an app).
-brand = "Mirror"
+# Currently: Truecaller from APKMirror alone (no archive.org, Uptodown or APKPure), to see
+# whether the store the other apps use serves the version the patches target.
+brand = "Morphe"
 arch = "arm64-v8a"
 
-[WhatsApp]
-mirror = true
-brand = "Mirror"
-app-name = "WhatsApp"
-version = "waenhancer"
-pkg-name = "com.whatsapp"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger/"
-uptodown-dlurl = "https://whatsapp-messenger.en.uptodown.com/android"
-
-[WhatsApp-Business]
-mirror = true
-brand = "Mirror"
-app-name = "WhatsApp Business"
-version = "waenhancer"
-pkg-name = "com.whatsapp.w4b"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger-business/"
-uptodown-dlurl = "https://whatsapp-business.en.uptodown.com/android"
+[Truecaller]
+patches-source = "Paresh-Maheshwari/paresh-patches"
+patches-source-host = "gitlab"
+pkg-name = "com.truecaller"
+version = "auto"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/true-software-scandinavia-ab/truecaller-caller-id-block/"
