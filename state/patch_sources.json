@@ -1,7 +1,5 @@
 {
   "MorpheApp/morphe-patches": {
-    "beta": "v1.47.0-dev.25",
-    "beta_date": "2026-10-11T15:09:15Z",
     "blocked": false,
     "host": "github",
     "repo": "MorpheApp/morphe-patches",
@@ -9,8 +7,6 @@
     "stable_date": "2026-10-11T15:20:10Z"
   },
   "Paresh-Maheshwari/paresh-patches": {
-    "beta": "v1.20.0-dev.4",
-    "beta_date": "2026-09-01T16:25:25.186Z",
     "blocked": false,
     "host": "gitlab",
     "repo": "Paresh-Maheshwari/paresh-patches",
@@ -18,8 +14,6 @@
     "stable_date": "2026-09-01T16:37:52.954Z"
   },
   "arandomhooman/hoomans-morphe-patches": {
-    "beta": "v1.44.0-dev.4",
-    "beta_date": "2026-08-13T04:04:19Z",
     "blocked": false,
     "host": "github",
     "repo": "arandomhooman/hoomans-morphe-patches",
@@ -27,8 +21,6 @@
     "stable_date": "2026-09-21T00:23:19Z"
   },
   "crimera/piko": {
-    "beta": "v3.10.0-dev.14",
-    "beta_date": "2026-10-10T07:16:09Z",
     "blocked": false,
     "host": "github",
     "repo": "crimera/piko",
@@ -36,8 +28,6 @@
     "stable_date": "2026-10-10T14:58:13Z"
   },
   "hoo-dles/morphe-patches": {
-    "beta": "v1.47.1-dev.1",
-    "beta_date": "2026-10-06T20:40:33Z",
     "blocked": false,
     "host": "github",
     "repo": "hoo-dles/morphe-patches",
@@ -45,8 +35,6 @@
     "stable_date": "2026-10-04T18:45:44Z"
   },
   "rabilrbl/fluffy-patches": {
-    "beta": "v1.1.0-dev.2",
-    "beta_date": "2026-09-04T19:58:41Z",
     "blocked": false,
     "host": "github",
     "repo": "rabilrbl/fluffy-patches",
@@ -54,8 +42,6 @@
     "stable_date": "2026-09-04T20:13:41Z"
   },
   "rushiranpise/morphe-patches": {
-    "beta": "v1.23.0-dev.1",
-    "beta_date": "2026-09-20T12:55:20Z",
     "blocked": false,
     "host": "github",
     "repo": "rushiranpise/morphe-patches",
