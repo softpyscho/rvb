@@ -14,8 +14,8 @@ Why the entries are what they are:
   HTML source on the archive    Obtainium's GitHub source can only call a release by its tag or
   release's asset list          title, and here those are build numbers (`260035`) - an update
   (`releases/expanded_assets/   read "260035", not "11.2.0". The HTML source reads the version out
-  stable|beta`)                 of the file name instead. That page is the rolling `stable` /
-                              `beta` archive, which holds the newest files of every app whichever
+  stable`)                      of the file name instead. That page is the rolling `stable`
+                              archive, which holds the newest files of every app whichever
                               build made them (a build only contains the apps that changed), and
                               is plain web HTML with no API rate limit.
   customLinkFilterRegex       `/<file-prefix>-v[^/]+-<arch>\\.apk$`, the asset grammar documented
@@ -27,10 +27,8 @@ Why the entries are what they are:
                               a patch may rewrite versionName), on for a stock mirror (the file is
                               named by the APK's own versionName, so it is compared with the
                               installed app's - see mirror_rv).
-  `beta` page for 🧪 apps      apps built in the beta pool are archived in the `beta` release.
 
-Stdlib only. The CLI imports compile_patch_configs for the pool routing rules rather than
-re-implementing them.
+Stdlib only. The CLI imports compile_patch_configs for the app list rather than re-implementing it.
 """
 import argparse
 import json
@@ -56,17 +54,13 @@ def regex_escape(text):
     return re.sub(r"([.^$*+?()\[\]{}|\\])", r"\\\1", text)
 
 
-def archive_tag(prerelease):
-    """The rolling archive release an app's newest file lives in: `beta` for the pre-release
-    channel, `stable` otherwise. Each keeps the newest versions of every app, whichever build
-    produced them."""
-    return "beta" if prerelease else "stable"
+ARCHIVE_TAG = "stable"  # the one rolling archive release; it keeps the newest file of every app
 
 
-def archive_page(repo, prerelease):
+def archive_page(repo):
     """The page Obtainium reads: GitHub's asset list of the archive release (plain HTML, no API
     token or rate limit; `/releases/expanded_assets/<tag>` is what the release page itself loads)."""
-    return f"https://github.com/{repo}/releases/expanded_assets/{archive_tag(prerelease)}"
+    return f"https://github.com/{repo}/releases/expanded_assets/{ARCHIVE_TAG}"
 
 
 def _arch_re(arch):
@@ -149,7 +143,7 @@ def html_settings(link_filter, version_re, standard_version=False):
     }
 
 
-def app_entry(package, name, repo, link_filter, version_re, prerelease=False, standard_version=False):
+def app_entry(package, name, repo, link_filter, version_re, standard_version=False):
     """One app as Obtainium's own export/deep link spells it.
 
     The whole object is written, not just the fields that matter here: Obtainium reads an app
@@ -159,7 +153,7 @@ def app_entry(package, name, repo, link_filter, version_re, prerelease=False, st
     owner = repo.split("/")[0]
     return {
         "id": package,
-        "url": archive_page(repo, prerelease),
+        "url": archive_page(repo),
         "author": owner,
         "name": name,
         "installedVersion": "",
@@ -219,8 +213,8 @@ def _first_source_owner(entry):
     return (first[0] or first[1] or first[2]).split("/")[0]
 
 
-def spec_from_entry(key, entry, prerelease):
-    """What the engine would build for one pool entry, as plain data."""
+def spec_from_entry(key, entry):
+    """What the engine would build for one app entry, as plain data."""
     mirror = _truthy(entry.get("mirror", False))
     name = entry.get("app-name") or key
     prefix = slug(name)
@@ -244,7 +238,6 @@ def spec_from_entry(key, entry, prerelease):
         "display": name.strip() if "app-name" in entry else key.replace("-", " ").strip(),
         "package": package,
         "mirror": mirror,
-        "prerelease": prerelease,
         "keep_filename": keep,
         "allow_resign": _truthy(entry.get("allow-resign", False)),
         "arch": arch,
@@ -260,12 +253,9 @@ def spec_from_entry(key, entry, prerelease):
 
 
 def specs_from_configs(config_path):
-    """Enabled apps from configs/config.toml, routed exactly like the watcher does."""
+    """Enabled apps from configs/config.toml, in config order."""
     import compile_patch_configs  # imported here so --help works without tomllib
-    stable, beta = compile_patch_configs.compile_configs(config_path)
-    specs = [spec_from_entry(k, v, False) for k, v in stable.items()]
-    specs += [spec_from_entry(k, v, True) for k, v in beta.items() if k not in stable]
-    return specs
+    return [spec_from_entry(k, v) for k, v in compile_patch_configs.compile_configs(config_path).items()]
 
 
 def entry_for_spec(spec, repo, data=None):
@@ -276,7 +266,7 @@ def entry_for_spec(spec, repo, data=None):
         link_filter, version_re = kept_patterns(known) if known else guessed_kept_patterns(spec["name"])
     else:
         link_filter, version_re = name_patterns(spec["prefix"], spec["arch"])
-    return app_entry(spec["package"], spec["display"], repo, link_filter, version_re, spec["prerelease"],
+    return app_entry(spec["package"], spec["display"], repo, link_filter, version_re,
                      standard_version=spec["mirror"])
 
 
@@ -349,21 +339,15 @@ def signature_cell(spec, data):
 
 
 def channel_cell(spec, data):
-    """Which channel the latest build of a patched app used: 🚧 Beta when it was built with the beta
-    (pre-release) patch bundle, 🧪 Experimental when the version is one the bundle lists only as
-    experimental, ✅ Stable when it is neither. Both can apply. An app whose build did not record whether
-    its version is experimental says so rather than passing as stable."""
+    """Which kind of version the latest build of a patched app used: 🧪 Experimental when it is one the
+    patch bundle lists only as experimental, ✅ Stable when the bundle lists it as stable. An app whose
+    build did not record whether its version is experimental says so rather than passing as stable."""
     d = data.get(spec["prefix"]) or {}
     if not d:
         return "*(pending)*"
-    parts = []
-    if d.get("channel") == "beta":
-        parts.append("🚧 Beta")
     exp = d.get("experimental")
     if exp is True:
-        parts.append("🧪 Experimental")
-    if parts:
-        return " · ".join(parts)
+        return "🧪 Experimental"
     return "✅ Stable" if exp is False else "*(not recorded)*"
 
 
@@ -383,9 +367,9 @@ def _configured_version_label(spec):
     """What the config asks for (Auto / Latest / a pinned version), for an app not built yet."""
     mode = spec["version_mode"]
     if mode == "auto":
-        return "Auto (pre-release)" if spec["prerelease"] else "Auto"
+        return "Auto"
     if mode == "latest":
-        return "Latest (pre-release)" if spec["prerelease"] else "Latest"
+        return "Latest"
     if mode == "waenhancer":
         return "WaEnhancer"
     return mode if not mode[:1].isdigit() else f"v{mode}"
@@ -487,7 +471,7 @@ def _mirror_row(spec, repo, data):
 def render_apps_section(specs, repo, data=None):
     """The apps section of the README: one group per patch source (in config order), then the
     stock mirrors, each a centred table. Patched apps: App, Version (what the patches recommend and
-    what was built, two badges in the one column), Channel (stable, experimental or beta), APK Source (the
+    what was built, two badges in the one column), Channel (stable or experimental), APK Source (the
     one used), Patches (with what was not applied), Obtainium. Mirrors have nothing patched or recommended: App, Version, APK Source,
     Signature (original, or re-signed with this repository's key), Obtainium."""
     data = data or {}
@@ -500,9 +484,8 @@ def render_apps_section(specs, repo, data=None):
 
     legend = ("> **Version** shows the version the patches *recommend* above the version that was *built* "
               "(they differ when a source no longer offers the recommended one). **APK Source** is where the "
-              "stock APK of that build came from. **Channel** says what the build used: ✅ Stable, 🧪 Experimental "
-              "(a version the patches list only as experimental, so less tested), or 🚧 Beta (built with the beta "
-              "patch bundle). ⚠️ in **Patches** means a patch the build meant to apply was "
+              "stock APK of that build came from. **Channel** says what the build used: ✅ Stable or 🧪 Experimental "
+              "(a version the patches list only as experimental, so less tested). ⚠️ in **Patches** means a patch the build meant to apply was "
               "skipped or failed - open the row to see which and why. For the stock mirrors, **Signature** says whether "
               "the file is exactly as its publisher signed it (✅ original, so it updates over the store install) or "
               "was signed with this repository's key (⚠️ re-signed: a merged split bundle, which cannot update over "
@@ -528,7 +511,7 @@ def render_apps_section(specs, repo, data=None):
 
 def load_manifest_data(paths):
     """Per app (keyed by file prefix): the version and applied patches of its newest published
-    file, from the archive manifests (state/archive/stable.json, state/archive/beta.json)."""
+    file, from the archive manifests (state/archive/stable.json)."""
     best = {}
     for path in paths:
         try:
@@ -554,8 +537,6 @@ def load_manifest_data(paths):
                                      # patched apps: True when the built version is one the patch bundle lists
                                      # only as experimental, False when it lists it as stable, None = unknown
                                      "experimental": entry.get("experimental"),
-                                     # the archive the newest file sits in: the patch bundle channel it was built with
-                                     "channel": "beta" if os.path.basename(path).lower().startswith("beta") else "stable",
                                      "skipped": entry.get("skippedPatches") or [],
                                      "failed": entry.get("failedPatches") or [],
                                      "excluded": entry.get("excludedPatches") or []})
@@ -564,12 +545,11 @@ def load_manifest_data(paths):
 
 def table_markdown(specs, repo):
     """Compact table for OBTAINIUM.md: one row per app, no build data (that page is static)."""
-    rows = ["| App | Package | Source | Channel | Obtainium |", "|:--|:--|:--|:--:|:--:|"]
+    rows = ["| App | Package | Source | Obtainium |", "|:--|:--|:--|:--:|"]
     for s in sorted(specs, key=lambda s: s["display"].lower()):
         source = "📦 stock APK, unmodified" if s["mirror"] else f"🧩 `{s['source']}`"
-        channel = "🧪 pre-release" if s["prerelease"] else "✅ stable"
         link = obtainium_badge_link(s, repo) if s["package"] else "—"
-        rows.append(f"| {app_badge(s)} | `{s['package']}` | {source} | {channel} | {link} |")
+        rows.append(f"| {app_badge(s)} | `{s['package']}` | {source} | {link} |")
     return "\n".join(rows)
 
 
@@ -614,7 +594,7 @@ def obtainium_page(specs, repo):
         "",
         "| Setting | Value | Why |",
         "|:--|:--|:--|",
-        "| Source | **HTML** · `https://github.com/" + repo + "/releases/expanded_assets/stable` (`beta` for 🧪 apps) | "
+        "| Source | **HTML** · `https://github.com/" + repo + "/releases/expanded_assets/stable` | "
         "the rolling archive release always lists the newest files of *every* app, whichever build made them; "
         "it is plain web HTML, so there is no API rate limit |",
         "| Link filter (regex) | `/<app>-v[^/]+-<arch>\\.apk$` | picks one app's file out of the list |",
@@ -643,7 +623,7 @@ def obtainium_page(specs, repo):
         "",
         "<sub>Regenerate with <code>python3 .github/scripts/obtainium.py --configs configs/config.toml --repo "
         + repo + " --page OBTAINIUM.md --json obtainium-apps.json --readme README.md "
-        "--manifest state/archive/stable.json --manifest state/archive/beta.json</code></sub>",
+        "--manifest state/archive/stable.json</code></sub>",
         "",
     ]
     return "\n".join(lines)

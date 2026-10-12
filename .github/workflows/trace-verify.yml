@@ -16,8 +16,13 @@ on:
       - ".github/scripts/build_make_manifest.py"
       - "configs/config.toml"
       - ".github/scripts/commit_to_main.sh"
-      - ".github/scripts/build_plan_configs.sh"
       - ".github/scripts/build_prepare_config.sh"
+      - ".github/scripts/compile_patch_configs.py"
+      - ".github/scripts/sync_patch_sources.py"
+      - ".github/scripts/derive_source_changes.py"
+      - ".github/scripts/ci_generate_configs.sh"
+      - ".github/scripts/ci_resolve_triggers.sh"
+      - ".github/scripts/ci_trigger_flags.sh"
       - ".github/scripts/merge_archive_manifest.sh"
       - ".github/scripts/cleanup_manifests.sh"
       - "README.md"
@@ -56,7 +61,8 @@ jobs:
           bash .github/traces/test_cleanup_update_branch.sh
           python3 .github/traces/test_cleanup_archive_assets.py
           bash .github/traces/test_update_readme.sh
-          bash .github/traces/test_build_plan.sh
+          bash .github/traces/test_build_config.sh
+          bash .github/traces/test_ci_watcher.sh
           bash .github/traces/test_build_record.sh
           bash .github/traces/test_commit_to_main.sh
           bash .github/traces/test_manifest_scripts.sh

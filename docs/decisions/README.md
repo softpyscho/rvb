@@ -39,6 +39,7 @@ document.
 | [0006](0006-filename-parsing-is-imported-not-mirrored.md) | Filename parsing is imported across the repo boundary, never mirrored | `naming.py`, the site's catalogue rebuild |
 | [0007](0007-requested-arch-is-a-hard-requirement.md) | A requested build arch is a hard requirement; no mislabeled artifacts | `build_rv` download gate, download-link index, published arch names |
 | [0008](0008-one-branch.md) | One branch: config, state and manifests live on `main` | `configs/`, `state/`, `commit_to_main.sh` |
+| [0009](0009-one-build-no-beta.md) | One build: no beta channel, one config, one pool | `patches-version`, watcher triggers, `ci.yml`, `build.yml` |
 
 Candidates still unwritten, because the reasoning currently lives only in commit
 messages: pinning a patch source's `patches-version` to a tag vs resolving the

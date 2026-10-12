@@ -30,10 +30,10 @@ brand = "Morphe"                     # patch brand/engine identity (e.g. "ReVanc
 author = "nullcpy"                   # module author name. default: "nullcpy"
 author-page = "github.com/nullcpy/rvb" # module author page/link printed during installation. default: "github.com/nullcpy/rvb"
 
-patches-version = "stable"  # 'stable', 'beta', 'both', or a version number. default: "stable"
+patches-version = "stable"  # 'stable' or a release tag to pin. default: "stable". 'beta' and 'both' are rejected.
 cli-version = "stable"      # 'stable', 'beta', or a version number. default: "stable"
-# 'stable' and 'beta' are the only channel keywords; a keyword resolves against
-# state/patch_sources.json (see Pool Routing below). 'both' is routing, not a channel.
+# 'stable' is the only channel keyword for patches; it resolves against
+# state/patch_sources.json (see One Config File below). There is one build and no beta channel.
 
 > [!TIP]
 > **File-Level Defaults in Modular Configs:**  
@@ -359,24 +359,21 @@ bundle download, for nothing.)
   merge-at-download behavior without a code change. Existing merged-`.apk`
   cache entries keep working for any non-morphe tool.
 
-## One Config File & Dynamic Pool Routing
+## One Config File
 
-Every app lives in one file, `configs/config.toml`, whatever its patch source or channel.
+Every app lives in one file, `configs/config.toml`, whatever its patch source. There is one build and no beta channel.
 
-There are no separate files for stable and beta - an app's `patches-version` picks its channel:
-- **Single File**: All apps, patch sources and channels sit in `configs/config.toml`; an app that needs another patch source sets its own `patches-source`.
-- **Top-Level Inheritance**: Keys defined at the top of the file before the first `[...]` header (such as `patches-source`, `brand`, `variant`, and `patches-version`) act as file-level defaults. Apps automatically inherit them, keeping app blocks concise and DRY.
+- **Single File**: All apps and patch sources sit in `configs/config.toml`; an app that needs another patch source sets its own `patches-source`.
+- **Top-Level Inheritance**: Keys defined at the top of the file before the first `[...]` header (such as `patches-source`, `brand`, `variant`) act as file-level defaults. Apps automatically inherit them, keeping app blocks concise and DRY.
 - **Default CLI Engine**: `cli-source` defaults to `"MorpheApp/morphe-desktop"` globally and can be completely omitted unless using alternative tools like `7723mod/NPatch` or `instafel/p-rel`.
-- **Dynamic Pool Routing**:
-  - **Stable Only (Default)**: If neither the file-level header nor the app specifies `patches-version`, the app is automatically compiled into the **stable** build pool only.
-  - **Both Pools**: Setting `patches-version = "both"` (at the top of the file or in an app block) compiles the app into **both** stable and beta pools.
-  - **Beta Only**: Setting `patches-version = "beta"` routes the app exclusively to the beta (pre-release) build pool.
-  - **File-Level Defaults**: Setting `patches-version = "both"` (or `"beta"`) at the top applies that channel to every app unless individually overridden.
-  - **No Filename Inference**: the channel is a setting, never read from a file name. An app without `patches-version` is stable; only `patches-version = "beta"` (or `"both"`) moves it. To follow a patch source's pre-release, set it on that app.
-  - **Concrete Version Pins**: A version number instead of a channel (e.g. `patches-version = "v4.8.3"`) pins that exact release — one app when written in an app block, every app in the file when written at the top level. The generated pool config carries it verbatim and nothing rewrites it.
-  - **Channel Resolution**: `"stable"` and `"beta"` are the only channel keywords, and they stay as keywords in the generated config; the build resolves each source's keyword against `state/patch_sources.json`, the watcher's record of that source's current release per channel. One source of truth instead of a stamped copy that can go stale, and a build run is consistent with the state it was generated from because `configs/` and `state/` come from the same `main` commit. A source with no release recorded on that channel falls back to listing the releases live. Any other word is treated as a release tag, so a mistyped channel fails on the release lookup rather than building the wrong thing.
+- **Patch bundle selection** (`patches-version`):
+  - **Stable (default)**: omit the key and the app is built with its source's latest non-pre-release.
+  - **No beta**: `patches-version = "beta"` and `"both"` (file-level or per app) are rejected loudly by the compiler and by `build.sh`. An app that needs a pre-release bundle pins its tag.
+  - **No Filename Inference**: the channel is a setting, never read from a file name.
+  - **Concrete Version Pins**: A version number instead of a channel (e.g. `patches-version = "v4.8.3"`) pins that exact release — one app when written in an app block, every app in the file when written at the top level. The generated config carries it verbatim and nothing rewrites it.
+  - **Channel Resolution**: `"stable"` is the only channel keyword, and it stays a keyword in the generated config; the build resolves each source's keyword against `state/patch_sources.json`, the watcher's record of that source's current release per channel. One source of truth instead of a stamped copy that can go stale, and a build run is consistent with the state it was generated from because `configs/` and `state/` come from the same `main` commit. A source with no release recorded on that channel falls back to listing the releases live. Any other word is treated as a release tag, so a mistyped channel fails on the release lookup rather than building the wrong thing.
   - **Blocked Sources**: when the forge answers `404` (deleted or renamed), `451` (legal takedown) or `403` (private or access refused), the watcher marks that source `blocked` and freezes its last known tags. A build then **skips every app using it** - keyword or pinned version alike - instead of querying the releases endpoint, because neither a retry nor a live listing can recover a repository that is gone. The app is logged as "Could not get prebuilts" and the run moves on; it comes back on its own once the source is reachable again.
-  - **Disabling an App**: Set `enabled = false` to disable an app across all pools.
+  - **Disabling an App**: Set `enabled = false` to disable an app.
 
 ## Automated Patch Sources State Tracking
 
@@ -384,8 +381,8 @@ There are no separate files for stable and beta - an app's `patches-version` pic
 >
 > - `configs/config.manual.toml`, `configs/config.toml` — **yours**: edit and
 >   commit them normally.
-> - `configs/stable_build.json`, `configs/beta_build.json` — generated pool
->   configs, written by the watcher only (`commit_to_main.sh`).
+> - `configs/build.json` — the generated build config (the apps that are due),
+>   written by the watcher only (`commit_to_main.sh`).
 > - `state/*.json` (`patch_sources`, `app_versions`, `patch_file_hashes`) —
 >   machine state, written by the watcher only.
 > - `state/manifests/`, `state/archive/` — build manifests, written by each build.
@@ -396,7 +393,7 @@ There are no separate files for stable and beta - an app's `patches-version` pic
 > [docs/decisions/0008](docs/decisions/0008-one-branch.md).
 
 Patch sources and their release versions in `state/patch_sources.json` are **100% automated**:
-- The CI automatically scans all `.toml` files, discovers every active `patches-source` repository and host (`github`, `gitlab` or `codeberg`), and checks for new stable and beta releases.
+- The CI automatically scans all `.toml` files, discovers every active `patches-source` repository and host (`github`, `gitlab` or `codeberg`), and checks for new stable releases.
 - Unreferenced or deleted patch sources are pruned automatically.
 - **You do not need to manually edit `patch_sources.json`.** Simply add or update `patches-source` in your `.toml` files.
 - The build reads this file to turn a `patches-version = "stable"|"beta"` keyword into a concrete tag, so it is the answer to "what is the current release" for both the watcher and the builder.
@@ -431,7 +428,7 @@ against the live releases API.
 - **Numbered releases**: the builder generates one manifest per build
   (`build_make_manifest.py` → `temp/manifest/build.json`); it is committed to the
   repository as `state/manifests/<tag>.json`, not uploaded as a release asset.
-- **Archive releases (`stable`/`beta`)**: after each archive file upload,
+- **Archive release (`stable`)**: after each archive file upload,
   `merge_archive_manifest.sh` reads the cumulative `state/archive/<channel>.json`
   from `main`, unions the new build's entries with it (same filename = file
   replaced = metadata replaced), drops entries whose file no longer exists in
@@ -457,7 +454,7 @@ Releases without a manifest get minimal filename-derived fallback entries.
 
 ### Automated Routine Cleanup (`cleanup.yml`)
 - **Numbered Releases**: Retains the latest 98 numbered releases via `ophub/delete-releases-workflows`. Keeping 98 *is* the catalog's history window — deleted releases vanish from the website, which is correct since their files are gone.
-- **Archive Releases**: Retains rolling `stable` and `beta` releases, keeping up to 2 versions per asset group via `cleanup-archive-assets.py`. Pruned assets drop out of the catalog automatically at the next rebuild.
+- **Archive Releases**: Retains the rolling `stable` release (and a retired `beta` one, if it still exists), keeping up to 2 versions per asset group via `cleanup-archive-assets.py`. Pruned assets drop out of the catalog automatically at the next rebuild.
 - **Manifests**: `cleanup_manifests.sh` deletes `state/manifests/<tag>.json` for numbered releases that no longer exist (same pattern as the update branch's changelog pruning).
 - Ends with a fire-and-forget `catalog-updated` dispatch so the website reflects deletions promptly.
 

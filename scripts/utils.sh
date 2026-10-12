@@ -264,26 +264,18 @@ source_release_asset_url() {
 }
 
 source_release_pick_from_list() {
-	# $2 = channel keyword: "beta" or anything else (read as stable). "dev" is not a
-	# keyword any more, so it is not tested here even though a release TAG may
-	# contain it (v1.2.3-dev.4) - that is matched by the gitlab pattern below.
-	local host=${1,,} mode=$2
+	# The newest stable release of a listing: not a pre-release. A release TAG may contain
+	# "dev" (v1.2.3-dev.4) - on GitLab, which has no pre-release flag, that is how a
+	# pre-release is told apart.
+	local host=${1,,}
 	case "$host" in
 		github | codeberg)
 			# .draft is always false for GitHub (its API omits drafts entirely) but
-			# Forgejo lists them, and an unpublished release is nobody's channel entry.
-			if [ "$mode" = beta ]; then
-				jq -e -c 'map(select(.prerelease == true and .draft != true and .tag_name != null and .tag_name != "")) | sort_by(.published_at // .created_at // "") | reverse | .[0] // empty'
-			else
-				jq -e -c 'map(select(.prerelease != true and .draft != true and .tag_name != null and .tag_name != "")) | sort_by(.published_at // .created_at // "") | reverse | .[0] // empty'
-			fi
+			# Forgejo lists them, and an unpublished release is nobody's entry.
+			jq -e -c 'map(select(.prerelease != true and .draft != true and .tag_name != null and .tag_name != "")) | sort_by(.published_at // .created_at // "") | reverse | .[0] // empty'
 			;;
 		gitlab)
-			if [ "$mode" = beta ]; then
-				jq -e -c 'map(select(.tag_name != null and .tag_name != "" and (.tag_name | test("(?i)(dev|alpha|beta|rc)")))) | sort_by(.released_at // .created_at // "") | reverse | .[0] // empty'
-			else
-				jq -e -c 'map(select(.tag_name != null and .tag_name != "" and (.tag_name | test("(?i)(dev|alpha|beta|rc)") | not))) | sort_by(.released_at // .created_at // "") | reverse | .[0] // empty'
-			fi
+			jq -e -c 'map(select(.tag_name != null and .tag_name != "" and (.tag_name | test("(?i)(dev|alpha|beta|rc)") | not))) | sort_by(.released_at // .created_at // "") | reverse | .[0] // empty'
 			;;
 		*) return 1 ;;
 	esac
@@ -329,27 +321,23 @@ rv_release_dir() { # $1=host (github|gitlab) $2=owner/repo -> ${TEMP_DIR}/<host>
 	printf '%s/%s__%s-rv' "$TEMP_DIR" "${1,,}" "$slug"
 }
 
-# Canonical release channel of a version value, or empty when it is not a channel
-# keyword. "stable" and "beta" are the entire vocabulary - CONFIG.md documents
-# nothing else, and compile_patch_configs.py routes pools on the same two words.
-# Anything else (a concrete tag, or a word someone typed by mistake) goes down the
-# exact-release path, so "latest" fails loudly at the release API instead of
-# quietly building whichever channel a fallback happened to pick. "both" is pool
-# routing that build.sh resolves from the config it was given before a build ever
-# sees it, so it is deliberately not a channel here. Keeping the two tests in one
-# function is what stops the beta/stable branch conditions from drifting apart.
+# Canonical release channel of a version value, or empty when it is not the channel
+# keyword. "stable" is the entire vocabulary - CONFIG.md documents nothing else, and
+# compile_patch_configs.py rejects the retired "beta"/"both". Anything else (a concrete
+# tag, or a word someone typed by mistake) goes down the exact-release path, so
+# "latest" fails loudly at the release API instead of quietly building whichever
+# release a fallback happened to pick.
 _release_channel_of() {
 	case "${1,,}" in
 	stable) echo stable ;;
-	beta) echo beta ;;
 	*) echo "" ;;
 	esac
 }
 
 # Concrete tag the watcher recorded for one patch source, or nothing.
-# $1=owner/repo (any case) $2=host $3=channel (stable|beta)
+# $1=owner/repo (any case) $2=host $3=channel (stable)
 # state/patch_sources.json is the watcher's snapshot of every patch source's
-# current release per channel (see sync_patch_sources.py); reading it here saves
+# current stable release (see sync_patch_sources.py); reading it here saves
 # a release listing plus a second copy of the selection heuristics. A blocked
 # source is reported as "no tag" here even though the snapshot still carries its
 # last known tag - callers must check _patch_source_state_blocked and skip it.
@@ -421,18 +409,9 @@ _get_prebuilts() {
 	# The CLI is not in the watcher snapshot (that file tracks patch sources only),
 	# so its channel keyword still resolves through the live listing below.
 	channel=$(_release_channel_of "$ver")
-	if [ "$channel" = beta ]; then
-		resp=$(source_release_req "$host" "$rv_rel" -) || return 1
-		release=$(source_release_pick_from_list "$host" beta <<<"$resp") || true
-		ver=$(jq -r '.tag_name' <<<"$release") || true
-		if [ -z "$ver" ] || [ "$ver" = "null" ]; then
-			ver=$(jq -e -r '.[].tag_name' <<<"$resp" | get_highest_ver) || return 1
-			release="" # Clear release if we had to fallback to get_highest_ver
-		fi
-	fi
 	if [ "$channel" = stable ]; then
 		resp=$(source_release_req "$host" "$rv_rel" -) || return 1
-		release=$(source_release_pick_from_list "$host" stable <<<"$resp") || return 1
+		release=$(source_release_pick_from_list "$host" <<<"$resp") || return 1
 	elif [ -z "${release:-}" ]; then
 		rv_rel=$(source_release_tag_api "$host" "$src" "$ver") || return 1
 		release=$(source_release_req "$host" "$rv_rel" -) || return 1
@@ -535,7 +514,7 @@ _get_prebuilts() {
 			return 1
 		fi
 		# A channel keyword is a question the watcher has already answered: this
-		# source's current stable/beta release is recorded in the state snapshot the
+		# source's current stable release is recorded in the state snapshot the
 		# build job checked out. Resolve from there (one local read, and no second
 		# copy of the selection heuristics); on a miss - unknown source, or no tag
 		# recorded for that channel - fall through to the live path below unchanged.
@@ -548,18 +527,9 @@ _get_prebuilts() {
 				channel=""
 			fi
 		fi
-		if [ "$channel" = beta ]; then
-			resp=$(source_release_req "$host" "$rv_rel" -) || return 1
-			release=$(source_release_pick_from_list "$host" beta <<<"$resp") || true
-			ver=$(jq -r '.tag_name' <<<"$release") || true
-			if [ -z "$ver" ] || [ "$ver" = "null" ]; then
-				ver=$(jq -e -r '.[].tag_name' <<<"$resp" | get_highest_ver) || return 1
-				release="" # Clear release if we had to fallback to get_highest_ver
-			fi
-		fi
 		if [ "$channel" = stable ]; then
 			resp=$(source_release_req "$host" "$rv_rel" -) || return 1
-			release=$(source_release_pick_from_list "$host" stable <<<"$resp") || return 1
+			release=$(source_release_pick_from_list "$host" <<<"$resp") || return 1
 		elif [ -z "${release:-}" ]; then
 			rv_rel=$(source_release_tag_api "$host" "$src" "$ver") || return 1
 			release=$(source_release_req "$host" "$rv_rel" -) || return 1

@@ -15,7 +15,6 @@ failedPatches, excludedPatches. See docs/storage-and-branches.md for what each m
 
 Env:
     NEXT_VER_CODE   release tag / build number (required)
-    IS_PRERELEASE   true -> beta channel, else stable
 Writes:
     temp/manifest/build.json
 """
@@ -34,8 +33,7 @@ def main():
     if not next_ver_code:
         print("Error: NEXT_VER_CODE not set.", file=sys.stderr)
         sys.exit(1)
-    is_prerelease = os.environ.get("IS_PRERELEASE", "false").lower() == "true"
-    channel = "beta" if is_prerelease else "stable"
+    channel = "stable"  # the one channel; the manifest schema keeps the key
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     build_json_file = Path("build.json")

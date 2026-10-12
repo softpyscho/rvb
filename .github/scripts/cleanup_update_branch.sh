@@ -25,7 +25,8 @@ if [ -z "$ACTIVE_TAGS" ]; then
   exit 0
 fi
 
-# Current asset names on the two rolling archive releases (zipUrls point here).
+# Current asset names on the rolling archive releases (zipUrls point here). `beta` is the retired
+# pre-release archive: pointers written while it was in use may still name it.
 LIVE_ASSETS=$(
   {
     gh api --paginate "repos/$REPO/releases/tags/stable" -q '.assets[].name' 2>/dev/null || true

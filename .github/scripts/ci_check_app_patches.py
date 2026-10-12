@@ -13,8 +13,8 @@ _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from patchers import ci_bundle_diffable  # isort:skip  # noqa: E402
 
 
-def load_channel_config(channel):
-    filename = f"config.{channel}.json"
+def load_config():
+    filename = "config.json"
     if not os.path.exists(filename):
         subprocess.run(
             ["bash", ".github/scripts/ci_compile_base_configs.sh"], check=False)
@@ -36,54 +36,52 @@ def is_mirror(app):
 
 
 def get_app_mappings():
-    apps_stable = {}
-    apps_beta = {}
+    apps = {}
     cli_sources = {}
 
-    for channel, target_dict in [('stable', apps_stable), ('beta', apps_beta)]:
-        data = load_channel_config(channel)
-        for key, val in data.items():
-            if not isinstance(val, dict):
-                continue
+    data = load_config()
+    for key, val in data.items():
+        if not isinstance(val, dict):
+            continue
 
-            enabled = val.get('enabled', True)
-            if isinstance(enabled, str):
-                enabled = enabled.lower() == 'true'
-            if not enabled:
-                continue
+        enabled = val.get('enabled', True)
+        if isinstance(enabled, str):
+            enabled = enabled.lower() == 'true'
+        if not enabled:
+            continue
 
-            # A mirrored app is published unpatched, so no patch bundle can ever
-            # cover it; it is rebuilt only when the app itself updates.
-            if is_mirror(val):
-                continue
+        # A mirrored app is published unpatched, so no patch bundle can ever
+        # cover it; it is rebuilt only when the app itself updates.
+        if is_mirror(val):
+            continue
 
-            src = (val.get('patches-source')
-                   or 'morpheapp/morphe-patches').strip().lower()
-            cli_src = (val.get('cli-source')
-                       or 'morpheapp/morphe-desktop').strip().lower()
-            if cli_src:
-                cli_sources.setdefault(src, set()).add(cli_src)
+        src = (val.get('patches-source')
+               or 'morpheapp/morphe-patches').strip().lower()
+        cli_src = (val.get('cli-source')
+                   or 'morpheapp/morphe-desktop').strip().lower()
+        if cli_src:
+            cli_sources.setdefault(src, set()).add(cli_src)
 
-            pkg_name = val.get('pkg-name') or ''
-            app_name = (val.get('app-name') or '').lower()
-            patch_folder = (val.get('patch-folder') or '').lower()
+        pkg_name = val.get('pkg-name') or ''
+        app_name = (val.get('app-name') or '').lower()
+        patch_folder = (val.get('patch-folder') or '').lower()
 
-            if not pkg_name:
-                m_git = val.get('github-dlurl') or ''
-                m_arch = val.get('archive-dlurl') or ''
-                if 'releases/tag/' in m_git:
-                    pkg_name = m_git.rstrip('/').split('/')[-1]
-                elif 'apks/' in m_arch:
-                    pkg_name = m_arch.rstrip('/').split('/')[-1]
+        if not pkg_name:
+            m_git = val.get('github-dlurl') or ''
+            m_arch = val.get('archive-dlurl') or ''
+            if 'releases/tag/' in m_git:
+                pkg_name = m_git.rstrip('/').split('/')[-1]
+            elif 'apks/' in m_arch:
+                pkg_name = m_arch.rstrip('/').split('/')[-1]
 
-            if pkg_name:
-                target_dict.setdefault(src, {})[key] = {
-                    'pkg': pkg_name,
-                    'app_name': app_name,
-                    'patch_folder': patch_folder
-                }
+        if pkg_name:
+            apps.setdefault(src, {})[key] = {
+                'pkg': pkg_name,
+                'app_name': app_name,
+                'patch_folder': patch_folder
+            }
 
-    return apps_stable, apps_beta, cli_sources
+    return apps, cli_sources
 
 
 def process_zip(path, pkg_info):
@@ -191,10 +189,10 @@ def process_zip(path, pkg_info):
     return {k: v.hexdigest() for k, v in buckets.items()}
 
 
-def evaluate_repo_channel(repo_lower, repo, tag, channel, new_info, hashes, active_list, apps_stable, apps_beta, is_revanced_or_morphe):
-    repo_apps = apps_stable.get(
-        repo_lower, {}) if channel == 'stable' else apps_beta.get(repo_lower, {})
-    print(f"::group::{repo} [{channel}] @ {tag}")
+def evaluate_repo(repo_lower, repo, tag, new_info, hashes, active_list, apps, is_revanced_or_morphe):
+    channel = 'stable'  # the hash record keeps its historical per-channel layout
+    repo_apps = apps.get(repo_lower, {})
+    print(f"::group::{repo} @ {tag}")
     if not repo_apps:
         print(f"  No enabled apps found. Skipping patch inspection.")
         print("::endgroup::")
@@ -210,7 +208,7 @@ def evaluate_repo_channel(repo_lower, repo, tag, channel, new_info, hashes, acti
         print(
             f"  Not a revanced/morphe patcher — triggering all {len(repo_apps)} app(s).")
         print(
-            f"::notice title=Patch Update [{channel}]::{repo} — non-morphe/revanced patcher, triggering all {len(repo_apps)} app(s)")
+            f"::notice title=Patch Update::{repo} — non-morphe/revanced patcher, triggering all {len(repo_apps)} app(s)")
         active_list.extend(repo_apps.keys())
         print("::endgroup::")
         return
@@ -323,7 +321,7 @@ def evaluate_repo_channel(repo_lower, repo, tag, channel, new_info, hashes, acti
             print(
                 f"  Shared patches changed — triggering all {len(repo_apps)} app(s).")
             print(
-                f"::notice title=Patch Update [{channel}]::{repo} @ {tag} — shared patches changed, triggering all {len(repo_apps)} app(s)")
+                f"::notice title=Patch Update::{repo} @ {tag} — shared patches changed, triggering all {len(repo_apps)} app(s)")
             active_list.extend(repo_apps.keys())
         else:
             # Check individual packages
@@ -338,7 +336,7 @@ def evaluate_repo_channel(repo_lower, repo, tag, channel, new_info, hashes, acti
                 for toml_key, pkg_name in changed:
                     print(f"    ✎ {toml_key} ({pkg_name})")
                     print(
-                        f"::notice title=Patch Update [{channel}]::{repo} @ {tag} — {toml_key} ({pkg_name}) patches changed")
+                        f"::notice title=Patch Update::{repo} @ {tag} — {toml_key} ({pkg_name}) patches changed")
             else:
                 print(
                     f"  No patch changes detected for {len(repo_apps)} app(s).")
@@ -378,9 +376,7 @@ def run():
               "step must run before this one.")
         raise SystemExit(1)
 
-    moved = {}
-    for rec in changed:
-        moved.setdefault(rec['key'], {})[rec['channel']] = rec['tag']
+    moved = {rec['key']: rec['tag'] for rec in changed}
 
     hash_file = 'state/patch_file_hashes.json'
     if os.path.exists(hash_file):
@@ -389,12 +385,11 @@ def run():
     else:
         hashes = {}
 
-    apps_stable, apps_beta, cli_sources = get_app_mappings()
+    apps, cli_sources = get_app_mappings()
 
-    active_stable = []
-    active_beta = []
+    active = []
 
-    for repo_key, channels in moved.items():
+    for repo_key, tag in moved.items():
         new_info = tags_new.get(repo_key) or {}
         repo = new_info.get('repo', '')
         repo_lower = repo.lower()
@@ -406,36 +401,21 @@ def run():
         if repo_lower not in hashes:
             hashes[repo_lower] = {}
         hashes[repo_lower].setdefault('stable', {})
-        hashes[repo_lower].setdefault('beta', {})
 
-        if 'stable' in channels:
-            evaluate_repo_channel(repo_lower, repo, channels['stable'], 'stable', new_info,
-                                  hashes, active_stable, apps_stable, apps_beta, is_revanced_or_morphe)
-
-        if 'beta' in channels:
-            evaluate_repo_channel(repo_lower, repo, channels['beta'], 'beta', new_info,
-                                  hashes, active_beta, apps_stable, apps_beta, is_revanced_or_morphe)
+        evaluate_repo(repo_lower, repo, tag, new_info,
+                      hashes, active, apps, is_revanced_or_morphe)
 
     with open(hash_file, 'w') as f:
         json.dump(hashes, f, indent=2, sort_keys=True)
 
-    stable_set = list(set(active_stable))
-    beta_set = list(set(active_beta))
+    active_set = sorted(set(active))
 
-    with open('active_patch_apps.stable.json', 'w') as f:
-        json.dump(stable_set, f)
+    with open('active_patch_apps.json', 'w') as f:
+        json.dump(active_set, f)
 
-    with open('active_patch_apps.beta.json', 'w') as f:
-        json.dump(beta_set, f)
-
-    if stable_set or beta_set:
-        parts = []
-        if stable_set:
-            parts.append(f"stable: {', '.join(sorted(stable_set))}")
-        if beta_set:
-            parts.append(f"beta: {', '.join(sorted(beta_set))}")
+    if active_set:
         print(
-            f"::notice title=Patch Check Summary::Apps queued for build — {' | '.join(parts)}")
+            f"::notice title=Patch Check Summary::Apps queued for build — {', '.join(active_set)}")
     else:
         print(
             "::notice title=Patch Check Summary::No patch changes detected across all repos")

@@ -1,29 +1,22 @@
-#!/usr/bin/env python3
 """
 compile_patch_configs.py
-Parses the app configuration, configs/config.toml, and generates config.stable.json and
-config.beta.json with dynamic pool routing:
-- apps with patches-version = "stable" go to stable pool only
-- apps with patches-version = "beta" go to beta pool only
-- apps with patches-version = "both" go to both pools
-- apps with no patches-version inherit the file-level default, which is itself
-  "stable" - so such an app lands in one pool, not both. "both" is what opts an
-  app into both.
+Parses the app configuration, configs/config.toml, and generates config.json: the one build
+pool, every enabled app.
 - apps with enabled = false are omitted
+- patches-version is "stable" (the default: the source's latest release) or a pinned release tag;
+  "beta" and "both" no longer exist and are rejected loudly rather than guessed at
 
 The config is one file. A directory of TOML files is read too (tests build small ones), each file
 with its own file-level defaults; an app key must be unique across them.
 
-Which release a channel keyword means is not resolved here: the generated config
-keeps the keyword and the build looks the tag up in state/patch_sources.json. A
-concrete patches-version (a tag instead of a channel) is copied verbatim.
+Which release "stable" means is not resolved here: the generated config keeps the keyword and the
+build looks the tag up in state/patch_sources.json. A pinned patches-version is copied verbatim.
 """
 
 import os
 import sys
 import glob
 import json
-import re
 
 try:
     import tomllib
@@ -35,22 +28,25 @@ except ImportError:
         sys.exit(1)
 
 
-def normalize_channel(val):
-    """Canonicalize a patches-version value to "stable"/"beta"/"both", or return a
-    concrete tag unchanged. Those three words are the whole vocabulary: stable and
-    beta name a release channel, both is pool routing that build.sh resolves before
-    a build runs. Anything else is read as a release tag to pin to - including a
-    mistyped channel, which then fails loudly instead of quietly landing in a pool.
-    utils.sh mirrors the same two keywords in _release_channel_of."""
+RETIRED_CHANNELS = ("beta", "both")
+
+
+def normalize_channel(val, where="patches-version"):
+    """Canonicalize a patches-version value to "stable", or return a pinned tag unchanged.
+    The retired channel words are an error: an app left on "beta" would otherwise be read as
+    a release tag and fail much later, on the release lookup. utils.sh mirrors the keyword in
+    _release_channel_of."""
     if not val or not isinstance(val, str):
         return None
     v = val.strip().lower()
     if v == "stable":
         return "stable"
-    if v == "beta":
-        return "beta"
-    if v == "both":
-        return "both"
+    if v in RETIRED_CHANNELS:
+        print(
+            f"Error: {where} = \"{val.strip()}\": there is one build and no beta channel any more. "
+            "Remove the key (the latest stable release is the default) or pin a release tag.",
+            file=sys.stderr)
+        sys.exit(1)
     return val.strip()  # Pinned version string like "v1.41.0"
 
 
@@ -65,17 +61,15 @@ def toml_sources(path=CONFIG_PATH):
 
 
 def compile_configs(config_path=CONFIG_PATH):
-    stable_pool = {}
-    beta_pool = {}
+    pool = {}
 
     toml_files = toml_sources(config_path)
     if not toml_files:
         print(
             f"Warning: No TOML config found at {config_path}", file=sys.stderr)
-        return stable_pool, beta_pool
+        return pool
 
-    seen_stable = {}
-    seen_beta = {}
+    seen = {}
 
     for filepath in toml_files:
         filename = os.path.basename(filepath)
@@ -89,10 +83,8 @@ def compile_configs(config_path=CONFIG_PATH):
         # File-level defaults are keys defined before tables
         file_defaults = {k: v for k,
                          v in data.items() if not isinstance(v, dict)}
-
-        # Resolve file-level channel default (default is "stable" if omitted). The channel is a
-        # setting, never read from a file name.
-        file_pv = normalize_channel(file_defaults.get("patches-version")) or "stable"
+        file_pv = normalize_channel(
+            file_defaults.get("patches-version"), f"{filename}: patches-version") or "stable"
 
         for app_key, app_table in data.items():
             if not isinstance(app_table, dict):
@@ -107,77 +99,39 @@ def compile_configs(config_path=CONFIG_PATH):
             if not enabled:
                 continue
 
-            app_pv_raw = app_table.get("patches-version")
-            if app_pv_raw:
-                channel = normalize_channel(app_pv_raw)
+            channel = normalize_channel(
+                app_table.get("patches-version"), f"[{app_key}] patches-version") or file_pv
+
+            if app_key in pool:
+                print(
+                    f"Error: Duplicate app key '[{app_key}]' in {filename} (already defined in {seen[app_key]})", file=sys.stderr)
+                sys.exit(1)
+            seen[app_key] = filename
+            entry = dict(merged)
+            if channel == "stable":
+                # Omit the redundant key: it matches the pool default
+                entry.pop("patches-version", None)
             else:
-                channel = file_pv
+                # A pin is carried exactly as written; the build resolves the "stable" keyword from
+                # state/patch_sources.json itself (see _patch_source_state_tag in utils.sh).
+                entry["patches-version"] = channel
+            pool[app_key] = entry
 
-            is_pinned = channel not in ("stable", "beta", "both")
-            is_beta_pin = False
-            if is_pinned:
-                is_beta_pin = bool(re.search(
-                    r"[-._](beta|dev|alpha|rc|pre)", channel, re.IGNORECASE)) or (file_pv == "beta")
-
-            # Route to stable pool
-            if channel in ("stable", "both") or (is_pinned and not is_beta_pin):
-                if app_key in stable_pool:
-                    print(
-                        f"Error: Duplicate app key '[{app_key}]' in {filename} (already defined in {seen_stable[app_key]})", file=sys.stderr)
-                    sys.exit(1)
-                seen_stable[app_key] = filename
-                entry = dict(merged)
-                if is_pinned:
-                    # Carried exactly as written. Generation used to overwrite a
-                    # non-channel patches-version with the watcher's current tag;
-                    # the build now resolves channel keywords from that snapshot
-                    # itself (see _patch_source_state_tag in utils.sh), so a pin is
-                    # the only thing left in the config and it is always the
-                    # author's, in both pools.
-                    entry["patches-version"] = channel
-                else:
-                    # Omit redundant key when matching pool default
-                    entry.pop("patches-version", None)
-                stable_pool[app_key] = entry
-
-            # Route to beta pool
-            if channel in ("beta", "both") or (is_pinned and is_beta_pin):
-                if app_key in beta_pool:
-                    print(
-                        f"Error: Duplicate app key '[{app_key}]' in {filename} (already defined in {seen_beta[app_key]})", file=sys.stderr)
-                    sys.exit(1)
-                seen_beta[app_key] = filename
-                entry = dict(merged)
-                if is_pinned:
-                    # See stable pool: a written pin is carried unchanged.
-                    entry["patches-version"] = channel
-                else:
-                    # Omit redundant key when matching pool default
-                    entry.pop("patches-version", None)
-                beta_pool[app_key] = entry
-
-    return stable_pool, beta_pool
+    return pool
 
 
 def main():
     config_path = sys.argv[1] if len(sys.argv) > 1 else CONFIG_PATH
-    stable_pool, beta_pool = compile_configs(config_path)
+    pool = compile_configs(config_path)
 
-    stable_out = {"patches-version": "stable"}
-    stable_out.update(stable_pool)
+    out = {"patches-version": "stable"}
+    out.update(pool)
 
-    beta_out = {"patches-version": "beta"}
-    beta_out.update(beta_pool)
+    with open("config.json", "w", encoding="utf-8") as f:
+        json.dump(out, f, indent=2)
 
-    with open("config.stable.json", "w", encoding="utf-8") as f:
-        json.dump(stable_out, f, indent=2)
-
-    with open("config.beta.json", "w", encoding="utf-8") as f:
-        json.dump(beta_out, f, indent=2)
-
-    print("Base patch configurations compiled successfully.")
-    print(f"Stable pool apps: {len(stable_pool)}")
-    print(f"Beta pool apps:   {len(beta_pool)}")
+    print("Base patch configuration compiled successfully.")
+    print(f"Apps: {len(pool)}")
 
 
 if __name__ == "__main__":

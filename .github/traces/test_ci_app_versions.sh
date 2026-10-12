@@ -22,21 +22,17 @@ STUB
 printf '#!/bin/sh\nexit 0\n' > "$WORK/stub/sleep" # the script pauses between scrapes
 chmod +x "$WORK/stub/sleep"
 echo '{}' > "$WORK/state/app_versions.json"
-cat > "$WORK/config.stable.json" <<'JSON'
+cat > "$WORK/config.json" <<'JSON'
 {"patches-version": "stable",
  "Implicit":   {"uptodown-dlurl": "https://x/implicit"},
  "Explicit":   {"enabled": true,  "uptodown-dlurl": "https://x/explicit"},
  "Switched":   {"enabled": false, "uptodown-dlurl": "https://x/off"}}
 JSON
-cat > "$WORK/config.beta.json" <<'JSON'
-{"patches-version": "beta",
- "BetaImplicit": {"uptodown-dlurl": "https://x/beta"}}
-JSON
 
 ( cd "$WORK" && PATH="$WORK/stub:$PATH" bash .github/scripts/ci_fetch_app_versions.sh > run.log 2>&1 ) \
 	|| fail "ci_fetch_app_versions.sh failed: $(tail -5 "$WORK/run.log")"
 got=$(jq -r 'keys | join(",")' "$WORK/fetched_app_versions.json")
-[ "$got" = "BetaImplicit,Explicit,Implicit" ] || fail "checked apps were '$got', expected BetaImplicit,Explicit,Implicit (run log: $(tail -3 "$WORK/run.log"))"
+[ "$got" = "Explicit,Implicit" ] || fail "checked apps were '$got', expected Explicit,Implicit (run log: $(tail -3 "$WORK/run.log"))"
 # the control is the disabled app: it is in the config and has a scrapeable URL, yet is not checked
 jq -e 'has("Switched") | not' "$WORK/fetched_app_versions.json" >/dev/null || fail "a disabled app must not be version-checked"
 
@@ -64,7 +60,7 @@ waenhancer_vers() {
 }
 STUB
 echo '{}' > "$WA/state/app_versions.json"
-cat > "$WA/config.stable.json" <<'JSON'
+cat > "$WA/config.json" <<'JSON'
 {"patches-version": "stable", "mirror": true, "version": "latest",
  "WA":    {"version": "waenhancer", "pkg-name": "com.whatsapp",
            "uptodown-dlurl": "https://x/wa-up", "apkmirror-dlurl": "https://x/wa-apkm"},

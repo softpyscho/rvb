@@ -7,7 +7,7 @@ GitHub's limits; notify reports failures.
 | File | Name | Triggered by | Concurrency group |
 |---|---|---|---|
 | [ci.yml](../.github/workflows/ci.yml) | CI | `schedule` (6 UTC crons: ~4 h windows with randomized minutes), `workflow_dispatch` | `ci` |
-| [build.yml](../.github/workflows/build.yml) | Build | `workflow_call` only — from `ci.yml` (per pool) or `manual-ci.yml` | `build` |
+| [build.yml](../.github/workflows/build.yml) | Build | `workflow_call` only — from `ci.yml` or `manual-ci.yml`, and dispatchable by hand | `build` |
 | [cleanup.yml](../.github/workflows/cleanup.yml) | Cleanup | `workflow_call`, `workflow_dispatch` | `clean` |
 | [manual-ci.yml](../.github/workflows/manual-ci.yml) | Manual CI | `workflow_dispatch` (`all` / one config + optional `remove_apks` / `clean`), followed by cleanup | `ci` |
 | [notify.yml](../.github/workflows/notify.yml) | Notify | `workflow_call`, on `failure()` of the caller | — |
@@ -35,16 +35,16 @@ step's output is the next step's input:
 
 | Step | Script | What it decides |
 |---|---|---|
-| Compile Base Configs | `compile_patch_configs.py` | every app's pool membership from `configs/config.toml` |
-| Sync Patch Sources | `sync_patch_sources.py` | discovers all `(patches-source, host)` pairs, lists releases on GitHub/GitLab/Codeberg, rewrites `state/patch_sources.json`, prunes sources no config uses, emits `TRIGGER_STABLE`/`TRIGGER_BETA`/`TRIGGER_BLOCKED` and writes `changed_sources.json` |
+| Compile Base Configs | `compile_patch_configs.py` | every enabled app of `configs/config.toml`, into `config.json` |
+| Sync Patch Sources | `sync_patch_sources.py` | discovers all `(patches-source, host)` pairs, lists releases on GitHub/GitLab/Codeberg, rewrites `state/patch_sources.json`, prunes sources no config uses, emits `TRIGGER_PATCHES`/`TRIGGER_BLOCKED` and writes `changed_sources.json` |
 | Fetch App Versions | `ci_fetch_app_versions.sh` | scrapes current store versions (honours `"_check_only_listed"` in `state/app_versions.json`); a `version = "waenhancer"` app is asked APKMirror first, then Uptodown, for the newest build the latest WaEnhancer release supports, so a WaEnhancer release moves the recorded version and triggers its mirror build |
 | Compare App Versions | `compare` step | `TRIGGER_APP_UPDATE` when a tracked app moved |
-| Classify triggers | `ci_trigger_flags.sh` | the two questions everyone else asks: `SOURCES_CHANGED`, `ANYTHING_CHANGED` |
+| Classify triggers | `ci_trigger_flags.sh` | the questions everyone else asks: `SOURCES_CHANGED`, `ANYTHING_CHANGED` |
 | Check Patch App Updates | `ci_check_app_patches.py` | only when `SOURCES_CHANGED`: downloads the changed bundles and hashes them (`state/patch_file_hashes.json`) to find which apps the new patches actually cover |
-| Generate configs (JSON) | `ci_generate_configs.sh` | only when `ANYTHING_CHANGED`: writes the pool config each channel will build |
-| Resolve effective triggers | `ci_resolve_triggers.sh` | per-channel `TRIGGER_*` **after** generation, and downgrades a trigger to 0 when the resulting pool has no enabled apps |
+| Generate configs (JSON) | `ci_generate_configs.sh` | only when `ANYTHING_CHANGED`: writes `configs/build.json`, the config the build will run |
+| Resolve effective triggers | `ci_resolve_triggers.sh` | `TRIGGER_BUILD` **after** generation, and downgrades it to 0 when `configs/build.json` has no enabled apps |
 | Notify telegram | `ci_notify_telegram.sh` | raw vs effective triggers, so a suppressed trigger is visible |
-| Commit updated state | `commit_to_main.sh` | commits **only** the named `configs/*_build.json` + `state/*.json` onto `main` (plumbing, `[skip ci]`) |
+| Commit updated state | `commit_to_main.sh` | commits **only** the named `configs/build.json` + `state/*.json` onto `main` (plumbing, `[skip ci]`) |
 
 Two design rules worth preserving:
 
@@ -54,21 +54,17 @@ Two design rules worth preserving:
   disagree about what moved.
 - **Generation is membership-only.** `ci_generate_configs.sh` sets
   `enabled = false` for apps outside this run's change set and never rewrites a
-  version: an app whose `patches-version` is a channel keyword keeps the keyword,
+  version: an app whose `patches-version` is the keyword `stable` keeps it,
   resolved at build time against `state/patch_sources.json`. Stamping a concrete
-  tag into the pool config used to create a second artifact that had to agree
+  tag into the config used to create a second artifact that had to agree
   with the state snapshot about what "stable" meant.
-- The beta pool keeps one extra gate: an app-version bump alone pulls an app into
-  beta only when one of its sources genuinely has `beta_date > stable_date`,
-  otherwise the stable pool already covers it.
 
 ### What causes a build
 
 | Event | Flags | Effect |
 |---|---|---|
-| A patch source publishes a release on the stable channel | `TRIGGER_STABLE` | stable pool regenerates and builds |
-| …on the beta channel | `TRIGGER_BETA` | beta pool only |
-| An app's own version changed in a tracked store | `TRIGGER_APP_UPDATE` | both pools reconsider membership (beta gated as above) |
+| A patch source publishes a (non-pre-)release | `TRIGGER_PATCHES` | `configs/build.json` regenerates and builds |
+| An app's own version changed in a tracked store | `TRIGGER_APP_UPDATE` | membership is reconsidered |
 | A source is blocked or unblocked (`404`/`451`/`403` from the forge) | `TRIGGER_BLOCKED` | regenerates membership, so frozen sources drop out and recovered ones return |
 | Nothing moved | all `0` | no config write, no notification, no build |
 
@@ -79,11 +75,10 @@ forge answers again. The deliberate fail-open inside that check is recorded in
 
 ### Ordering and safety rails
 
-- `build_beta` runs first; `build_stable` `needs` it and additionally requires the
-  watcher to have succeeded and beta not to have been cancelled. The single
-  `build` concurrency group therefore serialises every manifest merge against
-  `state/` on `main` — two builders never merge at once.
-- `trigger_cleanup` runs on `always()` if either build succeeded.
+- The one `build` job `needs` the watcher and runs only when it succeeded and
+  `trigger_build` is `1`. The `build` concurrency group serialises every manifest
+  merge against `state/` on `main` — two builders never merge at once.
+- `trigger_cleanup` runs on `always()` if the build succeeded.
 - `ci_trigger_flags.sh` writes outputs with explicit `if` blocks rather than
   `[ … ] || [ … ] && var=` lists on purpose: under `set -e` a short-circuit list
   whose final command never runs exits non-zero and would kill the step *before*
@@ -91,20 +86,13 @@ forge answers again. The deliberate fail-open inside that check is recorded in
 
 ## The build job (`build.yml`)
 
-Called once per pool by the watcher with `config_file` (and optional `remove_apks`), or
-dispatched by hand with `config_file`: `all` (the default, **every app in one run**), `stable`, `beta`
-(just that channel) or `manual` (`configs/config.manual.toml`).
-A `plan` job (`build_plan_configs.sh`) turns `config_file` into the matrix of the `build` job:
-`all` becomes `all:stable` and then `all:beta` (a pool with no app is left out, neither having one
-is an error), `stable`/`beta` build that one pool (an empty one is an error naming how an app opts
-in), any other value is built as the file it names, and an unknown value fails loudly. An `all:<pool>`
-entry is **compiled fresh from `configs/config.toml`** (`build_prepare_config.sh` →
-`compile_patch_configs.py`), so it holds every enabled app routed to that pool. It deliberately is
-not the watcher's `configs/*_build.json`: those record what the watcher decided to build next, and
-in the beta pool that is nobody unless a source's beta is newer than stable (every app there is
-written `enabled: false`), so building them for "everything" would build nothing.
-The matrix runs one pool at a time (`max-parallel: 1`: each pool has its own release tag, channel,
-archive and manifest merge) and `fail-fast: false`, so a pool that fails does not stop the other.
+One job. The watcher calls it with `config_file: configs/build.json` (and optional `remove_apks`);
+a hand dispatch picks `all` (the default: **every enabled app in one run**) or `manual`
+(`configs/config.manual.toml`). The "Prepare config" step (`build_prepare_config.sh`) turns that
+into the config file: `all` is **compiled fresh from `configs/config.toml`**
+(`compile_patch_configs.py` → `config.json`), so it holds every enabled app; it deliberately is not
+the watcher's `configs/build.json`, which records only what was due. Any other value is the file it
+names, and an unknown value fails loudly.
 Everything the job needs to be reproducible lives in that one file, including the tuning knobs —
 `PARALLEL_JOBS: "1"` and `UPLOAD_CONCURRENCY: "12"` are workflow env values, not
 repo variables, so they are visible in PRs, survive forks, and carry git history
@@ -121,9 +109,8 @@ Step order, with the reason each is where it is:
 1. Java 21 (Temurin) → checkout `main` with `fetch-depth: 0` and submodules (full
    history is needed to enumerate existing tags). `configs/` and `state/` come with the
    checkout — they are tracked on `main`.
-2. `build_resolve_context.sh` maps the config file to `ARCHIVE_TAG`,
-   `IS_PRERELEASE`, `TITLE_SUFFIX` and the Telegram thread — the single owner of
-   "which channel is this run".
+2. `build_resolve_context.sh` names `ARCHIVE_TAG` (`stable`) and the Telegram thread,
+   and checks that the config exists.
 3. Install Bouncy Castle **only if** `patchers.py needs-bks` says a module in this
    config requires a BKS keystore.
 4. `install_keystore.sh` writes the signing identity from secrets.
@@ -143,7 +130,7 @@ Step order, with the reason each is where it is:
    append does not corrupt it).
 10. `build_make_manifest.py` → `temp/manifest/build.json`.
 11. **Upload to release** (numbered): title `Build No. <code>`, body from
-    `build.md`, `--prerelease` for beta.
+    `build.md`, never a pre-release.
 12. **Update changelog and module update files**: `build_update_changelog.sh`
     checks out `update`, writes `changelogs/<code>.md` plus one JSON pointer per
     module zip, and lists the exact paths it created in `.updated_pointers`. The
@@ -198,7 +185,7 @@ Step order, with the reason each is where it is:
 | secret | `CODEBERG_TOKEN` | watcher | raises Codeberg/Forgejo rate limits |
 | secret | `TG_TOKEN`, `WEBSITE_DISPATCH_TOKEN` (optional) | notify steps | |
 | var | `APKS_REPO`, `WEBSITE_REPO` | build, cleanup | the stock-APK cache repo and the site repo. **No default**: unset turns the cache (read and write, and the usage tracker) and the `catalog-updated` dispatch off, so a fork never talks to the upstream's repositories |
-| var | `TG_CHAT_ID`, `TG_CHAT_ID_BROADCAST`, `TG_THREAD_CI`, `TG_THREAD_STABLE`, `TG_THREAD_BETA`, `TG_THREAD_NOTIFY` | notifications | Telegram destinations. **No default**: with `TG_TOKEN` but no `TG_CHAT_ID` nothing is posted, and an unset thread id is simply not sent |
+| var | `TG_CHAT_ID`, `TG_CHAT_ID_BROADCAST`, `TG_THREAD_CI`, `TG_THREAD_STABLE` (the build thread), `TG_THREAD_NOTIFY` | notifications | Telegram destinations. **No default**: with `TG_TOKEN` but no `TG_CHAT_ID` nothing is posted, and an unset thread id is simply not sent |
 | var | `RELEASE_NOTES_TG_LINK`, `RELEASE_NOTES_DONATE_LINK`, `RELEASE_NOTES_WEBSITE_LINK` | build | footer links in the generated release body; a link that is unset is left out |
 | var | `RVB_MORPHE_PASSTHROUGH` | build | bundle handling escape hatch |
 

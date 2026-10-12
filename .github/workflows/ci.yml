@@ -34,8 +34,7 @@ jobs:
         ports:
           - 8000:8000
     outputs:
-      trigger_stable: ${{ steps.effective_triggers.outputs.TRIGGER_STABLE }}
-      trigger_beta: ${{ steps.effective_triggers.outputs.TRIGGER_BETA }}
+      trigger_build: ${{ steps.effective_triggers.outputs.TRIGGER_BUILD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -71,8 +70,7 @@ jobs:
       - name: Classify triggers
         id: flags
         env:
-          TRIGGER_STABLE: ${{ steps.sync_patch_sources.outputs.TRIGGER_STABLE || '0' }}
-          TRIGGER_BETA: ${{ steps.sync_patch_sources.outputs.TRIGGER_BETA || '0' }}
+          TRIGGER_PATCHES: ${{ steps.sync_patch_sources.outputs.TRIGGER_PATCHES || '0' }}
           TRIGGER_BLOCKED: ${{ steps.sync_patch_sources.outputs.TRIGGER_BLOCKED || '0' }}
           TRIGGER_APP_UPDATE: ${{ steps.compare_apps.outputs.TRIGGER_APP_UPDATE || '0' }}
         run: bash .github/scripts/ci_trigger_flags.sh
@@ -87,8 +85,7 @@ jobs:
         if: ${{ steps.flags.outputs.ANYTHING_CHANGED == '1' }}
         id: generate_configs
         env:
-          TRIGGER_STABLE: ${{ steps.sync_patch_sources.outputs.TRIGGER_STABLE }}
-          TRIGGER_BETA: ${{ steps.sync_patch_sources.outputs.TRIGGER_BETA }}
+          TRIGGER_PATCHES: ${{ steps.sync_patch_sources.outputs.TRIGGER_PATCHES }}
           TRIGGER_APP_UPDATE: ${{ steps.compare_apps.outputs.TRIGGER_APP_UPDATE }}
           TRIGGER_BLOCKED: ${{ steps.sync_patch_sources.outputs.TRIGGER_BLOCKED }}
         run: bash .github/scripts/ci_generate_configs.sh
@@ -96,8 +93,7 @@ jobs:
       - name: Resolve effective triggers
         id: effective_triggers
         env:
-          RAW_TRIGGER_STABLE: ${{ steps.sync_patch_sources.outputs.TRIGGER_STABLE || '0' }}
-          RAW_TRIGGER_BETA: ${{ steps.sync_patch_sources.outputs.TRIGGER_BETA || '0' }}
+          RAW_TRIGGER_PATCHES: ${{ steps.sync_patch_sources.outputs.TRIGGER_PATCHES || '0' }}
           RAW_TRIGGER_APP_UPDATE: ${{ steps.compare_apps.outputs.TRIGGER_APP_UPDATE || '0' }}
         run: bash .github/scripts/ci_resolve_triggers.sh
 
@@ -107,47 +103,37 @@ jobs:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT_ID: "${{ vars.TG_CHAT_ID }}"
           TG_THREAD_CI: "${{ vars.TG_THREAD_CI }}"
-          TRIGGER_STABLE: ${{ steps.sync_patch_sources.outputs.TRIGGER_STABLE }}
-          TRIGGER_BETA: ${{ steps.sync_patch_sources.outputs.TRIGGER_BETA }}
+          TRIGGER_PATCHES: ${{ steps.sync_patch_sources.outputs.TRIGGER_PATCHES }}
           TRIGGER_APP_UPDATE: ${{ steps.compare_apps.outputs.TRIGGER_APP_UPDATE }}
-          EFFECTIVE_STABLE: ${{ steps.effective_triggers.outputs.TRIGGER_STABLE }}
-          EFFECTIVE_BETA: ${{ steps.effective_triggers.outputs.TRIGGER_BETA }}
+          EFFECTIVE_BUILD: ${{ steps.effective_triggers.outputs.TRIGGER_BUILD }}
         run: bash .github/scripts/ci_notify_telegram.sh
 
       - name: Commit updated patch sources and configs
         if: ${{ steps.flags.outputs.ANYTHING_CHANGED == '1' }}
-        # Commits state/*.json + configs/*_build.json onto main (plumbing only: the
+        # Commits state/*.json + configs/build.json onto main (plumbing only: the
         # checkout is never switched). Only these generated files are named, so the
         # hand-edited TOMLs can never ride along.
         run: |
           bash .github/scripts/commit_to_main.sh \
             "chore: update generated patch sources, app versions and configs" \
-            configs/*_build.json state/*.json
+            configs/build.json state/*.json
 
-  build_beta:
+  build:
     needs: check_patch
-    if: ${{ needs.check_patch.outputs.trigger_beta == '1' }}
+    if: ${{ needs.check_patch.outputs.trigger_build == '1' }}
     uses: ./.github/workflows/build.yml
     with:
-      config_file: "configs/beta_build.json"
-    secrets: inherit
-
-  build_stable:
-    needs: [check_patch, build_beta]
-    if: ${{ always() && needs.check_patch.outputs.trigger_stable == '1' && needs.check_patch.result == 'success' && needs.build_beta.result != 'cancelled' }}
-    uses: ./.github/workflows/build.yml
-    with:
-      config_file: "configs/stable_build.json"
+      config_file: "configs/build.json"
     secrets: inherit
 
   trigger_cleanup:
-    needs: [build_beta, build_stable]
-    if: ${{ always() && (needs.build_beta.result == 'success' || needs.build_stable.result == 'success') }}
+    needs: [build]
+    if: ${{ always() && needs.build.result == 'success' }}
     uses: ./.github/workflows/cleanup.yml
     secrets: inherit
 
   trigger_notify_failure:
-    needs: [check_patch, build_beta, build_stable]
+    needs: [check_patch, build]
     if: ${{ failure() }}
     uses: ./.github/workflows/notify.yml
     with:

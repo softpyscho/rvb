@@ -13,9 +13,9 @@ human-only; for a single-maintainer fork that cost more than it bought — see
 |---|---|---|---|
 | engine, workflows, scripts, `module/`, `bin/`, `docs/`, `CONFIG.md` | code | maintainer | every CI job |
 | `configs/config.toml`, `configs/config.manual.toml` | **your app configuration** | maintainer (a normal commit) | watcher, builds, `obtainium.py` |
-| `configs/{stable,beta}_build.json` | generated pool configs | watcher, via `commit_to_main.sh` | builds |
+| `configs/build.json` | generated build config (the apps that are due) | watcher, via `commit_to_main.sh` | builds |
 | `state/{patch_sources,app_versions,patch_file_hashes}.json` | watcher memory | watcher, via `commit_to_main.sh` | watcher, builds |
-| `state/manifests/<tag>.json`, `state/archive/{stable,beta}.json` | build metadata | `merge_archive_manifest.sh`; pruned by `cleanup_manifests.sh` | `obtainium.py` (README table); a download site, if one exists |
+| `state/manifests/<tag>.json`, `state/archive/stable.json` | build metadata (a frozen `beta.json` from the retired beta archive may remain) | `merge_archive_manifest.sh`; pruned by `cleanup_manifests.sh` | `obtainium.py` (README table); a download site, if one exists |
 | `README.md` apps section | generated table | `update_readme.sh`, via plumbing | readers |
 
 The one other branch that can ever exist is `update` (`changelogs/<code>.md`,
@@ -59,7 +59,7 @@ Schema v1 envelope (produced by `build_make_manifest.py`):
 {
   "schema": 1,
   "kind": "build" | "archive",
-  "meta": { "build": "<tag>", "channel": "stable" | "beta", "publishedAt": "<iso>" },
+  "meta": { "build": "<tag>", "channel": "stable", "publishedAt": "<iso>" },
   "files": { "<exact asset filename>": { … per-file entry … } }
 }
 ```
@@ -85,8 +85,7 @@ when it is exactly as its publisher signed it; absent for a patched app (always 
 file built before it was recorded. The README's Signature column reads it. Added 2026-10-12, for a patched
 app only: `experimental` — `true` when the built version is one the patch bundle lists only as
 experimental (present with the CLI's `-x` listing, absent from the stable one), `false` when it lists it as
-stable, absent when the tool cannot say. With the archive the file sits in (`stable` or `beta`, the patch
-bundle channel), it feeds the README's Channel column.
+stable, absent when the tool cannot say. It feeds the README's Channel column.
 
 The `<arch>` token in an asset filename is frozen grammar (parse it only through
 `.github/scripts/naming.py`). A manifest records exactly the arches a build
@@ -97,7 +96,7 @@ file ([decisions/0007](decisions/0007-requested-arch-is-a-hard-requirement.md)).
 An archive envelope restamps `meta` as `{build: <channel>, channel: <channel>,
 publishedAt: <merge time>}` while keeping the surviving file entries.
 
-Merge semantics for `state/archive/<channel>.json` (`merge_archive_manifest.sh`):
+Merge semantics for `state/archive/stable.json` (`merge_archive_manifest.sh`):
 
 1. Fetch `origin/main` and read the current cumulative file from its tip. A fetch
    failure **fails the job** — there is deliberately no "start from empty" path,
@@ -124,7 +123,7 @@ Wire format baked into shipped software. A module zip's `module.prop` carries
 [scripts/utils.sh](../scripts/utils.sh) is the single derivation:
 
 ```
-module id  <table>-<author>[-beta][-arm64|-arm]     (build.sh composes it)
+module id  <table>-<author>[-arm64|-arm]          (build.sh composes it; a retired "-beta" suffix survives only in modules installed earlier)
 pointer    <channel>/<id-without-author-or-channel>.json   → stable/youtube.json
                                                       → beta/youtube-arm64.json
 changelog  changelogs/<build-code>.md
@@ -144,11 +143,11 @@ URL and would 404, which is a forced re-flash for the user.
 
 | | Numbered | Archive |
 |---|---|---|
-| Tags | `260141`, `260140`, … (`YY` + sequence) | `stable`, `beta` |
+| Tags | `260141`, `260140`, … (`YY` + sequence) | `stable` (a retired `beta` may remain) |
 | Lifetime | append-only; newest 98 survive cleanup | permanent (`releases_keep_keyword`) |
 | Contents | this build's APKs + module zips | cumulative, pruned to 2 versions per app+arch |
 | Title/body | generated per build | **owner-written**; CI names no metadata |
-| Pre-release flag | `--prerelease` on beta runs | set once by hand (`beta` only) |
+| Pre-release flag | never set by CI | never set by CI |
 | `build.json` | no (moved to `state/manifests/`) | no |
 
 Asset filename grammar — the contract every consumer parses:

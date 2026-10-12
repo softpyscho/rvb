@@ -31,10 +31,15 @@ main_config_t=$(toml_get_table_main)
 COMPRESSION_LEVEL=$(toml_get "$main_config_t" compression-level) || COMPRESSION_LEVEL="9"
 REMOVE_RV_INTEGRATIONS_CHECKS=$(toml_get "$main_config_t" remove-rv-integrations-checks) || REMOVE_RV_INTEGRATIONS_CHECKS="false"
 DEF_PATCHES_VER=$(toml_get "$main_config_t" patches-version) || DEF_PATCHES_VER="stable"
-# "both" means "whichever pool this config is for", and the only signal for that is
-# the file being built: the beta pool is configs/beta_build.json (a hand-written
-# config names itself with .beta.).
-[ "$DEF_PATCHES_VER" = "both" ] && { if [[ "${1:-}" == *"beta"* ]]; then DEF_PATCHES_VER="beta"; else DEF_PATCHES_VER="stable"; fi; }
+# There is one build and no beta channel: "stable" (the default) or a pinned tag. The two words
+# that used to route a pool are rejected, not guessed at - an app left on "beta" would otherwise
+# be looked up as a release tag called "beta".
+reject_retired_channel() {
+	if isoneof "${1,,}" beta both; then
+		abort "patches-version = \"$1\"${2:+ in $2}: there is no beta channel any more; remove the key (the latest stable release is the default) or pin a release tag"
+	fi
+}
+reject_retired_channel "$DEF_PATCHES_VER" "the file-level defaults"
 DEF_CLI_VER=$(toml_get "$main_config_t" cli-version) || DEF_CLI_VER="stable"
 DEF_PATCHES_SRC=$(toml_get "$main_config_t" patches-source) || DEF_PATCHES_SRC="MorpheApp/morphe-patches"
 DEF_PATCHES_SRC_HOST=$(toml_get "$main_config_t" patches-source-host) || DEF_PATCHES_SRC_HOST="github"
@@ -177,9 +182,7 @@ for table_name in $(toml_get_table_names); do
 	patches_src=$(toml_get "$t" patches-source) || patches_src=$DEF_PATCHES_SRC
 	patches_src_host=$(toml_get "$t" patches-source-host) || patches_src_host=$DEF_PATCHES_SRC_HOST
 	patches_ver=$(toml_get "$t" patches-version) || patches_ver=$DEF_PATCHES_VER
-	# "both" is not a channel — it is routing, resolved here from the config being
-	# built: a beta-named file, or a file-level default already set to beta.
-	[ "$patches_ver" = "both" ] && { if [[ "${1:-}" == *"beta"* ]] || [ "$DEF_PATCHES_VER" = "beta" ]; then patches_ver="beta"; else patches_ver="stable"; fi; }
+	reject_retired_channel "$patches_ver" "[$table_name]"
 	# mirror = true re-hosts the stock APK unmodified (mirror_rv in utils.sh), so none of the
 	# patch machinery below applies: no CLI, no bundle, no patch lists. Anything that would
 	# configure it is rejected rather than ignored - a mirrored app that silently dropped its
@@ -342,13 +345,6 @@ for table_name in $(toml_get_table_names); do
 	table_name_f=${table_name,,}
 	table_name_f=${table_name_f// /-}
 	app_args[module_prop_name]=$(toml_get "$t" module-prop-name) || app_args[module_prop_name]="${table_name_f}-${DEF_AUTHOR_NAME}"
-
-	# Automatically append -beta to the module ID for pre-release builds
-	# so they have an independent update channel in Magisk. The channel value is
-	# only ever "stable" or "beta"; the glob is the beta pool's own filename.
-	if { [[ "${1:-}" == *"beta"* ]] || [ "${DEF_PATCHES_VER:-}" = "beta" ] || [ "${patches_ver:-}" = "beta" ]; } && [[ "${app_args[module_prop_name]}" != *"-beta"* ]]; then
-		app_args[module_prop_name]="${app_args[module_prop_name]}-beta"
-	fi
 
 	if [ "${app_args[arch]}" = both ]; then
 		module_prop_name_b=${app_args[module_prop_name]}

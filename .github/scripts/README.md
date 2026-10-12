@@ -17,9 +17,9 @@ builder (utils.sh)                build.yml
                         ▼                          ▼ (after archive upload)
             temp/manifest/*.json        merge_archive_manifest.sh
             (not uploaded anymore)       │ writes state/manifests/<tag>.json
-                                         │ + merges state/archive/<channel>.json
+                                         │ + merges state/archive/stable.json
                                          ▼   (union, live-filter, commit_to_main.sh)
-                        main: state/archive/{stable,beta}.json
+                        main: state/archive/stable.json
 ```
 
 ## Per-build pipeline (runs in CI)
@@ -27,13 +27,13 @@ builder (utils.sh)                build.yml
 ### `build_make_manifest.py`
 Converts the builder's raw `build.json` into the unified filename-keyed
 manifest (`temp/manifest/build.json`) that everything downstream consumes.
-Env: `NEXT_VER_CODE` (release tag), `IS_PRERELEASE` (→ channel `beta`/`stable`).
+Env: `NEXT_VER_CODE` (release tag). The manifest's `channel` is always `stable`.
 
 ### `generate_release_notes.py`
 Writes `build.md`, the numbered release's body, from `build.json` + `build/` at the end of
 `build.sh`: apps grouped by patch source (mirrored apps last), per-arch download links, an
-applied-patch list per app and a per-app Obtainium link (HTML source on the rolling `stable`/`beta` archive page; its link filter selects that app's file and its version regex reads the app's own version out of the file name - for an app that keeps its source's own file name, whose name embeds a date or hash, the stable lead of the name plus a wildcard, so the link still matches the next build)
-(`IS_PRERELEASE=true` marks the beta pool and flips the link's pre-release switch). The same file is
+applied-patch list per app and a per-app Obtainium link (HTML source on the rolling `stable` archive page; its link filter selects that app's file and its version regex reads the app's own version out of the file name - for an app that keeps its source's own file name, whose name embeds a date or hash, the stable lead of the name plus a wildcard, so the link still matches the next build)
+The same file is
 relayed to Telegram, which keeps only the plain Markdown grammar, so GitHub-only markup sits on lines
 `build_notify_telegram.sh` drops (`<…`, `![`, `> `, any line holding an Obtainium link). Footer links
 come only from the `RELEASE_NOTES_*_LINK` variables — nothing is defaulted. Filename/arch parsing is
@@ -41,7 +41,7 @@ imported from `naming.py`, not re-implemented here.
 
 ### `obtainium.py`
 The one definition of an Obtainium entry for this repository (the complete app object Obtainium reads
-back, filter regex, version-detection off, fall-back to older releases, pre-release switch; the link is
+back, filter regex, version-detection off, fall-back to older releases; the link is
 the whole deep link percent-encoded once behind `apps.obtainium.imranr.dev/redirect?r=`) — imported by
 `generate_release_notes.py` and used as a CLI to regenerate `OBTAINIUM.md`, `obtainium-apps.json` and the
 README's apps section from the TOML config (`--configs configs/config.toml --repo owner/repo --page … --json …
@@ -94,7 +94,7 @@ Merges the current build's manifest into `main`: writes
 `state/manifests/<tag>.json` and updates the cumulative `state/archive/<channel>.json`
 (union, live-filter against the release's APK/ZIP assets, sanity gate) and
 commits both with `commit_to_main.sh`. Run **after** the archive file upload so the live-asset filter sees the
-new files. Env: `ARCHIVE_TAG` (`stable`|`beta`), `BUILD_TAG` (this release's
+new files. Env: `ARCHIVE_TAG` (`stable`; a retired `beta` still merges), `BUILD_TAG` (this release's
 tag), `GITHUB_REPOSITORY`.
 
 Keeping the manifests in git removes the 2026-09-24 incident class by construction: the

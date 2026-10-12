@@ -7,16 +7,9 @@ dos2unix scripts/utils.sh 2>/dev/null || true
 source scripts/utils.sh
 set_prebuilts
 
-# Use pre-compiled configs if available, or compile as fallback
-CONFIG_INPUTS=()
-[ -f config.stable.json ] && CONFIG_INPUTS+=(config.stable.json)
-[ -f config.beta.json ] && CONFIG_INPUTS+=(config.beta.json)
-
-if [ ${#CONFIG_INPUTS[@]} -eq 0 ]; then
-    python3 .github/scripts/compile_patch_configs.py
-    [ -f config.stable.json ] && CONFIG_INPUTS+=(config.stable.json)
-    [ -f config.beta.json ] && CONFIG_INPUTS+=(config.beta.json)
-fi
+# Use the pre-compiled config if available, or compile as fallback
+[ -f config.json ] || python3 .github/scripts/compile_patch_configs.py
+CONFIG_INPUTS=(config.json)
 
 mkdir -p state
 [ -f state/app_versions.json ] || echo '{}' > state/app_versions.json
@@ -26,7 +19,7 @@ CHECK_ONLY_LISTED=$(jq -r '."_check_only_listed" // false' state/app_versions.js
 if [ "$CHECK_ONLY_LISTED" = "true" ]; then
     jq -r 'to_entries | map(select(.key | startswith("_") | not)) | .[] | "\(.key)|\(.value.keys[0])"' state/app_versions.json > check_list.txt
 else
-    # All enabled apps across stable and beta configs. "Enabled" is the default
+    # All enabled apps of the config. "Enabled" is the default
     # (CONFIG.md: enabled = true), so a table that never writes the key still counts: the
     # compiled pools omit disabled apps already, and requiring an explicit `true` here
     # silently exempted every app whose TOML relied on the default from version checks -

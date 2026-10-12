@@ -33,17 +33,15 @@ trap 'rm -rf "$WORK"' EXIT
 # are kept apart on purpose: this runs under `if`/`$( )`, where `set -e` does not apply, so every
 # step that can fail says so explicitly - a broken generation must never read as "nothing to do".
 build_commit() {
-	local base=$1 idx blob tree manifests=() ch
+	local base=$1 idx blob tree manifests=()
 	mkdir -p "$WORK/cfg" || return 2
 	git archive "$base" configs/config.toml | tar -x -C "$WORK/cfg" || return 2
 	git show "$base:README.md" > "$WORK/README.md" || return 2
-	for ch in stable beta; do
-		# a channel that has never published has no archive manifest yet; that is not an error
-		if git cat-file -e "$base:state/archive/$ch.json" 2> /dev/null; then
-			git show "$base:state/archive/$ch.json" > "$WORK/$ch.json" || return 2
-			manifests+=(--manifest "$WORK/$ch.json")
-		fi
-	done
+	# a repository that has never published has no archive manifest yet; that is not an error
+	if git cat-file -e "$base:state/archive/stable.json" 2> /dev/null; then
+		git show "$base:state/archive/stable.json" > "$WORK/stable.json" || return 2
+		manifests+=(--manifest "$WORK/stable.json")
+	fi
 	python3 "$SCRIPTS/obtainium.py" --configs "$WORK/cfg/configs/config.toml" --repo "$REPO" --readme "$WORK/README.md" "${manifests[@]}" > /dev/null || return 2
 	if git show "$base:README.md" | cmp -s - "$WORK/README.md"; then
 		return 3

@@ -75,7 +75,7 @@ Releases, records build metadata in the repository (`state/`), and feeds a stati
 | `.github/traces/` | fixtures + `curl`/`java` stubs + golden argv files; the engine's safety net |
 | `configs/config.toml` | the actual app configuration — one file, every app |
 | `state/*.json` | watcher memory: patch source tags/blocked flags, app versions, bundle hashes |
-| `state/manifests/`, `state/archive/` | build metadata: one manifest per numbered release + the cumulative `stable`/`beta` archive manifests (schema v1) |
+| `state/manifests/`, `state/archive/` | build metadata: one manifest per numbered release + the cumulative `stable` archive manifest (schema v1) |
 | `module/` | Magisk/KernelSU module template (scripted `module.prop`, `config`, `service.sh`, `action.sh`, bundled binaries) |
 | `README.md` apps section, `OBTAINIUM.md`, `obtainium-apps.json` | generated from `configs/config.toml` (+ `state/archive/`) by `obtainium.py`; the README section is refreshed by CI after each build |
 | `bin/` | vendored tools: `aapt2`, `htmlq`, `toml/tq` (per-arch), `apksigner.jar`, `dexlib2.jar`, `paccer.jar` |
@@ -86,18 +86,18 @@ Releases, records build metadata in the repository (`state/`), and feeds a stati
 
 | Branch | Holds | Written by |
 |---|---|---|
-| `main` | code + docs, `configs/` (TOMLs + generated pool JSON), `state/` (watcher JSONs, `manifests/<tag>.json`, `archive/{stable,beta}.json`) | humans (code, TOML); CI via `commit_to_main.sh` (JSON, manifests, README table) |
+| `main` | code + docs, `configs/` (TOMLs + the generated `build.json`), `state/` (watcher JSONs, `manifests/<tag>.json`, `archive/stable.json`) | humans (code, TOML); CI via `commit_to_main.sh` (JSON, manifests, README table) |
 | `update` | `<channel>/<module-id>.json` pointers, `changelogs/<code>.md` | build job, only when modules were built (never in an APK-only fork) |
 
-Releases: numbered (`260141`) = immutable per-build; `stable`/`beta` = rolling
-archives whose metadata CI never touches. External: `nullcpy/apks` = shared
+Releases: numbered (`260141`) = immutable per-build; `stable` = the rolling
+archive whose metadata CI never touches. External: `nullcpy/apks` = shared
 download cache (release per package name). Full detail:
 [storage-and-branches.md](storage-and-branches.md) and
 [cache-repo.md](cache-repo.md).
 
 ## Version resolution precedence (highest first)
 
-1. Explicit `version` in the app's TOML — a tag, or `exp` / `latest` / `beta`.
+1. Explicit `version` in the app's TOML — a tag, or `exp` / `latest`.
 2. The version the patch bundle advertises under `auto` — a tested compatibility
    guarantee, unlike chasing upstream latest.
 3. `state/app_versions.json`, reached only when the CLI advertises nothing.
@@ -133,7 +133,7 @@ source and the arch goes unbuilt if none supplies it
 | No workflow defaults point at `nullcpy/apks`, the upstream site or its Telegram chats | a fork must opt in to every satellite; an unset value switches the feature off instead of sending traffic to somebody else's repository → [fork-setup.md](fork-setup.md) |
 | Tuning values sit in `build.yml` `env:` rather than in config or repo variables | reviewable, fork-safe, git history for the numbers → [decisions/0005](decisions/0005-tuning-knobs-live-in-the-workflow.md) |
 | A malformed `patch_sources.json` answers "not blocked" instead of failing closed | fail-open on purpose: the alternative silently skips every app → [decisions/0003](decisions/0003-blocked-patch-sources-are-skipped.md) |
-| `configs/stable_build.json` keeps `patches-version: "stable"` rather than a tag | one source of truth (`state/patch_sources.json`) instead of a stamped copy that can go stale |
+| `configs/build.json` keeps `patches-version: "stable"` rather than a tag | one source of truth (`state/patch_sources.json`) instead of a stamped copy that can go stale |
 
 ## Task → start here
 
@@ -166,11 +166,10 @@ gh run list --repo nullcpy/rvb                       # what ran and how
 
 ## Glossary
 
-**pool** — one channel's generated config (`configs/{stable,beta}_build.json`) and
-the build run from it. **channel** — `stable` | `beta`, the only two keywords.
+**build config** — the watcher's generated `configs/build.json`: the apps that are due.
+There is one build and no beta channel; `patches-version` is `stable` (default) or a pinned tag.
 **watcher** — `ci.yml`, which decides whether anything needs building. **prebuilts**
 — the patcher CLI jar + patch bundles downloaded per source release. **bundle** — a
 multi-APK container (`.xapk`/`.apkm`/`.apks`). **manifest** — a schema-v1,
 filename-keyed JSON of what a build produced. **pointer** — a module's
-`<channel>/<id>.json` update record. **archive release** — the rolling `stable` /
-`beta` release. **golden** — a recorded expected argv trace under `.github/traces/goldens/`.
+`<channel>/<id>.json` update record. **archive release** — the rolling `stable` release. **golden** — a recorded expected argv trace under `.github/traces/goldens/`.

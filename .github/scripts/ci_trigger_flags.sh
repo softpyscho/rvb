@@ -12,25 +12,24 @@ set -euo pipefail
 #                    got blocked/unblocked: enough to reshape the generated
 #                    configs, so regenerate, notify and commit.
 #
-# The per-channel flags stay owned by their producers: ci_generate_configs.sh
-# reads TRIGGER_STABLE/TRIGGER_BETA to pick which pool to rebuild, and
-# ci_resolve_triggers.sh turns them into the effective build triggers once the
-# pools exist. This step only answers "is there any work left downstream".
+# The flags stay owned by their producers: ci_generate_configs.sh reads TRIGGER_PATCHES to
+# decide whether to regenerate configs/build.json, and ci_resolve_triggers.sh turns them into
+# the effective build trigger once the config exists. This step only answers "is there any work
+# left downstream".
 #
 # Written with explicit `if` blocks rather than `[ .. ] || [ .. ] && assign`
 # lists on purpose: under set -e a short-circuit list whose final command never
 # runs exits non-zero, which would kill this step before it wrote its outputs
 # and silently turn every dependent step into a no-op.
 
-TRIGGER_STABLE=${TRIGGER_STABLE:-0}
-TRIGGER_BETA=${TRIGGER_BETA:-0}
+TRIGGER_PATCHES=${TRIGGER_PATCHES:-0}
 TRIGGER_BLOCKED=${TRIGGER_BLOCKED:-0}
 TRIGGER_APP_UPDATE=${TRIGGER_APP_UPDATE:-0}
 
 sources_changed=0
 anything_changed=0
 
-if [ "$TRIGGER_STABLE" = "1" ] || [ "$TRIGGER_BETA" = "1" ]; then
+if [ "$TRIGGER_PATCHES" = "1" ]; then
   sources_changed=1
 fi
 

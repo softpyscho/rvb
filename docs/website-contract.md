@@ -10,7 +10,7 @@ notices, search engine, Obtainium flow) are documented by its own guide:
 
 | Channel | Direction | Format | Stability |
 |---|---|---|---|
-| `state/manifests/`, `state/archive/` on rvb's `main` | rvb → site | `<tag>.json`, `{stable,beta}.json`, schema v1 | **the contract**; the site sparse-clones these two directories (they were the `website` branch's `manifests/` and `archive/` until 2026-10-06, [decisions/0008](decisions/0008-one-branch.md) — a site still cloning that branch must be repointed) |
+| `state/manifests/`, `state/archive/` on rvb's `main` | rvb → site | `<tag>.json`, `stable.json` (and a frozen `beta.json` from the retired beta archive), schema v1 | **the contract**; the site sparse-clones these two directories (they were the `website` branch's `manifests/` and `archive/` until 2026-10-06, [decisions/0008](decisions/0008-one-branch.md) — a site still cloning that branch must be repointed) |
 | GitHub Releases API | site → GitHub | asset existence, size, `downloadCount`, browser download URLs | queried live, never cached in git |
 | `catalog-updated` dispatch | rvb → site | `repository_dispatch` event type | name only; a lost dispatch is recovered by schedule |
 | `update` branch pointers | phone → rvb | `module.prop` `updateJson` URL + JSON | baked into installed modules |
@@ -26,7 +26,7 @@ regenerates from rvb's manifests.
 ```
 rvb: merge_build_info → build.json → build_make_manifest.py → temp/manifest/build.json
                                                             ↓ (after archive upload)
-rvb:  main: state/manifests/<tag>.json  +  state/archive/<channel>.json
+rvb:  main: state/manifests/<tag>.json  +  state/archive/stable.json
                                                             ↓ sparse clone of main (state/)
 site: rebuild-catalog.yml → rebuild_catalog.py → data.json (schema v2) → deploy-pages.yml
                                                             ↑

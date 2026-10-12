@@ -83,7 +83,7 @@ class Obtainium(unittest.TestCase):
 
     def test_deep_link_roundtrip_and_settings(self):
         lf, ver = obtainium.name_patterns("x-morphe", "arm64-v8a")
-        entry = obtainium.app_entry("com.x", "X", REPO, lf, ver, prerelease=False)
+        entry = obtainium.app_entry("com.x", "X", REPO, lf, ver)
         _, got, settings = decode_link(obtainium.redirect_link(entry))
         # HTML source over the rolling archive release: the version is read from the file name,
         # which the GitHub source (tag or title only) cannot do - it showed the build number
@@ -94,10 +94,6 @@ class Obtainium(unittest.TestCase):
         self.assertIs(settings["versionDetection"], False)
         self.assertIs(settings["sortByLastLinkSegment"], True, "newest = last by file name")
         self.assertIs(settings["trackOnly"], False)
-        # control: the pre-release channel changes the page and nothing else
-        beta = obtainium.app_entry("com.x", "X", REPO, lf, ver, prerelease=True)
-        self.assertEqual(beta["url"], f"https://github.com/{REPO}/releases/expanded_assets/beta")
-        self.assertEqual(json.loads(beta["additionalSettings"]), settings)
 
     def test_standard_version_detection_is_on_for_mirrors_only(self):
         """A mirrored APK is unmodified and named by its own versionName, so Obtainium can compare
@@ -194,25 +190,11 @@ class Obtainium(unittest.TestCase):
         self.assertIsNotNone(re.search(st["customLinkFilterRegex"], nxt), "the link must keep working next build")
         self.assertEqual(re.search(st["versionExtractionRegEx"], nxt).group(1), "2026.10.07-aaaaaaaaaaaa")
 
-    def test_beta_pool_apps_read_the_beta_archive(self):
-        # no app of the real config is on the beta patches now (Piko's stable supports Instagram's build
-        # too), so the beta pool is exercised with a config written for the test
-        with tempfile.TemporaryDirectory() as d:
-            (Path(d) / "c.toml").write_text(
-                'patches-source = "o/r"\n[Beta-App]\npkg-name = "a.beta"\npatches-version = "beta"\napkpure-dlurl = "https://apkpure.com/x/a.beta"\n'
-                '[Stable-App]\npkg-name = "a.stable"\napkpure-dlurl = "https://apkpure.com/y/a.stable"\n', encoding="utf-8")
-            specs = {s["key"]: s for s in obtainium.specs_from_configs(d)}
-        self.assertTrue(specs["Beta-App"]["prerelease"])
-        self.assertFalse(specs["Stable-App"]["prerelease"], "control: a default app is not a pre-release")
-        for key, tag in (("Beta-App", "beta"), ("Stable-App", "stable")):
-            entry = obtainium.entry_for_spec(specs[key], REPO)
-            self.assertEqual(entry["url"], f"https://github.com/{REPO}/releases/expanded_assets/{tag}", key)
-
-    def test_the_real_config_has_no_beta_app(self):
-        specs = {s["key"]: s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
-        for key in ("Instagram", "Battery-Guru", "Reddit"):
-            self.assertFalse(specs[key]["prerelease"], key)
-            self.assertEqual(obtainium.entry_for_spec(specs[key], REPO)["url"], f"https://github.com/{REPO}/releases/expanded_assets/stable", key)
+    def test_every_app_reads_the_one_archive(self):
+        # there is one build and one rolling archive release; no app reads another page
+        for key, spec in {s["key"]: s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}.items():
+            self.assertEqual(obtainium.entry_for_spec(spec, REPO)["url"], f"https://github.com/{REPO}/releases/expanded_assets/stable", key)
+            self.assertNotIn("prerelease", spec, "no spec carries a pre-release flag any more")
 
     def test_disabled_apps_are_not_offered(self):
         with tempfile.TemporaryDirectory() as d:
@@ -257,14 +239,13 @@ class ReleaseNotes(unittest.TestCase):
             if st["versionExtractionRegEx"] and pkg != "com.eltavine.duckdetector":
                 self.assertEqual(re.search(st["versionExtractionRegEx"], Obtainium.url(fname)).group(1), version, pkg)
 
-    def test_prerelease_build_is_flagged_and_links_include_prereleases(self):
-        md = self.render(env=dict(ENV, IS_PRERELEASE="true"))
-        self.assertIn("pre--release", md)
-        self.assertIn("[!WARNING]", md)
-        link = re.search(r"\((https://apps\.obtainium[^)]+)\)", md).group(1)
-        self.assertTrue(decode_link(link)[1]["url"].endswith("/expanded_assets/beta"), "a pre-release build reads the beta archive")
-        stable = self.render()  # control
-        self.assertNotIn("[!WARNING]", stable)
+    def test_there_is_no_pre_release_banner_or_channel_badge(self):
+        md = self.render()
+        for needle in ("pre--release", "[!WARNING]", "badge/channel-"):
+            self.assertNotIn(needle, md)
+        self.assertIn("badge/build-260142", md, "control: the build badge is still there")
+        # a leftover IS_PRERELEASE in the environment changes nothing
+        self.assertEqual(self.render(env=dict(ENV, IS_PRERELEASE="true")), md)
 
     def test_no_upstream_defaults_leak(self):
         md = self.render()
@@ -314,7 +295,7 @@ class Telegram(unittest.TestCase):
             return (d / "log").read_text(encoding="utf-8")
 
     def test_github_only_markup_is_dropped_and_apps_survive(self):
-        body = grn.render(FIXTURE, FIXTURE_FILES, dict(ENV, IS_PRERELEASE="true"))
+        body = grn.render(FIXTURE, FIXTURE_FILES, dict(ENV))
         # control: the raw body does carry everything the relay must strip
         for needle in ('<div align="center">', "![build](", "> [!TIP]", "apps.obtainium.imranr.dev", "<details>"):
             self.assertIn(needle, body)
@@ -573,7 +554,7 @@ class AppsSection(unittest.TestCase):
 
 
 class PatchedChannel(unittest.TestCase):
-    """The patched apps' Channel column: stable, experimental or beta, as the build recorded it."""
+    """The patched apps' Channel column: stable or experimental, as the build recorded it."""
 
     SPECS = {s["key"]: s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
 
@@ -582,32 +563,29 @@ class PatchedChannel(unittest.TestCase):
         return obtainium.channel_cell(spec, {spec["prefix"]: entry} if entry is not None else {})
 
     def test_the_cell_says_what_the_build_used(self):
-        self.assertEqual(self.cell("Reddit", {"channel": "stable", "experimental": False}), "✅ Stable")
-        self.assertEqual(self.cell("Reddit", {"channel": "stable", "experimental": True}), "🧪 Experimental")
-        self.assertEqual(self.cell("Instagram", {"channel": "beta", "experimental": False}), "🚧 Beta")
-        self.assertEqual(self.cell("Instagram", {"channel": "beta", "experimental": True}), "🚧 Beta · 🧪 Experimental", "both can apply")
+        self.assertEqual(self.cell("Reddit", {"experimental": False}), "✅ Stable")
+        self.assertEqual(self.cell("Reddit", {"experimental": True}), "🧪 Experimental")
         self.assertEqual(self.cell("Reddit", None), "*(pending)*")
 
     def test_an_unrecorded_build_is_not_passed_off_as_stable(self):
-        self.assertEqual(self.cell("Reddit", {"channel": "stable", "experimental": None}), "*(not recorded)*")
-        # a beta build whose version kind is unknown is still known to be beta
-        self.assertEqual(self.cell("Instagram", {"channel": "beta", "experimental": None}), "🚧 Beta")
+        self.assertEqual(self.cell("Reddit", {"experimental": None}), "*(not recorded)*")
 
     def test_reddit_is_configured_experimental_on_purpose(self):
         self.assertEqual(self.SPECS["Reddit"]["version_mode"], "exp")
         self.assertEqual(self.SPECS["Twitter"]["version_mode"], "auto", "control: the others follow the stable list")
 
-    def test_the_loader_reads_channel_from_the_archive_and_the_flag_from_the_entry(self):
+    def test_the_loader_reads_the_flag_from_the_entry(self):
         with tempfile.TemporaryDirectory() as d:
-            stable, beta = Path(d) / "stable.json", Path(d) / "beta.json"
-            stable.write_text(json.dumps({"files": {"a-v1-arm64-v8a.apk": {"name": "a", "fileType": "APK", "version": "1",
-                "publishedAt": "2026-10-12T00:00:00Z", "apkSource": "x", "experimental": True}}}))
-            beta.write_text(json.dumps({"files": {"b-v1-arm64-v8a.apk": {"name": "b", "fileType": "APK", "version": "1",
-                "publishedAt": "2026-10-12T00:00:00Z", "apkSource": "x", "experimental": False},
+            stable = Path(d) / "stable.json"
+            stable.write_text(json.dumps({"files": {
+                "a-v1-arm64-v8a.apk": {"name": "a", "fileType": "APK", "version": "1",
+                                       "publishedAt": "2026-10-12T00:00:00Z", "apkSource": "x", "experimental": True},
+                "b-v1-arm64-v8a.apk": {"name": "b", "fileType": "APK", "version": "1",
+                                       "publishedAt": "2026-10-12T00:00:00Z", "apkSource": "x", "experimental": False},
                 "c-v1-arm64-v8a.apk": {"name": "c", "fileType": "APK", "version": "1", "publishedAt": "2026-10-12T00:00:00Z"}}}))
-            data = obtainium.load_manifest_data([str(stable), str(beta)])
-        self.assertEqual((data["a"]["channel"], data["a"]["experimental"]), ("stable", True))
-        self.assertEqual((data["b"]["channel"], data["b"]["experimental"]), ("beta", False))
+            data = obtainium.load_manifest_data([str(stable)])
+        self.assertIs(data["a"]["experimental"], True)
+        self.assertIs(data["b"]["experimental"], False)
         self.assertIsNone(data["c"]["experimental"], "an entry from before it was recorded has none")
 
     def test_the_mirror_table_has_no_channel_column(self):
@@ -682,11 +660,11 @@ class MirrorSignature(unittest.TestCase):
 class SeedConfig(unittest.TestCase):
     def test_every_configured_app_is_buildable_on_paper(self):
         import compile_patch_configs
-        stable, beta = compile_patch_configs.compile_configs(str(CONFIG_PATCHES))  # exits on a duplicate app key
-        self.assertEqual(len(stable) + len(beta), 21)
+        stable = compile_patch_configs.compile_configs(str(CONFIG_PATCHES))  # exits on a duplicate app key
+        self.assertEqual(len(stable), 21)
         patch_keys = ("patches-source", "cli-source", "included-patches", "excluded-patches", "exclusive-patches",
                       "inclusive-patches", "patcher-args", "patched-pkg-name", "include-stock")
-        for pool in (stable, beta):
+        for pool in (stable,):
             for key, app in pool.items():
                 self.assertTrue(app.get("pkg-name"), f"{key}: pkg-name")
                 self.assertTrue(any(k.endswith("-dlurl") for k in app), f"{key}: needs a download url")
@@ -697,7 +675,8 @@ class SeedConfig(unittest.TestCase):
                 else:
                     self.assertTrue(app.get("patches-source"), f"{key}: patched apps name their source")
                     self.assertNotIn("keep-filename", app)
-        self.assertEqual(set(beta), set(), "every app is on the stable patches; the beta pool is empty until one opts in")
+        for key, app in stable.items():
+            self.assertNotIn(app.get("patches-version"), ("beta", "both"), f"{key}: there is no beta channel")
         self.assertFalse((ROOT / "configs" / "patches").exists(), "the config is one file now, not a directory of per-source files")
         self.assertIn("Instagram", stable)
         self.assertIn("Battery-Guru", stable)
@@ -718,7 +697,7 @@ class SeedConfig(unittest.TestCase):
 
     def test_generated_documents_are_in_sync_with_the_config(self):
         specs = obtainium.specs_from_configs(str(CONFIG_PATCHES))
-        data = obtainium.load_manifest_data([str(ROOT / "state" / "archive" / "stable.json"), str(ROOT / "state" / "archive" / "beta.json")])
+        data = obtainium.load_manifest_data([str(ROOT / "state" / "archive" / "stable.json")])
         expected_json = json.dumps(obtainium.import_document(specs, REPO, data), indent=2, ensure_ascii=False) + "\n"
         self.assertEqual((ROOT / "obtainium-apps.json").read_text(encoding="utf-8"), expected_json,
                          "obtainium-apps.json is stale: run .github/scripts/obtainium.py (see OBTAINIUM.md footer)")

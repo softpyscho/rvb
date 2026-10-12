@@ -3,11 +3,10 @@
 # Each app is a [Table]; its keys are documented in CONFIG.md. Keys written here, before the first table,
 # are defaults for every app that does not set them itself.
 #
-# Channel. `patches-version` picks the patch bundle an app is built with: "stable" (the default), "beta"
-# (the source's pre-release line) or a pinned tag. Manual CI and the scheduled run build the apps by
-# channel: `stable`, `beta`, or `all`. An app that names no channel is on stable. The channel of a build
-# is shown in the README's Channel column; whether a *version* is experimental is a different thing,
-# decided by `version` ("auto" = what the patches support, "exp" = their experimental targets).
+# One build, no beta channel. Every app is built with its patch source's latest stable release unless it
+# pins a tag with `patches-version`; "beta" and "both" are rejected. Whether a *version* is experimental is
+# a different thing, decided by `version` ("auto" = what the patches support, "exp" = their experimental
+# targets) and shown in the README's Channel column.
 #
 # Order matters only for the README: the apps of one patch source are listed in the order they have here.
 # Stock mirrors (`mirror = true`) republish the stock APK and use no patch source.
@@ -231,7 +230,7 @@ badge-icon = "instagram"
 version = "auto"
 # Stable patches. It used to follow Piko's beta ("dev") line, but Piko's stable v3.10.0 (published after
 # that beta) supports the same Instagram build (447.0.0.55.81) with the same 62 patches, so nothing here
-# needs a pre-release bundle. To follow the beta line again, set patches-version = "beta" on this app.
+# needs a pre-release bundle. There is no beta channel any more; pin a tag if one is ever needed.
 apkmirror-dlurl = "https://www.apkmirror.com/apk/instagram/instagram-instagram"
 uptodown-dlurl = "https://instagram.en.uptodown.com/android"
 github-dlurl = "https://github.com/softpyscho/apkforge/releases/tag/com.instagram.android"

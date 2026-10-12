@@ -106,4 +106,5 @@ if __name__ == "__main__":
         print("GITHUB_REPOSITORY environment variable not set.")
         sys.exit(1)
     cleanup_release("stable")
+    # the retired beta archive: its files stay downloadable until they age out, but no build adds to it
     cleanup_release("beta")

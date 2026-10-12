@@ -11,7 +11,6 @@ such a line.
 Env (all optional):
     NEXT_VER_CODE                    release tag (links point at it)
     GITHUB_REPOSITORY, GITHUB_SERVER_URL
-    IS_PRERELEASE                    "true" for the beta pool
     RELEASE_NOTES_TG_LINK / _DONATE_LINK / _WEBSITE_LINK
                                      footer links; a link that is not set is left out
 """
@@ -115,7 +114,6 @@ def render(build_info, built_files, env):
     repo = (env.get("GITHUB_REPOSITORY") or "").strip()
     server = (env.get("GITHUB_SERVER_URL") or "https://github.com").rstrip("/")
     tag = (env.get("NEXT_VER_CODE") or "").strip()
-    prerelease = (env.get("IS_PRERELEASE") or "").lower() == "true"
     base_url = f"{server}/{repo}/releases/download/{tag}" if (repo and tag) else "./build"
 
     groups = collect(build_info, built_files, base_url)
@@ -126,12 +124,10 @@ def render(build_info, built_files, env):
 
     lines = []
     if total:
-        channel = ("beta", "pre--release", "8957e5") if prerelease else ("stable", "stable", "21a378")
         lines += [
             '<div align="center">', "",
             " ".join(filter(None, [
                 badge("build", tag, "2f81f7") if tag else "",
-                badge("channel", channel[1], channel[2]),
                 badge("apps", str(total), "f78166"),
             ])), "",
             "</div>", "",
@@ -143,8 +139,6 @@ def render(build_info, built_files, env):
                 f"filter already filled in, or see the [Obtainium guide]({server}/{repo}/blob/main/OBTAINIUM.md).",
                 "",
             ]
-        if prerelease:
-            lines += ["> [!WARNING]", "> Pre-release channel: built from beta patches, expect rough edges.", ""]
 
     any_patched = False
     for gkey in order:
@@ -180,7 +174,7 @@ def render(build_info, built_files, env):
                 links = []
                 for a, raw, _ in app["apks"]:
                     flt, ver = obtainium.kept_patterns(app["exact"]) if app["exact"] else obtainium.name_patterns(app["prefix"], raw)
-                    entry = obtainium.app_entry(app["package"], app["display"], repo, flt, ver, prerelease,
+                    entry = obtainium.app_entry(app["package"], app["display"], repo, flt, ver,
                                                 standard_version=group["mirrored"])
                     links.append(f"[{ARCH_LABEL.get(a, raw)}]({obtainium.redirect_link(entry)})")
                 # one line, so Telegram can drop it whole (the links are very long)

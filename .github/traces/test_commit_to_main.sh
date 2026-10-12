@@ -16,7 +16,7 @@ git config user.email t@t; git config user.name t
 git remote add origin "$WORK/origin.git"
 mkdir -p configs state/manifests
 echo 'a = 1' > configs/config.toml
-echo '{"v":1}' > configs/stable_build.json
+echo '{"v":1}' > configs/build.json
 echo '{"old":true}' > state/manifests/260001.json
 echo '{"keep":true}' > state/manifests/260002.json
 echo readme > README.md
@@ -26,16 +26,16 @@ files_changed() { git -C "$WORK/origin.git" diff --name-only "$1" "$2" | sort | 
 
 # 1. add + update + remove in one commit; a hand-edited TOML and a scratch file stay behind
 base=$(tip)
-echo '{"v":2}' > configs/stable_build.json            # update
+echo '{"v":2}' > configs/build.json            # update
 echo '{"new":true}' > state/app_versions.json         # add
 rm state/manifests/260001.json                        # remove
 echo 'a = 2' > configs/config.toml               # NOT named: must not be committed
 echo scratch > temp.txt
-out=$(bash "$SCRIPT" "chore: test" configs/stable_build.json state/app_versions.json state/manifests/260001.json state/manifests/never-existed.json 2>&1 | quiet)
+out=$(bash "$SCRIPT" "chore: test" configs/build.json state/app_versions.json state/manifests/260001.json state/manifests/never-existed.json 2>&1 | quiet)
 new=$(tip)
 [ "$base" != "$new" ] || fail "expected a commit: $out"
-[ "$(files_changed "$base" "$new")" = "configs/stable_build.json state/app_versions.json state/manifests/260001.json " ] || fail "wrong files changed: $(files_changed "$base" "$new")"
-[ "$(git -C "$WORK/origin.git" show main:configs/stable_build.json)" = '{"v":2}' ] || fail "update not applied"
+[ "$(files_changed "$base" "$new")" = "configs/build.json state/app_versions.json state/manifests/260001.json " ] || fail "wrong files changed: $(files_changed "$base" "$new")"
+[ "$(git -C "$WORK/origin.git" show main:configs/build.json)" = '{"v":2}' ] || fail "update not applied"
 git -C "$WORK/origin.git" cat-file -e main:state/manifests/260001.json 2>/dev/null && fail "removal not applied"
 [ "$(git -C "$WORK/origin.git" show main:configs/config.toml)" = 'a = 1' ] || fail "an unnamed (dirty) TOML must not be committed"
 git -C "$WORK/origin.git" cat-file -e main:temp.txt 2>/dev/null && fail "scratch must not be committed"
@@ -49,24 +49,24 @@ git diff --cached --quiet || fail "index touched"
 
 # 2. nothing differs -> no commit (negative control for 1: the commit above was real)
 before=$(tip)
-out=$(bash "$SCRIPT" "chore: again" configs/stable_build.json state/app_versions.json state/manifests/260001.json 2>&1 | quiet)
+out=$(bash "$SCRIPT" "chore: again" configs/build.json state/app_versions.json state/manifests/260001.json 2>&1 | quiet)
 [ "$(tip)" = "$before" ] || fail "an unchanged state must not create a commit: $out; $(git -C "$WORK/origin.git" log --oneline -3 main)"
 grep -q "Nothing to commit" <<<"$out" || fail "should say so: $out"
 
 # 3. a human push lands first: its change is kept, ours is applied on top
 git clone -q -b main "$WORK/origin.git" "$WORK/human" 2>&1 | quiet
 ( cd "$WORK/human" && git config user.email h@h && git config user.name h && echo 'edited by a human' > README.md && git commit -qam human && git push -q origin main 2>&1 | quiet )
-echo '{"v":3}' > configs/stable_build.json
-bash "$SCRIPT" "chore: after human" configs/stable_build.json > /dev/null 2>&1 || fail "should succeed on a moved main"
+echo '{"v":3}' > configs/build.json
+bash "$SCRIPT" "chore: after human" configs/build.json > /dev/null 2>&1 || fail "should succeed on a moved main"
 [ "$(git -C "$WORK/origin.git" show main:README.md)" = 'edited by a human' ] || fail "the human's change must survive"
-[ "$(git -C "$WORK/origin.git" show main:configs/stable_build.json)" = '{"v":3}' ] || fail "our file should be applied"
+[ "$(git -C "$WORK/origin.git" show main:configs/build.json)" = '{"v":3}' ] || fail "our file should be applied"
 
 # 4. loud failures: no message/paths, unreachable origin
 bash "$SCRIPT" "only a message" > /dev/null 2>&1; [ "$?" = 2 ] || fail "missing paths must be a usage error"
 git remote set-url origin "$WORK/missing.git"
 t=$(tip)
-echo '{"v":4}' > configs/stable_build.json
-bash "$SCRIPT" "chore: unreachable" configs/stable_build.json > "$WORK/err.log" 2>&1; rc=$?
+echo '{"v":4}' > configs/build.json
+bash "$SCRIPT" "chore: unreachable" configs/build.json > "$WORK/err.log" 2>&1; rc=$?
 [ "$rc" != 0 ] || fail "an unreachable origin must fail, not pass as saved"
 grep -q "FATAL" "$WORK/err.log" || fail "failure should be explained: $(cat "$WORK/err.log")"
 [ "$(tip)" = "$t" ] || fail "nothing may be written on failure"

@@ -4,14 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       config_file:
-        description: "What to build, from configs/config.toml: all = stable then beta apps, stable = the apps on the stable patches, beta = the apps on the beta patches, manual = configs/config.manual.toml"
+        description: "What to build: all = every enabled app of configs/config.toml, manual = configs/config.manual.toml"
         required: true
         type: choice
         default: "all"
         options:
           - "all"
-          - "stable"
-          - "beta"
           - "manual"
       remove_apks:
         description: "Optional: APKs to remove from cache (space-separated, e.g., com.brave.browser-1.93.138-*.apk)"

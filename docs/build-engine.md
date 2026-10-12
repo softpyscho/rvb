@@ -7,7 +7,7 @@ Magisk module zip.
 ## Entry point and invariants
 
 ```bash
-bash scripts/build.sh configs/stable_build.json   # CWD must be the repo root
+bash scripts/build.sh configs/build.json          # CWD must be the repo root
 bash scripts/build.sh clean                       # remove temp/, build/, build.md
 ```
 
@@ -29,8 +29,8 @@ and the file splits into a **main table** (file-level defaults: `patches-version
 table per app. For each enabled table `build.sh`:
 
 1. Inherits every key from the file-level default when the app omits it.
-2. Resolves `patches-version = "both"` from the file being built — a beta-named
-   config *is* the beta pool (`configs/beta_build.json`, `*.beta.toml`).
+2. Rejects the retired `patches-version = "beta"` / `"both"` (file-level or per app): there is
+   one build and no beta channel, so it aborts instead of looking up a release called "beta".
 3. Validates the enum keys hard (`arch`, `build-mode`, `include-stock`,
    `*-source-host`, boolean `inclusive-patches`) and rejects quote-less patch
    lists, because `list_args` splits on quoted tokens.
@@ -47,8 +47,8 @@ table per app. For each enabled table `build.sh`:
    handed to `mirror_rv` ([below](#mirrored-apps-mirror_rv)).
 7. `arch = both` fans out into two builds, `arm64-v8a` and `arm-v7a`, each with
    its own module-id suffix (`-arm64` / `-arm`).
-8. Beta builds get `-beta` appended to the module id automatically, so a phone's
-   module updater never crosses channels.
+8. (Retired) Beta builds used to get `-beta` appended to the module id. Nothing adds it now; the
+   module id and its `update` branch pointers are unchanged for installed modules.
 
 `get_prebuilts` must be called directly rather than inside `$( )`: it writes the
 `__PREBUILTS_CACHE__` global, and a subshell would discard it.

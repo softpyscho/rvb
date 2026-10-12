@@ -4,9 +4,9 @@ sync_patch_sources.py
 Automated patch sources state manager for CI:
 1. Dynamically discovers all unique (patches-source, patches-source-host) from configs/config.toml.
 2. Queries GitHub, GitLab and Codeberg APIs for active releases.
-3. Tracks latest stable and beta releases in state/patch_sources.json (state cache).
+3. Tracks each source's latest stable release in state/patch_sources.json (state cache).
 4. Automatically prunes sources no longer used by any app in the config.
-5. Detects changes and emits TRIGGER_STABLE, TRIGGER_BETA, and TRIGGER_BLOCKED.
+5. Detects changes and emits TRIGGER_PATCHES and TRIGGER_BLOCKED.
 6. Writes changed_sources.json: the one canonical "what moved since last run"
     record set that every later step consumes (see derive_source_changes.py).
 """
@@ -191,52 +191,35 @@ def fetch_codeberg_releases(repo, token=None):
 
 
 def parse_releases(releases, host):
+    """The latest stable release of a source: (tag, date). Pre-releases (the forge's flag, or a
+    dev/alpha/beta/rc tag) are not releases of the stable line and are ignored."""
     if not isinstance(releases, list):
-        return "", "", "", ""
+        return "", ""
 
     stable_tag = ""
     stable_date = ""
-    beta_tag = ""
-    beta_date = ""
 
-    beta_pattern = re.compile(r"(dev|alpha|beta|rc)", re.IGNORECASE)
+    pre_pattern = re.compile(r"(dev|alpha|beta|rc)", re.IGNORECASE)
 
-    if host == "gitlab":
-        for rel in releases:
-            tag = rel.get("tag_name") or ""
+    for rel in releases:
+        tag = rel.get("tag_name") or ""
+        if host == "gitlab":
             date = rel.get("released_at") or rel.get("created_at") or ""
-            if not tag:
-                continue
-            if beta_pattern.search(tag):
-                if not beta_tag or date > beta_date:
-                    beta_tag = tag
-                    beta_date = date
-            else:
-                if not stable_tag or date > stable_date:
-                    stable_tag = tag
-                    stable_date = date
-    else:  # github and codeberg: same release shape, prerelease flag + published_at
-        for rel in releases:
-            tag = rel.get("tag_name") or ""
+            is_pre = bool(pre_pattern.search(tag))
+        else:  # github and codeberg: same release shape, prerelease flag + published_at
             date = rel.get("published_at") or rel.get("created_at") or ""
             # GitHub's API never lists drafts; Forgejo's does, and an unpublished
-            # release is no one's channel release.
+            # release is no one's release.
             if rel.get("draft"):
                 continue
-            is_pre = rel.get("prerelease", False) or bool(
-                beta_pattern.search(tag))
-            if not tag:
-                continue
-            if is_pre:
-                if not beta_tag or date > beta_date:
-                    beta_tag = tag
-                    beta_date = date
-            else:
-                if not stable_tag or date > stable_date:
-                    stable_tag = tag
-                    stable_date = date
+            is_pre = rel.get("prerelease", False) or bool(pre_pattern.search(tag))
+        if not tag or is_pre:
+            continue
+        if not stable_tag or date > stable_date:
+            stable_tag = tag
+            stable_date = date
 
-    return stable_tag, stable_date, beta_tag, beta_date
+    return stable_tag, stable_date
 
 
 def main():
@@ -257,8 +240,7 @@ def main():
                 f"Warning: Failed to read {STATE_FILE}: {e}", file=sys.stderr)
 
     new_state = {}
-    trigger_stable = 0
-    trigger_beta = 0
+    trigger_patches = 0
     trigger_blocked = 0
 
     for repo, host in sorted(active_sources.items()):
@@ -281,8 +263,6 @@ def main():
                 "host": host,
                 "stable": old_info.get("stable", ""),
                 "stable_date": old_info.get("stable_date", ""),
-                "beta": old_info.get("beta", ""),
-                "beta_date": old_info.get("beta_date", ""),
                 "blocked": True
             }
             print("::endgroup::")
@@ -296,18 +276,16 @@ def main():
             entry["host"] = host
             entry.setdefault("stable", "")
             entry.setdefault("stable_date", "")
-            entry.setdefault("beta", "")
-            entry.setdefault("beta_date", "")
+            entry.pop("beta", None)
+            entry.pop("beta_date", None)
             entry.setdefault("blocked", False)
             new_state[repo] = entry
             print("::endgroup::")
             continue
 
-        stable_tag, stable_date, beta_tag, beta_date = parse_releases(
-            releases, host)
+        stable_tag, stable_date = parse_releases(releases, host)
 
         old_stable = old_info.get("stable", "")
-        old_beta = old_info.get("beta", "")
 
         if stable_tag and stable_tag != old_stable:
             print(f"  ↑ Stable: {old_stable or 'none'} → {stable_tag}")
@@ -318,24 +296,11 @@ def main():
         else:
             print(f"    Stable: (none)")
 
-        if beta_tag and beta_tag != old_beta:
-            print(f"  ↑ Beta:   {old_beta or 'none'} → {beta_tag}")
-            # Beta triggers if it is newer than stable
-            if beta_date > stable_date:
-                print(
-                    f"::notice title=New Beta Release::{repo} — {old_beta or 'none'} → {beta_tag}")
-        elif beta_tag:
-            print(f"    Beta:   {beta_tag} (no change)")
-        else:
-            print(f"    Beta:   (none)")
-
         new_state[repo] = {
             "repo": repo,
             "host": host,
             "stable": stable_tag,
             "stable_date": stable_date,
-            "beta": beta_tag,
-            "beta_date": beta_date,
             "blocked": False
         }
         print("::endgroup::")
@@ -358,31 +323,26 @@ def main():
     changed_records = derive_source_changes.derive(old_state, new_state)
     with open("changed_sources.json", "w", encoding="utf-8") as f:
         json.dump(changed_records, f, indent=2, sort_keys=True)
-    if any(r["channel"] == "stable" for r in changed_records):
-        trigger_stable = 1
-    if any(r["channel"] == "beta" and r["newer_than_base"] for r in changed_records):
-        trigger_beta = 1
+    if changed_records:
+        trigger_patches = 1
 
     # Export CI trigger variables
     github_output = os.environ.get("GITHUB_OUTPUT")
     if github_output:
         with open(github_output, "a", encoding="utf-8") as f:
-            f.write(f"TRIGGER_STABLE={trigger_stable}\n")
-            f.write(f"TRIGGER_BETA={trigger_beta}\n")
+            f.write(f"TRIGGER_PATCHES={trigger_patches}\n")
             f.write(f"TRIGGER_BLOCKED={trigger_blocked}\n")
 
     print(
         f"Patch sources synchronized: {len(new_state)} active sources tracked.")
     print(
-        f"Triggers: STABLE={trigger_stable}, BETA={trigger_beta}, BLOCKED={trigger_blocked}")
-    if not trigger_stable and not trigger_beta and not trigger_blocked:
+        f"Triggers: PATCHES={trigger_patches}, BLOCKED={trigger_blocked}")
+    if not trigger_patches and not trigger_blocked:
         print("::notice title=Patch Sync Summary::No new patch releases detected")
     else:
         parts = []
-        if trigger_stable:
-            parts.append("STABLE")
-        if trigger_beta:
-            parts.append("BETA")
+        if trigger_patches:
+            parts.append("PATCHES")
         if trigger_blocked:
             parts.append("BLOCKED")
         print(

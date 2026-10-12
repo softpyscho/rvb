@@ -17,12 +17,11 @@ defaults above the first `[table]`.
 Every key is documented in [CONFIG.md](../CONFIG.md); read that rather than
 copying a neighbour's guess. The rules that people get wrong:
 
-- **Channel is routing, not versioning.** `patches-version` is `stable`, `beta` or
-  `both` (or a concrete tag to pin). Omitted means "inherit the file default", and
-  the file default is `stable` unless the filename carries `.beta.`. `both` opts an
-  app into both pools — an app with no explicit setting does **not** get both.
-- **A mistyped channel is treated as a tag**, so `patchs-version = "stble"` fails
-  loudly on the release lookup instead of quietly landing in the wrong pool.
+- **There is one build and no beta channel.** `patches-version` is `stable` (the
+  default; omit it) or a concrete tag to pin. `beta` and `both` are rejected
+  loudly, and a file name carries no meaning.
+- **A mistyped channel is treated as a tag**, so `patches-version = "stble"` fails
+  loudly on the release lookup instead of quietly building the wrong thing.
 - **Patch names in include/exclude lists must be quoted** — the parser splits on
   quoted tokens, and `build.sh` rejects an unquoted list.
 - **`inclusive-patches` and `exclusive-patches` are opposites**; setting both is a
@@ -46,9 +45,8 @@ written by CI. Regenerate the README/Obtainium documents after adding or removin
 
 Your change takes effect on the next watcher run (every 4 hours): the pool configs
 are regenerated from your TOML and the affected app gets built. To verify
-immediately instead of waiting, run **Manual CI** (`workflow_dispatch`): `all` builds every app
-(stable pool, then beta pool), or pick `configs/config.manual.toml` — a hand-built config that never
-touches the pools. Tick `clean` to ignore every cached stock APK and download all of them again.
+immediately instead of waiting, run **Manual CI** (`workflow_dispatch`): `all` builds every enabled app
+of `configs/config.toml`, or pick `manual` (`configs/config.manual.toml`) — a hand-built scratch config. Tick `clean` to ignore every cached stock APK and download all of them again.
 **Build** (`build.yml`) can also be dispatched directly with the same choices;
 Manual CI adds the cleanup and failure notification around it.
 
@@ -90,7 +88,8 @@ describing it. `bash scripts/build.sh clean` resets.
 | APKMirror release-page lookup (`dl_apkmirror`) | `bash .github/traces/test_apkmirror_resolve.sh` | same job; a fake page fetcher serving crafted pages, every refusal paired with an accepting control |
 | Archive pruning (`cleanup-archive-assets.py`) | `python3 .github/traces/test_cleanup_archive_assets.py` | same job; `plan_prune` on fixture assets and manifests |
 | What a build records about itself (stock-APK source, recommended version, skipped / failed / excluded patches) and how it reaches the manifest | `bash .github/traces/test_build_record.sh` | same job; the real `write_build_info` over a Morphe-shaped log and result file |
-| Which configs a build run covers (`all` → both pools, empty pool left out, typo rejected) | `bash .github/traces/test_build_plan.sh` | same job; offline, jq only |
+| Which config a build run uses (`all`/`manual`/path, typo rejected, retired `beta`/`both` refused) | `bash .github/traces/test_build_config.sh` | same job; offline, jq only |
+| The watcher's bookkeeping (changed sources, `configs/build.json`, trigger flags) | `bash .github/traces/test_ci_watcher.sh` | same job; offline, jq only |
 | CI's writer to `main` (`commit_to_main.sh`); manifest merge and prune | `bash .github/traces/test_commit_to_main.sh`, `bash .github/traces/test_manifest_scripts.sh` | same job; local bare origin, stub `gh`; includes a human push landing mid-run and loud failures |
 | How a `github` source reports versions (tag vs release-per-package asset names) | `bash .github/traces/test_github_versions.sh` | same job |
 | The CI refresh of the README app table (`update_readme.sh`) | `bash .github/traces/test_update_readme.sh` | same job; local bare origin whose `main` carries the config and `state/archive/` |

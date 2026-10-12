@@ -12,6 +12,7 @@ build.json
 /test
 module/maintainer.txt
 config.stable.json
+config.json
 config.beta.json
 # Configs and state ARE tracked on main (see state/README.md). Only transient pool scratch is ignored:
 active*.json

@@ -1,5 +1,5 @@
 # Hand-built config for Manual CI (workflow_dispatch -> "configs/config.manual.toml").
-# It never touches the stable/beta pools, so it is the place to try apps end to end, or to
+# It never touches configs/config.toml or the watcher, so it is the place to try apps end to end, or to
 # re-run ones the watcher cannot retrigger. Edit, publish with
 #   git commit -am "chore(config): ..." && git push
 # and run Manual CI.
