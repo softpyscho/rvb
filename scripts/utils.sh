@@ -844,6 +844,27 @@ _get_patch_last_supported_ver() {
 	grep -F "($pcount patch" <<<"$op" | sed 's/ (.* patch.*//' | sed 's/ \[.*//' | sort_vers || return 1
 }
 
+# Whether $4 is a version the patch bundle lists only as experimental: "true" when the unfiltered
+# list-versions (-x) names it and the stable list does not, "false" when the stable list names it,
+# "" when the tool cannot say (a CLI without the experimental flag) or lists it nowhere. Recorded with
+# the build so the README can say which channel a version came from.
+_version_is_experimental() {
+	local cli_jar=$1 patches_jar=$2 pkg_name=$3 version=${4// /} cli_source=${5:-}
+	version=${version#v}
+	resolve_patcher "$cli_source"
+	if [ "$PATCHER_HAS_PATCH_LIST" != true ] || [ -z "$PATCHER_LIST_X" ] || [ -z "$version" ]; then return 0; fi
+	local list_stable list_all
+	list_stable=$(patches_list_versions "$cli_jar" "$patches_jar" "$pkg_name" "$cli_source" "") || return 0
+	list_all=$(patches_list_versions "$cli_jar" "$patches_jar" "$pkg_name" "$cli_source" "$PATCHER_LIST_X") || return 0
+	list_stable=$(sed -n '/Most common compatible versions:/,$p' <<<"$list_stable" | sed '1d' | awk '{print $1}')
+	list_all=$(sed -n '/Most common compatible versions:/,$p' <<<"$list_all" | sed '1d' | awk '{print $1}')
+	if grep -qFx -- "$version" <<<"$list_stable"; then
+		echo false
+	elif grep -qFx -- "$version" <<<"$list_all"; then
+		echo true
+	fi
+}
+
 get_patch_exp_ver() {
 	local cli_jar=$1 patches_jar=$2 pkg_name=$3 cli_source=$4
 	local list_stable list_all
@@ -863,6 +884,12 @@ get_patch_exp_ver() {
 
 	if [ -n "$exp_versions" ]; then
 		sort_vers <<<"$exp_versions"
+	elif [ -n "$list_all" ]; then
+		# Nothing is flagged experimental any more (the author promoted it, or the bundle has none):
+		# `exp` means "the newest the patches support", so it takes the newest of the unfiltered list
+		# instead of skipping an app that has a build to make.
+		wpr "No experimental-only version for '$pkg_name'; taking the newest the patches list."
+		sort_vers <<<"$list_all"
 	fi
 }
 
@@ -3531,6 +3558,9 @@ write_build_info() {
 	# "true" when a mirror was signed with this repository's key (a merged split bundle), "false"
 	# when it is as its publisher signed it, "" for a patched app (always signed with our key).
 	local resigned=${17:-}
+	# "true" when the version that was built is one the patch bundle lists only as experimental,
+	# "false" when it lists it as stable, "" when that is unknown (a mirror, or a CLI that cannot say).
+	local experimental=${18:-}
 	local arch_orig="${args[arch]// /}"
 	if [ "$arch_orig" != "auto" ]; then ext="${arch}${ext}"; arch=""; fi
 	# Applied patches: morphe's -r summary when we have one (it lists every patch
@@ -3625,6 +3655,7 @@ write_build_info() {
 		--arg apk_source "$apk_source" \
 		--arg recommended "$recommended" \
 		--arg resigned "$resigned" \
+		--arg experimental "$experimental" \
 		--argjson applied "$applied_json" \
 		--argjson skipped "$skipped_json" \
 		--argjson failed "$failed_json" \
@@ -3646,6 +3677,7 @@ write_build_info() {
 			apk_source: $apk_source,
 			recommended_version: $recommended,
 			resigned: (if $resigned == "true" then true elif $resigned == "false" then false else null end),
+			experimental: (if $experimental == "true" then true elif $experimental == "false" then false else null end),
 			applied_patches: $applied,
 			skipped_patches: $skipped,
 			failed_patches: $failed,
@@ -5246,7 +5278,7 @@ build_rv() {
 				cp -f "$patched_apk" "$apk_output"
 			fi
 			pr "Built ${table} (non-root): '${apk_output}'"
-			write_build_info "${table% (*}" "${arch_f}" ".apk" "${file_prefix}" "$version_f" "$patches_ref" "$changelog_url" "$final_pkg_name" "${app_name}" "${args[patches_src]}" "${brand_val}" "${variant_val}" "${sub_variant_val}" "" "$used_source" "$recommended_version"
+			write_build_info "${table% (*}" "${arch_f}" ".apk" "${file_prefix}" "$version_f" "$patches_ref" "$changelog_url" "$final_pkg_name" "${app_name}" "${args[patches_src]}" "${brand_val}" "${variant_val}" "${sub_variant_val}" "" "$used_source" "$recommended_version" "" "$(_version_is_experimental "$cli_jar" "$patches_jar" "$pkg_name" "$version_f" "${args[cli_source]:-}")"
 			continue
 		fi
 		local base_template
@@ -5322,7 +5354,7 @@ build_rv() {
 		zip -"$COMPRESSION_LEVEL" -FSqr "${CWD}/${BUILD_DIR}/${module_output}" .
 		popd >/dev/null || :
 		pr "Built ${table} (root): '${BUILD_DIR}/${module_output}'"
-		write_build_info "${table% (*}" "${arch_f}" ".zip" "${file_prefix}" "$version_f" "$patches_ref" "$changelog_url" "$final_pkg_name" "${app_name}" "${args[patches_src]}" "${brand_val}" "${variant_val}" "${sub_variant_val}" "" "$used_source" "$recommended_version"
+		write_build_info "${table% (*}" "${arch_f}" ".zip" "${file_prefix}" "$version_f" "$patches_ref" "$changelog_url" "$final_pkg_name" "${app_name}" "${args[patches_src]}" "${brand_val}" "${variant_val}" "${sub_variant_val}" "" "$used_source" "$recommended_version" "" "$(_version_is_experimental "$cli_jar" "$patches_jar" "$pkg_name" "$version_f" "${args[cli_source]:-}")"
 	done
 }
 

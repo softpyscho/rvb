@@ -16,8 +16,8 @@ TEMP_DIR="$WORK/temp"; BUILD_JSON_FILE="$WORK/build.json"; mkdir -p "$TEMP_DIR"
 declare -A args=([arch]="arm64-v8a" [patches_src]="x/y" [brand]="Morphe" [variant]="" [sub_variant]="" [included_patches]="" [excluded_patches]="")
 PATCHER_FLOW=cli-patch; PATCHER_KIND=morphe
 
-record() { # key pkg source recommended [resigned]
-	write_build_info "$1" "arm64-v8a" ".apk" "$(tr 'A-Z' 'a-z' <<<"$1")-morphe" "2.5.0.2" "x/patches-1.0.mpp" "" "$2" "$1" "x/y" "Morphe" "" "" "" "$3" "$4" "${5:-}"
+record() { # key pkg source recommended [resigned] [experimental]
+	write_build_info "$1" "arm64-v8a" ".apk" "$(tr 'A-Z' 'a-z' <<<"$1")-morphe" "2.5.0.2" "x/patches-1.0.mpp" "" "$2" "$1" "x/y" "Morphe" "" "" "" "$3" "$4" "${5:-}" "${6:-}"
 }
 
 # 1. Battery Guru as it really failed: one patch skipped as incompatible, none applied
@@ -93,4 +93,40 @@ printf '{"Old":{"exts":[".apk"],"name":"old-morphe","arch":"arm64-v8a","version"
 
 # _skipped_patches_json: reads only what the patcher said, nothing from a quiet log
 [ "$(_skipped_patches_json 'INFO: Applying 3 patches...')" = '[]' ] || fail "a quiet log has no skipped patches"
+# ===== which channel a version came from (README: Channel column) ================================
+# A fake list-versions: without -x the stable targets, with -x the experimental ones as well, shaped like
+# the Morphe CLI's output (verified against morphe-desktop 1.18.1 for Reddit, 2026-10-12).
+patches_list_versions() { # cli patches pkg cli_source [extra]
+	if [ "${5:-}" = "-x" ]; then
+		printf 'INFO: Package name: %s\nMost common compatible versions:\n\t2026.41.0 (18 patches)\n\t2026.40.0 (18 patches)\n\t2026.24.0 (18 patches)\n\t2026.10.0 (18 patches)\n' "$3"
+	else
+		printf 'INFO: Package name: %s\nMost common compatible versions:\n\t2026.24.0 (18 patches)\n\t2026.10.0 (18 patches)\n' "$3"
+	fi
+}
+MORPHE="MorpheApp/morphe-desktop"
+[ "$(_version_is_experimental cli.jar p.mpp com.reddit.frontpage 2026.41.0 "$MORPHE")" = true ] || fail "2026.41.0 is only in the -x list: experimental"
+[ "$(_version_is_experimental cli.jar p.mpp com.reddit.frontpage v2026.40.0 "$MORPHE")" = true ] || fail "a leading v is ignored"
+[ "$(_version_is_experimental cli.jar p.mpp com.reddit.frontpage 2026.24.0 "$MORPHE")" = false ] || fail "2026.24.0 is on the stable list: not experimental (control)"
+[ -z "$(_version_is_experimental cli.jar p.mpp com.reddit.frontpage 1.2.3 "$MORPHE")" ] || fail "a version listed nowhere is unknown, not 'stable'"
+[ -z "$(_version_is_experimental cli.jar p.mpp com.reddit.frontpage 2026.41.0 "some/revanced-cli")" ] || fail "a CLI with no experimental flag cannot say"
+
+# exp = the experimental-only versions, newest first; when none are left it takes the newest listed
+got=$(get_patch_exp_ver cli.jar p.mpp com.reddit.frontpage "$MORPHE" 2>/dev/null | head -1)
+[ "$got" = "2026.41.0" ] || fail "exp must name the newest experimental version, got: '$got'"
+patches_list_versions() { # everything promoted to stable: both lists are the same
+	printf 'INFO: Package name: %s\nMost common compatible versions:\n\t2026.41.0 (18 patches)\n\t2026.24.0 (18 patches)\n' "$3"
+}
+got=$(get_patch_exp_ver cli.jar p.mpp com.reddit.frontpage "$MORPHE" 2>/dev/null | head -1)
+[ "$got" = "2026.41.0" ] || fail "with nothing experimental left exp must fall back to the newest listed, not skip: '$got'"
+patches_list_versions() { printf 'INFO: Package name: %s\nMost common compatible versions:\nAny\n' "$3"; }
+got=$(get_patch_exp_ver cli.jar p.mpp com.reddit.frontpage "$MORPHE" 2>/dev/null | head -1)
+[ "$got" = "Any" ] || [ -z "$got" ] || fail "control: a bundle that names no version still resolves to nothing usable: '$got'"
+
+# the record: true / false as given, null when unknown, and the manifest writes a key only when known
+record Exp1 com.exp1 apkmirror "" "" true >/dev/null 2>&1
+record Exp2 com.exp2 apkmirror "" "" false >/dev/null 2>&1
+merge_build_info >/dev/null 2>&1
+[ "$(q '.Exp1.experimental')" = 'true' ] && [ "$(q '.Exp2.experimental')" = 'false' ] || fail "experimental: $(q '[.Exp1.experimental, .Exp2.experimental]')"
+[ "$(q '.Plain.experimental')" = 'null' ] || fail "an app that said nothing records null, got: $(q '.Plain.experimental')"
+
 echo "BUILD RECORD TESTS: PASS"

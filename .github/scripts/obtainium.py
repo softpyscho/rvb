@@ -348,6 +348,25 @@ def signature_cell(spec, data):
     return "*(not recorded)*"
 
 
+def channel_cell(spec, data):
+    """Which channel the latest build of a patched app used: 🚧 Beta when it was built with the beta
+    (pre-release) patch bundle, 🧪 Experimental when the version is one the bundle lists only as
+    experimental, ✅ Stable when it is neither. Both can apply. An app whose build did not record whether
+    its version is experimental says so rather than passing as stable."""
+    d = data.get(spec["prefix"]) or {}
+    if not d:
+        return "*(pending)*"
+    parts = []
+    if d.get("channel") == "beta":
+        parts.append("🚧 Beta")
+    exp = d.get("experimental")
+    if exp is True:
+        parts.append("🧪 Experimental")
+    if parts:
+        return " · ".join(parts)
+    return "✅ Stable" if exp is False else "*(not recorded)*"
+
+
 def _vlabel(version):
     """`v` in front of a number only: a nightly's version is the word "nightly"."""
     return version if version.startswith("v") or not version[:1].isdigit() else f"v{version}"
@@ -449,14 +468,14 @@ def _group_header(badge, logo, alt=None):
             f'&logo={logo}&logoColor=white" alt="{alt or badge}">')
 
 
-TABLE_HEAD = ["<div align=\"center\">", "", "| App | Version | APK Source | Patches | Obtainium |",
-              "|:---|:-------:|:----------:|:--------|:---------:|"]
+TABLE_HEAD = ["<div align=\"center\">", "", "| App | Version | Channel | APK Source | Patches | Obtainium |",
+              "|:---|:-------:|:-------:|:----------:|:--------|:---------:|"]
 MIRROR_HEAD = ["<div align=\"center\">", "", "| App | Version | APK Source | Signature | Obtainium |",
                "|:---|:-------:|:----------:|:---------:|:---------:|"]
 
 
 def _row(spec, repo, data):
-    return (f"| {app_badge(spec)} | {versions_cell(spec, data)} "
+    return (f"| {app_badge(spec)} | {versions_cell(spec, data)} | {channel_cell(spec, data)} "
             f"| {apk_source(spec, data)} | {patches_cell(spec, data)} | {obtainium_badge_link(spec, repo, data)} |")
 
 
@@ -468,8 +487,8 @@ def _mirror_row(spec, repo, data):
 def render_apps_section(specs, repo, data=None):
     """The apps section of the README: one group per patch source (in config order), then the
     stock mirrors, each a centred table. Patched apps: App, Version (what the patches recommend and
-    what was built, two badges in the one column), APK Source (the one used), Patches (with what was
-    not applied), Obtainium. Mirrors have nothing patched or recommended: App, Version, APK Source,
+    what was built, two badges in the one column), Channel (stable, experimental or beta), APK Source (the
+    one used), Patches (with what was not applied), Obtainium. Mirrors have nothing patched or recommended: App, Version, APK Source,
     Signature (original, or re-signed with this repository's key), Obtainium."""
     data = data or {}
     groups, mirrors = {}, []
@@ -481,7 +500,9 @@ def render_apps_section(specs, repo, data=None):
 
     legend = ("> **Version** shows the version the patches *recommend* above the version that was *built* "
               "(they differ when a source no longer offers the recommended one). **APK Source** is where the "
-              "stock APK of that build came from. ⚠️ in **Patches** means a patch the build meant to apply was "
+              "stock APK of that build came from. **Channel** says what the build used: ✅ Stable, 🧪 Experimental "
+              "(a version the patches list only as experimental, so less tested), or 🚧 Beta (built with the beta "
+              "patch bundle). ⚠️ in **Patches** means a patch the build meant to apply was "
               "skipped or failed - open the row to see which and why. For the stock mirrors, **Signature** says whether "
               "the file is exactly as its publisher signed it (✅ original, so it updates over the store install) or "
               "was signed with this repository's key (⚠️ re-signed: a merged split bundle, which cannot update over "
@@ -530,6 +551,11 @@ def load_manifest_data(paths):
                                      "recommended": entry.get("recommendedVersion") or "",
                                      # True / False / None (None = built before it was recorded)
                                      "resigned": entry.get("resigned"),
+                                     # patched apps: True when the built version is one the patch bundle lists
+                                     # only as experimental, False when it lists it as stable, None = unknown
+                                     "experimental": entry.get("experimental"),
+                                     # the archive the newest file sits in: the patch bundle channel it was built with
+                                     "channel": "beta" if os.path.basename(path).lower().startswith("beta") else "stable",
                                      "skipped": entry.get("skippedPatches") or [],
                                      "failed": entry.get("failedPatches") or [],
                                      "excluded": entry.get("excludedPatches") or []})

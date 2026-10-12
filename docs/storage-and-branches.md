@@ -82,7 +82,11 @@ the patcher declined it, typically because it does not support the version that 
 reader of these. Added 2026-10-12, for a mirror only: `resigned` — `true` when the published file was
 signed with this repository's key (a merged split bundle, allowed only by `allow-resign`), `false`
 when it is exactly as its publisher signed it; absent for a patched app (always our key) and for a
-file built before it was recorded. The README's Signature column reads it.
+file built before it was recorded. The README's Signature column reads it. Added 2026-10-12, for a patched
+app only: `experimental` — `true` when the built version is one the patch bundle lists only as
+experimental (present with the CLI's `-x` listing, absent from the stable one), `false` when it lists it as
+stable, absent when the tool cannot say. With the archive the file sits in (`stable` or `beta`, the patch
+bundle channel), it feeds the README's Channel column.
 
 The `<arch>` token in an asset filename is frozen grammar (parse it only through
 `.github/scripts/naming.py`). A manifest records exactly the arches a build

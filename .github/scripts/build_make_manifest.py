@@ -125,6 +125,10 @@ def main():
             # patched app (always our key) and for builds from before it was recorded.
             if info.get("resigned") is not None:
                 files[fname]["resigned"] = bool(info["resigned"])
+            # experimental (a patched app only): true when the built version is one the patch bundle
+            # lists only as experimental, false when it lists it as stable. Absent when unknown.
+            if info.get("experimental") is not None:
+                files[fname]["experimental"] = bool(info["experimental"])
             for rec_key, out_key in (("skipped_patches", "skippedPatches"), ("failed_patches", "failedPatches"),
                                      ("excluded_patches", "excludedPatches")):
                 if info.get(rec_key):

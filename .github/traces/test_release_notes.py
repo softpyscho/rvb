@@ -406,8 +406,8 @@ class AppsSection(unittest.TestCase):
 
     def test_layout_matches_the_reference(self):
         md = self.section()
-        self.assertIn("| App | Version | APK Source | Patches | Obtainium |", md)
-        self.assertIn("|:---|:-------:|:----------:|:--------|:---------:|", md)
+        self.assertIn("| App | Version | Channel | APK Source | Patches | Obtainium |", md)
+        self.assertIn("|:---|:-------:|:-------:|:----------:|:--------|:---------:|", md)
         self.assertNotIn("| Recommended |", md, "recommended and built share the Version column")
         self.assertIn("| App | Version | APK Source | Signature | Obtainium |", md, "the mirrors have no patches column, but say how they are signed")
         self.assertIn("|:---|:-------:|:----------:|:---------:|:---------:|", md)
@@ -429,7 +429,7 @@ class AppsSection(unittest.TestCase):
         for line in md.splitlines():
             if line.startswith("| [![") and "Add_to_Obtainium" in line:
                 cells = len(re.findall(r"(?<!\\)\|", re.sub(r"\([^)]*\)", "", line))) - 1
-                self.assertIn(cells, (4, 5), line[:80])
+                self.assertIn(cells, (5, 6), line[:80])  # mirrors: 5 (with Signature), patched: 6 (with Channel)
 
     RECORD = {"has_record": True, "apk_source": "uptodown", "recommended": "2026.39.0", "skipped": [], "failed": [], "excluded": []}
 
@@ -561,6 +561,60 @@ class AppsSection(unittest.TestCase):
         self.assertEqual(decode_link(paren)[1]["name"], "X (beta)", "and they decode back")
         # control: the same entry with its object cut down is what we must not produce
         self.assertNotEqual(set(entry), {"id", "url", "author", "name", "preferredApkIndex", "additionalSettings"})
+
+
+class PatchedChannel(unittest.TestCase):
+    """The patched apps' Channel column: stable, experimental or beta, as the build recorded it."""
+
+    SPECS = {s["key"]: s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
+
+    def cell(self, key, entry):
+        spec = self.SPECS[key]
+        return obtainium.channel_cell(spec, {spec["prefix"]: entry} if entry is not None else {})
+
+    def test_the_cell_says_what_the_build_used(self):
+        self.assertEqual(self.cell("Reddit", {"channel": "stable", "experimental": False}), "✅ Stable")
+        self.assertEqual(self.cell("Reddit", {"channel": "stable", "experimental": True}), "🧪 Experimental")
+        self.assertEqual(self.cell("Instagram", {"channel": "beta", "experimental": False}), "🚧 Beta")
+        self.assertEqual(self.cell("Instagram", {"channel": "beta", "experimental": True}), "🚧 Beta · 🧪 Experimental", "both can apply")
+        self.assertEqual(self.cell("Reddit", None), "*(pending)*")
+
+    def test_an_unrecorded_build_is_not_passed_off_as_stable(self):
+        self.assertEqual(self.cell("Reddit", {"channel": "stable", "experimental": None}), "*(not recorded)*")
+        # a beta build whose version kind is unknown is still known to be beta
+        self.assertEqual(self.cell("Instagram", {"channel": "beta", "experimental": None}), "🚧 Beta")
+
+    def test_reddit_is_configured_experimental_on_purpose(self):
+        self.assertEqual(self.SPECS["Reddit"]["version_mode"], "exp")
+        self.assertEqual(self.SPECS["Twitter"]["version_mode"], "auto", "control: the others follow the stable list")
+
+    def test_the_loader_reads_channel_from_the_archive_and_the_flag_from_the_entry(self):
+        with tempfile.TemporaryDirectory() as d:
+            stable, beta = Path(d) / "stable.json", Path(d) / "beta.json"
+            stable.write_text(json.dumps({"files": {"a-v1-arm64-v8a.apk": {"name": "a", "fileType": "APK", "version": "1",
+                "publishedAt": "2026-10-12T00:00:00Z", "apkSource": "x", "experimental": True}}}))
+            beta.write_text(json.dumps({"files": {"b-v1-arm64-v8a.apk": {"name": "b", "fileType": "APK", "version": "1",
+                "publishedAt": "2026-10-12T00:00:00Z", "apkSource": "x", "experimental": False},
+                "c-v1-arm64-v8a.apk": {"name": "c", "fileType": "APK", "version": "1", "publishedAt": "2026-10-12T00:00:00Z"}}}))
+            data = obtainium.load_manifest_data([str(stable), str(beta)])
+        self.assertEqual((data["a"]["channel"], data["a"]["experimental"]), ("stable", True))
+        self.assertEqual((data["b"]["channel"], data["b"]["experimental"]), ("beta", False))
+        self.assertIsNone(data["c"]["experimental"], "an entry from before it was recorded has none")
+
+    def test_the_mirror_table_has_no_channel_column(self):
+        md = obtainium.render_apps_section([self.SPECS["Bitget"]], REPO, {})
+        self.assertIn("| App | Version | APK Source | Signature | Obtainium |", md)
+        self.assertNotIn("| Channel |", md.split("Stock Mirrors")[1], "mirrors have no patch channel to show")
+
+    def test_the_manifest_writes_experimental_only_when_known(self):
+        runner = MirrorManifest()
+        build = {k: dict(v) for k, v in FIXTURE.items()}
+        build["Reddit"]["experimental"] = True
+        build["Twitter"]["experimental"] = False
+        files = runner.run_manifest(build, FIXTURE_FILES)
+        self.assertIs(files["reddit-morphe-v2026.40.0-arm64-v8a.apk"]["experimental"], True)
+        self.assertIs(files["twitter-piko-v11.5-arm64-v8a.apk"]["experimental"], False)
+        self.assertNotIn("experimental", files["bitget-v9.1-arm64-v8a.apk"], "a mirror records none (control)")
 
 
 class MirrorSignature(unittest.TestCase):

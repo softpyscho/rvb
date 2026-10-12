@@ -63,7 +63,8 @@ arch = "both"        # 'both', 'auto', 'all', 'arm64-v8a', 'arm-v7a', 'x86_64', 
 # reverse. Universal bundles serve both channels from one fetch.
 
 # 'auto' option gets the latest possible version supported by all the included patches
-# 'exp' gets the latest experimental version from patches.json. falls back to 'latest' if none found.
+# 'exp' gets the newest version the patches list as experimental (the README shows it as 🧪 Experimental). When the
+# bundle lists none as experimental any more it takes the newest version the patches list at all.
 # 'latest' gets the latest stable without checking patches support. 'beta' gets the latest beta/alpha
 # whitespace seperated list of patches to exclude. default: ""
 version = "auto"     # 'auto', 'exp', 'latest', 'beta' or a version number (e.g. '17.40.41'). default: auto
