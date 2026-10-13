@@ -232,7 +232,8 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/splitwise/splitwise/",
     "uptodown-dlurl": "https://splitwise.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/splitwise/com.Splitwise.SplitwiseMobile"
+    "apkpure-dlurl": "https://apkpure.com/splitwise/com.Splitwise.SplitwiseMobile",
+    "enabled": false
   },
   "Greenify": {
     "arch": "arm64-v8a",
