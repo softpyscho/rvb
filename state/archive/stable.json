@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-13T21:31:06Z"
+    "publishedAt": "2026-10-13T23:47:48Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -339,8 +339,8 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260075",
-      "publishedAt": "2026-10-12T12:03:32Z",
+      "originBuild": "260084",
+      "publishedAt": "2026-10-13T23:47:29Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "12.19.1-release.0",
       "experimental": false
@@ -672,27 +672,6 @@
       "originBuild": "260075",
       "publishedAt": "2026-10-12T12:03:32Z",
       "apkSource": "github",
-      "recommendedVersion": null,
-      "resigned": false
-    },
-    "oxygen-customizer-vnightly-209-2062-all.apk": {
-      "name": "oxygen-customizer",
-      "version": "nightly-209-2062",
-      "appKey": "oxygencustomizer",
-      "appName": "Oxygen Customizer",
-      "arch": "all",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "it.dhd.oxygencustomizer",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260075",
-      "publishedAt": "2026-10-12T12:03:32Z",
-      "apkSource": "actions",
       "recommendedVersion": null,
       "resigned": false
     },
