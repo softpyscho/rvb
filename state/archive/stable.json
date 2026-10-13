@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-13T06:51:20Z"
+    "publishedAt": "2026-10-13T16:01:50Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -28,8 +28,8 @@
       "appliedPatches": [
         "Unlock Premium"
       ],
-      "originBuild": "260080",
-      "publishedAt": "2026-10-13T06:50:55Z",
+      "originBuild": "260081",
+      "publishedAt": "2026-10-13T16:01:26Z",
       "apkSource": "uptodown",
       "recommendedVersion": "26.32.1",
       "experimental": false
@@ -102,8 +102,8 @@
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260080",
-      "publishedAt": "2026-10-13T06:50:55Z",
+      "originBuild": "260081",
+      "publishedAt": "2026-10-13T16:01:26Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "5.1.1",
       "experimental": false
@@ -144,8 +144,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260080",
-      "publishedAt": "2026-10-13T06:50:55Z",
+      "originBuild": "260081",
+      "publishedAt": "2026-10-13T16:01:26Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -191,8 +191,8 @@
       "appliedPatches": [
         "Unlock Pro"
       ],
-      "originBuild": "260080",
-      "publishedAt": "2026-10-13T06:50:55Z",
+      "originBuild": "260081",
+      "publishedAt": "2026-10-13T16:01:26Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "26.7.3",
       "experimental": false
@@ -367,8 +367,8 @@
         "Disable Analytics / Telemetry",
         "Spoof WARP+ Unlimited UI"
       ],
-      "originBuild": "260080",
-      "publishedAt": "2026-10-13T06:50:55Z",
+      "originBuild": "260081",
+      "publishedAt": "2026-10-13T16:01:26Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "6.38.9",
       "experimental": false
@@ -543,8 +543,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260080",
-      "publishedAt": "2026-10-13T06:50:55Z",
+      "originBuild": "260081",
+      "publishedAt": "2026-10-13T16:01:26Z",
       "apkSource": "uptodown",
       "recommendedVersion": null,
       "resigned": false
@@ -809,8 +809,8 @@
         "Unlock developer options",
         "View story mentions"
       ],
-      "originBuild": "260080",
-      "publishedAt": "2026-10-13T06:50:55Z",
+      "originBuild": "260081",
+      "publishedAt": "2026-10-13T16:01:26Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "447.0.0.55.81",
       "experimental": false
