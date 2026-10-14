@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-14T13:46:28Z"
+    "publishedAt": "2026-10-14T18:09:50Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -28,8 +28,8 @@
       "appliedPatches": [
         "Unlock Premium"
       ],
-      "originBuild": "260087",
-      "publishedAt": "2026-10-14T13:46:09Z",
+      "originBuild": "260088",
+      "publishedAt": "2026-10-14T18:09:25Z",
       "apkSource": "uptodown",
       "recommendedVersion": "26.32.1",
       "experimental": false
@@ -94,16 +94,16 @@
       "subVariant": null,
       "packageName": "com.oasisfeng.greenify",
       "patchSources": [
-        "rushiranpise/patches-1.22.0.mpp"
+        "rushiranpise/patches-1.23.0.mpp"
       ],
       "changelogs": [
-        "https://github.com/rushiranpise/morphe-patches/releases/tag/v1.22.0"
+        "https://github.com/rushiranpise/morphe-patches/releases/tag/v1.23.0"
       ],
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260087",
-      "publishedAt": "2026-10-14T13:46:09Z",
+      "originBuild": "260088",
+      "publishedAt": "2026-10-14T18:09:25Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "5.1.1",
       "experimental": false
@@ -144,8 +144,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260087",
-      "publishedAt": "2026-10-14T13:46:09Z",
+      "originBuild": "260088",
+      "publishedAt": "2026-10-14T18:09:25Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -183,16 +183,16 @@
       "subVariant": null,
       "packageName": "com.Splitwise.SplitwiseMobile",
       "patchSources": [
-        "rushiranpise/patches-1.22.0.mpp"
+        "rushiranpise/patches-1.23.0.mpp"
       ],
       "changelogs": [
-        "https://github.com/rushiranpise/morphe-patches/releases/tag/v1.22.0"
+        "https://github.com/rushiranpise/morphe-patches/releases/tag/v1.23.0"
       ],
       "appliedPatches": [
         "Unlock Pro"
       ],
-      "originBuild": "260081",
-      "publishedAt": "2026-10-13T16:01:26Z",
+      "originBuild": "260088",
+      "publishedAt": "2026-10-14T18:09:25Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "26.7.3",
       "experimental": false
@@ -358,17 +358,17 @@
       "subVariant": null,
       "packageName": "com.cloudflare.onedotonedotonedotone",
       "patchSources": [
-        "rushiranpise/patches-1.22.0.mpp"
+        "rushiranpise/patches-1.23.0.mpp"
       ],
       "changelogs": [
-        "https://github.com/rushiranpise/morphe-patches/releases/tag/v1.22.0"
+        "https://github.com/rushiranpise/morphe-patches/releases/tag/v1.23.0"
       ],
       "appliedPatches": [
         "Disable Analytics / Telemetry",
         "Spoof WARP+ Unlimited UI"
       ],
-      "originBuild": "260087",
-      "publishedAt": "2026-10-14T13:46:09Z",
+      "originBuild": "260088",
+      "publishedAt": "2026-10-14T18:09:25Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "6.38.9",
       "experimental": false
@@ -768,32 +768,11 @@
         "Unlock developer options",
         "View story mentions"
       ],
-      "originBuild": "260087",
-      "publishedAt": "2026-10-14T13:46:09Z",
+      "originBuild": "260088",
+      "publishedAt": "2026-10-14T18:09:25Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "447.0.0.55.81",
       "experimental": false
-    },
-    "oxygen-customizer-vnightly-210-2063-all.apk": {
-      "name": "oxygen-customizer",
-      "version": "nightly-210-2063",
-      "appKey": "oxygencustomizer",
-      "appName": "Oxygen Customizer",
-      "arch": "all",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "it.dhd.oxygencustomizer",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260077",
-      "publishedAt": "2026-10-12T17:55:47Z",
-      "apkSource": "actions",
-      "recommendedVersion": null,
-      "resigned": false
     },
     "oxygen-customizer-vnightly-210-2065-all.apk": {
       "name": "oxygen-customizer",
