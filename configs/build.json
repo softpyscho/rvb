@@ -115,8 +115,7 @@
     "app-name": "Oxygen Customizer",
     "pkg-name": "it.dhd.oxygencustomizer",
     "actions-dlurl": "https://github.com/DHD2280/Oxygen-Customizer/actions/workflows/build_debug.yml",
-    "actions-artifact": "Dev \\(#[0-9]+\\)$",
-    "enabled": false
+    "actions-artifact": "Dev \\(#[0-9]+\\)$"
   },
   "WhatsApp": {
     "arch": "arm64-v8a",
