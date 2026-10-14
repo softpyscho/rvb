@@ -47,8 +47,7 @@
     "pkg-name": "com.bitget.exchange",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-crypto/",
     "uptodown-dlurl": "https://bitget.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/bitget-buy-sell-crypto/com.bitget.exchange",
-    "enabled": false
+    "apkpure-dlurl": "https://apkpure.com/bitget-buy-sell-crypto/com.bitget.exchange"
   },
   "Stremio": {
     "arch": "arm64-v8a",
@@ -115,7 +114,8 @@
     "app-name": "Oxygen Customizer",
     "pkg-name": "it.dhd.oxygencustomizer",
     "actions-dlurl": "https://github.com/DHD2280/Oxygen-Customizer/actions/workflows/build_debug.yml",
-    "actions-artifact": "Dev \\(#[0-9]+\\)$"
+    "actions-artifact": "Dev \\(#[0-9]+\\)$",
+    "enabled": false
   },
   "WhatsApp": {
     "arch": "arm64-v8a",
@@ -181,7 +181,8 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/x-corp/twitter",
     "uptodown-dlurl": "https://twitter.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/twitter/com.twitter.android"
+    "apkpure-dlurl": "https://apkpure.com/twitter/com.twitter.android",
+    "enabled": false
   },
   "Instagram": {
     "arch": "arm64-v8a",
@@ -230,8 +231,7 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/splitwise/splitwise/",
     "uptodown-dlurl": "https://splitwise.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/splitwise/com.Splitwise.SplitwiseMobile",
-    "enabled": false
+    "apkpure-dlurl": "https://apkpure.com/splitwise/com.Splitwise.SplitwiseMobile"
   },
   "Greenify": {
     "arch": "arm64-v8a",

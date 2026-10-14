@@ -49,9 +49,9 @@
   "rushiranpise/morphe-patches": {
     "beta": {},
     "stable": {
-      "com.Splitwise.SplitwiseMobile": "c05c4d8e096d3fd2fffec0e1e9f8b339",
-      "com.cloudflare.onedotonedotonedotone": "e482dea53e48b8e01b9ab4617f2a22a1",
-      "com.oasisfeng.greenify": "7abbc5edbec58fef0830e944c8d4bca0",
+      "com.Splitwise.SplitwiseMobile": "98b548b18cb16fe0201d32390ac21632",
+      "com.cloudflare.onedotonedotonedotone": "04edcd306778cd56c989ae4e45c0f111",
+      "com.oasisfeng.greenify": "99136159aff6ca10723bbd9b0e0a57b5",
       "shared": "b337cf3aa24d7635804a8e2fa9435a93"
     }
   }
