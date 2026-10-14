@@ -72,8 +72,7 @@
     "pkg-name": "com.mixplorer",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/hootan-parsa/mixplorer-hootanparsa/",
     "uptodown-dlurl": "https://mixplorer.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/mixplorer/com.mixplorer",
-    "enabled": false
+    "apkpure-dlurl": "https://apkpure.com/mixplorer/com.mixplorer"
   },
   "Mix-Archive": {
     "arch": "arm64-v8a",
@@ -95,8 +94,7 @@
     "app-name": "RedotPay",
     "pkg-name": "com.redotpay",
     "uptodown-dlurl": "https://redotpay.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/redotpay/com.redotpay",
-    "enabled": false
+    "apkpure-dlurl": "https://apkpure.com/redotpay/com.redotpay"
   },
   "Duck-Detector": {
     "arch": "all",
@@ -129,7 +127,8 @@
     "pkg-name": "com.whatsapp",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger/",
     "uptodown-dlurl": "https://whatsapp-messenger.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/whatsapp-messenger/com.whatsapp"
+    "apkpure-dlurl": "https://apkpure.com/whatsapp-messenger/com.whatsapp",
+    "enabled": false
   },
   "Reddit": {
     "arch": "arm64-v8a",
@@ -183,8 +182,7 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/x-corp/twitter",
     "uptodown-dlurl": "https://twitter.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/twitter/com.twitter.android",
-    "enabled": false
+    "apkpure-dlurl": "https://apkpure.com/twitter/com.twitter.android"
   },
   "Instagram": {
     "arch": "arm64-v8a",
@@ -197,8 +195,7 @@
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/instagram/instagram-instagram",
     "uptodown-dlurl": "https://instagram.en.uptodown.com/android",
     "github-dlurl": "https://github.com/softpyscho/apkforge/releases/tag/com.instagram.android",
-    "apkpure-dlurl": "https://apkpure.com/instagram/com.instagram.android",
-    "enabled": false
+    "apkpure-dlurl": "https://apkpure.com/instagram/com.instagram.android"
   },
   "Alarmy": {
     "arch": "arm64-v8a",
@@ -210,8 +207,7 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/sleep-tracker-alarm-clock-by-delightroom/alarmy-challenge-alarm-clock/",
     "uptodown-dlurl": "https://alarmy.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/alarmy-alarm-clock/droom.sleepIfUCan",
-    "enabled": false
+    "apkpure-dlurl": "https://apkpure.com/alarmy-alarm-clock/droom.sleepIfUCan"
   },
   "WARP": {
     "arch": "arm64-v8a",
@@ -223,8 +219,7 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/cloudflare/1-1-1-1-faster-safer-internet",
     "uptodown-dlurl": "https://1-1-1-1.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/1-1-1-1-faster-safer-internet/com.cloudflare.onedotonedotonedotone",
-    "enabled": false
+    "apkpure-dlurl": "https://apkpure.com/1-1-1-1-faster-safer-internet/com.cloudflare.onedotonedotonedotone"
   },
   "Splitwise": {
     "arch": "arm64-v8a",
@@ -250,7 +245,6 @@
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/oasisfeng/greenify",
     "github-dlurl": "https://github.com/softpyscho/apkforge/releases/tag/com.oasisfeng.greenify",
     "uptodown-dlurl": "https://greenify.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/greenify/com.oasisfeng.greenify",
-    "enabled": false
+    "apkpure-dlurl": "https://apkpure.com/greenify/com.oasisfeng.greenify"
   }
 }
