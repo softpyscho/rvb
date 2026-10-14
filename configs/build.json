@@ -129,8 +129,7 @@
     "pkg-name": "com.whatsapp",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/whatsapp-inc/whatsapp-messenger/",
     "uptodown-dlurl": "https://whatsapp-messenger.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/whatsapp-messenger/com.whatsapp",
-    "enabled": false
+    "apkpure-dlurl": "https://apkpure.com/whatsapp-messenger/com.whatsapp"
   },
   "Reddit": {
     "arch": "arm64-v8a",
@@ -184,7 +183,8 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/x-corp/twitter",
     "uptodown-dlurl": "https://twitter.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/twitter/com.twitter.android"
+    "apkpure-dlurl": "https://apkpure.com/twitter/com.twitter.android",
+    "enabled": false
   },
   "Instagram": {
     "arch": "arm64-v8a",
