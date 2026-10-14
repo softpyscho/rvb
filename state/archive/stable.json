@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-14T09:53:36Z"
+    "publishedAt": "2026-10-14T13:46:28Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -28,8 +28,8 @@
       "appliedPatches": [
         "Unlock Premium"
       ],
-      "originBuild": "260086",
-      "publishedAt": "2026-10-14T09:53:15Z",
+      "originBuild": "260087",
+      "publishedAt": "2026-10-14T13:46:09Z",
       "apkSource": "uptodown",
       "recommendedVersion": "26.32.1",
       "experimental": false
@@ -102,8 +102,8 @@
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260086",
-      "publishedAt": "2026-10-14T09:53:15Z",
+      "originBuild": "260087",
+      "publishedAt": "2026-10-14T13:46:09Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "5.1.1",
       "experimental": false
@@ -144,8 +144,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260086",
-      "publishedAt": "2026-10-14T09:53:15Z",
+      "originBuild": "260087",
+      "publishedAt": "2026-10-14T13:46:09Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -339,8 +339,8 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260086",
-      "publishedAt": "2026-10-14T09:53:15Z",
+      "originBuild": "260087",
+      "publishedAt": "2026-10-14T13:46:09Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "12.19.1-release.0",
       "experimental": false
@@ -367,8 +367,8 @@
         "Disable Analytics / Telemetry",
         "Spoof WARP+ Unlimited UI"
       ],
-      "originBuild": "260086",
-      "publishedAt": "2026-10-14T09:53:15Z",
+      "originBuild": "260087",
+      "publishedAt": "2026-10-14T13:46:09Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "6.38.9",
       "experimental": false
@@ -768,8 +768,8 @@
         "Unlock developer options",
         "View story mentions"
       ],
-      "originBuild": "260086",
-      "publishedAt": "2026-10-14T09:53:15Z",
+      "originBuild": "260087",
+      "publishedAt": "2026-10-14T13:46:09Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "447.0.0.55.81",
       "experimental": false
@@ -834,6 +834,27 @@
       "originBuild": "260085",
       "publishedAt": "2026-10-14T04:50:02Z",
       "apkSource": "apkmirror",
+      "recommendedVersion": null,
+      "resigned": false
+    },
+    "oxygen-customizer-vnightly-210-2066-all.apk": {
+      "name": "oxygen-customizer",
+      "version": "nightly-210-2066",
+      "appKey": "oxygencustomizer",
+      "appName": "Oxygen Customizer",
+      "arch": "all",
+      "fileType": "APK",
+      "brandKey": "mirror",
+      "brandName": "Mirror",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "it.dhd.oxygencustomizer",
+      "patchSources": [],
+      "changelogs": [],
+      "appliedPatches": [],
+      "originBuild": "260087",
+      "publishedAt": "2026-10-14T13:46:09Z",
+      "apkSource": "actions",
       "recommendedVersion": null,
       "resigned": false
     }
