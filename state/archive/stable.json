@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-14T20:27:04Z"
+    "publishedAt": "2026-10-17T18:42:16Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -28,8 +28,8 @@
       "appliedPatches": [
         "Unlock Premium"
       ],
-      "originBuild": "260089",
-      "publishedAt": "2026-10-14T20:26:38Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "uptodown",
       "recommendedVersion": "26.32.1",
       "experimental": false
@@ -57,8 +57,8 @@
         "Rename shared permissions",
         "Skip ads"
       ],
-      "originBuild": "260080",
-      "publishedAt": "2026-10-13T06:50:55Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "3.0.470.1047",
       "experimental": false
@@ -102,8 +102,8 @@
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260089",
-      "publishedAt": "2026-10-14T20:26:38Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "5.1.1",
       "experimental": false
@@ -123,8 +123,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260075",
-      "publishedAt": "2026-10-12T12:03:32Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -144,8 +144,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260089",
-      "publishedAt": "2026-10-14T20:26:38Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -191,8 +191,8 @@
       "appliedPatches": [
         "Unlock Pro"
       ],
-      "originBuild": "260088",
-      "publishedAt": "2026-10-14T18:09:25Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "26.7.3",
       "experimental": false
@@ -212,8 +212,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260075",
-      "publishedAt": "2026-10-12T12:03:32Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": true
@@ -241,8 +241,8 @@
         "Restore reminder alarms",
         "TickTick Premium"
       ],
-      "originBuild": "260075",
-      "publishedAt": "2026-10-12T12:03:32Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "8.1.3.3",
       "experimental": false
@@ -339,8 +339,8 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260087",
-      "publishedAt": "2026-10-14T13:46:09Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "12.19.1-release.0",
       "experimental": false
@@ -367,8 +367,8 @@
         "Disable Analytics / Telemetry",
         "Spoof WARP+ Unlimited UI"
       ],
-      "originBuild": "260089",
-      "publishedAt": "2026-10-14T20:26:38Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "6.38.9",
       "experimental": false
@@ -394,8 +394,8 @@
       "appliedPatches": [
         "Enable Pro"
       ],
-      "originBuild": "260075",
-      "publishedAt": "2026-10-12T12:03:32Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "11.2.0",
       "experimental": false
@@ -495,8 +495,8 @@
         "Neutralize third-party SDKs",
         "Truecaller Premium"
       ],
-      "originBuild": "260080",
-      "publishedAt": "2026-10-13T06:50:55Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "26.10.6",
       "experimental": false
@@ -522,8 +522,8 @@
       "appliedPatches": [
         "Unlock PRO"
       ],
-      "originBuild": "260075",
-      "publishedAt": "2026-10-12T12:03:32Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "2.5.0.6",
       "experimental": false
@@ -608,8 +608,8 @@
         "Spoof signature",
         "Start as guest"
       ],
-      "originBuild": "260078",
-      "publishedAt": "2026-10-12T21:35:38Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "2026.41.0",
       "experimental": true
@@ -768,8 +768,8 @@
         "Unlock developer options",
         "View story mentions"
       ],
-      "originBuild": "260089",
-      "publishedAt": "2026-10-14T20:26:38Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "447.0.0.55.81",
       "experimental": false
@@ -810,8 +810,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260085",
-      "publishedAt": "2026-10-14T04:50:02Z",
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -833,6 +833,48 @@
       "appliedPatches": [],
       "originBuild": "260087",
       "publishedAt": "2026-10-14T13:46:09Z",
+      "apkSource": "actions",
+      "recommendedVersion": null,
+      "resigned": false
+    },
+    "Duck.Detector-2026.10.16-b1135897cff4.apk": {
+      "name": "duck-detector",
+      "version": "nightly",
+      "appKey": "duckdetector",
+      "appName": "Duck Detector",
+      "arch": "all",
+      "fileType": "APK",
+      "brandKey": "mirror",
+      "brandName": "Mirror",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "com.eltavine.duckdetector",
+      "patchSources": [],
+      "changelogs": [],
+      "appliedPatches": [],
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
+      "apkSource": "github",
+      "recommendedVersion": null,
+      "resigned": false
+    },
+    "oxygen-customizer-vnightly-210-2067-all.apk": {
+      "name": "oxygen-customizer",
+      "version": "nightly-210-2067",
+      "appKey": "oxygencustomizer",
+      "appName": "Oxygen Customizer",
+      "arch": "all",
+      "fileType": "APK",
+      "brandKey": "mirror",
+      "brandName": "Mirror",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "it.dhd.oxygencustomizer",
+      "patchSources": [],
+      "changelogs": [],
+      "appliedPatches": [],
+      "originBuild": "260090",
+      "publishedAt": "2026-10-17T18:41:48Z",
       "apkSource": "actions",
       "recommendedVersion": null,
       "resigned": false
