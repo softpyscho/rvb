@@ -259,7 +259,7 @@ apkmirror-dlurl = "https://www.apkmirror.com/apk/splitwise/splitwise/"
 uptodown-dlurl = "https://splitwise.en.uptodown.com/android"
 apkpure-dlurl = "https://apkpure.com/splitwise/com.Splitwise.SplitwiseMobile"
 
-[Adobe Scan]
+[Adobe-Scan]
 patches-source = "rushiranpise/morphe-patches"
 pkg-name = "com.adobe.scan.android"
 badge-color = "E2231A"
@@ -267,7 +267,7 @@ badge-icon = "adobe"
 version = "auto"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/adobe/adobe-scan-pdf-scanner-ocr/"
 uptodown-dlurl = "https://adobe-scan.en.uptodown.com/android"
-apkpure-dlurl = "https://apkpure.net/adobe-scan-ai-pdf-scanner-ocr/com.adobe.scan.android"
+apkpure-dlurl = "https://apkpure.com/adobe-scan-ai-pdf-scanner-ocr/com.adobe.scan.android"
 
 [Greenify]
 patches-source = "rushiranpise/morphe-patches"
