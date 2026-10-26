@@ -9,19 +9,19 @@
     "keys": [
       "Amazon-Prime-Video"
     ],
-    "version": "3.0.476"
+    "version": "3.0.478"
   },
   "Battery-Guru": {
     "keys": [
       "Battery-Guru"
     ],
-    "version": "2.5.0.8"
+    "version": "2.5.0.9"
   },
   "Bitget": {
     "keys": [
       "Bitget"
     ],
-    "version": "2.94.4"
+    "version": "3.0.1"
   },
   "Duck-Detector": {
     "keys": [
@@ -39,7 +39,7 @@
     "keys": [
       "Instagram"
     ],
-    "version": "452.0.0.0.53"
+    "version": "454.0.0.0.46"
   },
   "Mix-Archive": {
     "keys": [
@@ -57,13 +57,13 @@
     "keys": [
       "Reddit"
     ],
-    "version": "2026.41.0"
+    "version": "2026.42.0"
   },
   "RedotPay": {
     "keys": [
       "RedotPay"
     ],
-    "version": "3.14.4"
+    "version": "3.14.6"
   },
   "Splitwise": {
     "keys": [
@@ -81,25 +81,25 @@
     "keys": [
       "TickTick"
     ],
-    "version": "8.2.2.0"
+    "version": "8.2.4.0"
   },
   "Truecaller": {
     "keys": [
       "Truecaller"
     ],
-    "version": "26.40.5"
+    "version": "26.41.5"
   },
   "Twitter": {
     "keys": [
       "Twitter"
     ],
-    "version": "12.34.0-prod.01"
+    "version": "12.37.2-prod.01"
   },
   "WARP": {
     "keys": [
       "WARP"
     ],
-    "version": "6.38.10"
+    "version": "6.38.11"
   },
   "Xodo": {
     "keys": [
@@ -111,18 +111,24 @@
     "keys": [
       "Oxygen-Customizer"
     ],
-    "version": "2066"
+    "version": "2070"
   },
   "WhatsApp": {
     "keys": [
       "WhatsApp"
     ],
-    "version": "2.26.40.77"
+    "version": "2.26.41.78"
   },
   "WhatsApp-Business": {
     "keys": [
       "WhatsApp-Business"
     ],
     "version": "2.26.39.72"
+  },
+  "Adobe-Scan": {
+    "keys": [
+      "Adobe-Scan"
+    ],
+    "version": "26.10.06"
   }
 }

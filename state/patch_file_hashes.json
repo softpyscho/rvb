@@ -27,8 +27,8 @@
   "morpheapp/morphe-patches": {
     "beta": {},
     "stable": {
-      "com.reddit.frontpage": "59f4197c376045a317af241fe538c7eb",
-      "shared": "37419c431fbdcfb2c425a66d42d8aaba"
+      "com.reddit.frontpage": "acd05fd6faa2ee4b86716a822759f192",
+      "shared": "986a989b1f52ce1f548dd08c65941d53"
     }
   },
   "paresh-maheshwari/paresh-patches": {
