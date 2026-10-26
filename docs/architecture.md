@@ -6,7 +6,7 @@
    patch sources (github/gitlab/codeberg)         app sources (stores & mirrors)
    MorpheApp, ReVanced, anddea, Piko, devanced…   APKMirror, Uptodown, APKPure,
         │                                         APKCombo, archive.org, GitHub,
-        │ watcher lists releases, every 4 h       direct URL, shared APK cache
+        │ watcher lists releases, daily        direct URL, shared APK cache
         ▼                                              │
  ┌──────────────────────────────────────┐              ▼
  │ nullcpy/rvb  (this repo)             │      ┌──────────────────┐
@@ -113,9 +113,8 @@ one archive release, `stable`.
 
 ## One build, end to end
 
-**Watcher** — `ci.yml`, 6 UTC crons on a 4 h window grid with randomized minutes
-(GitHub's scheduler is best-effort and drops missed ticks — see
-[CI pipelines](ci-pipelines.md)), concurrency group `ci`:
+**Watcher** — `ci.yml`, one daily cron at 00:00 IST (`30 18 * * *` UTC; GitHub's scheduler is
+best-effort and drops missed ticks — see [CI pipelines](ci-pipelines.md)), concurrency group `ci`:
 
 1. Checkout `main`: `configs/` + `state/` come with it.
 2. `compile_patch_configs.py` compiles `configs/config.toml` into `config.json`.

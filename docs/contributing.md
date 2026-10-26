@@ -43,7 +43,7 @@ written by CI. Regenerate the README/Obtainium documents after adding or removin
 `python3 .github/scripts/obtainium.py --repo <owner>/<repo> --page OBTAINIUM.md --json obtainium-apps.json --readme README.md`
 (`test_release_notes.py` fails while they are stale).
 
-Your change takes effect on the next watcher run (every 4 hours): the pool configs
+Your change takes effect on the next watcher run (daily at 00:00 IST): the pool configs
 are regenerated from your TOML and the affected app gets built. To verify
 immediately instead of waiting, run **Manual CI** (`workflow_dispatch`): `all` builds every enabled app
 of `configs/config.toml`, or pick `manual` (`configs/config.manual.toml`) — a hand-built scratch config. Tick `clean` to ignore every cached stock APK and download all of them again.

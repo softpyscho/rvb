@@ -57,7 +57,7 @@ Releases, records build metadata in the repository (`state/`), and feeds a stati
     that must run forever goes to `.github/traces/`. An absence assertion needs a
     negative control in the same harness.
 13. Nothing here runs on `push` to `main` except Trace Verify. A workflow change
-    takes effect on the next *scheduled* run (every 4 h) or a dispatch.
+    takes effect on the next *scheduled* run (daily, 00:00 IST) or a dispatch.
 
 ## File map
 

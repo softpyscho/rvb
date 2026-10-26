@@ -101,4 +101,7 @@ flags() { : > out; TRIGGER_PATCHES="$1" TRIGGER_BLOCKED="$2" TRIGGER_APP_UPDATE=
 [ "$(flags 0 1 0)" = "SOURCES_CHANGED=0 ANYTHING_CHANGED=1 " ] || fail "blocked: $(flags 0 1 0)"
 [ "$(flags 0 0 1)" = "SOURCES_CHANGED=0 ANYTHING_CHANGED=1 " ] || fail "app update: $(flags 0 0 1)"
 [ "$(flags 0 0 0)" = "SOURCES_CHANGED=0 ANYTHING_CHANGED=0 " ] || fail "idle: $(flags 0 0 0)"
+# --- the schedule: one tick a day, 00:00 IST = 18:30 UTC --------------------------------------
+crons=$(grep -E '^[[:space:]]*- cron:' "$REPO_ROOT/.github/workflows/ci.yml")
+[ "$(wc -l <<<"$crons")" = 1 ] && grep -q '"30 18 \* \* \*"' <<<"$crons" || fail "the watcher must run once a day at 30 18 (00:00 IST), got: $crons"
 echo "CI WATCHER TESTS: PASS"

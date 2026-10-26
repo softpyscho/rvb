@@ -27,7 +27,7 @@ New patches or a new app version land → a fresh, signed APK appears in Release
 <td width="33%" valign="top">
 
 ### ⚡ Always current
-A watcher checks every patch source and app store every 4 hours and builds only what moved.
+A watcher checks every patch source and app store once a day (00:00 IST) and builds only what moved.
 
 </td>
 <td width="33%" valign="top">
@@ -231,7 +231,7 @@ Why every app shares one repository, and what the Add to Obtainium links actuall
 flowchart LR
     P["🧩 Patch sources<br/>Morphe · Piko · …"] --> W
     S["🏪 App stores<br/>APKMirror · Uptodown · GitHub"] --> W
-    W{{"👀 Watcher<br/>every 4 h"}} -- "something new" --> B
+    W{{"👀 Watcher<br/>daily 00:00 IST"}} -- "something new" --> B
     B["🔨 Build<br/>download · verify · patch · sign"] --> R[("📦 GitHub Releases")]
     R --> O["🔔 Obtainium<br/>on your phone"]
 ```
