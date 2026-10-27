@@ -3,7 +3,7 @@
     "keys": [
       "Alarmy"
     ],
-    "version": "26.36.1"
+    "version": "26.41.1"
   },
   "Amazon-Prime-Video": {
     "keys": [
@@ -39,7 +39,7 @@
     "keys": [
       "Instagram"
     ],
-    "version": "454.0.0.0.53"
+    "version": "454.0.0.0.55"
   },
   "Mix-Archive": {
     "keys": [
@@ -57,7 +57,7 @@
     "keys": [
       "Reddit"
     ],
-    "version": "2026.42.0"
+    "version": "2026.43.0"
   },
   "RedotPay": {
     "keys": [
@@ -75,7 +75,7 @@
     "keys": [
       "Stremio"
     ],
-    "version": "2.4.0"
+    "version": "2.5.0"
   },
   "TickTick": {
     "keys": [
