@@ -39,7 +39,7 @@
     "keys": [
       "Instagram"
     ],
-    "version": "454.0.0.0.55"
+    "version": "454.0.0.0.66"
   },
   "Mix-Archive": {
     "keys": [
@@ -57,7 +57,7 @@
     "keys": [
       "Reddit"
     ],
-    "version": "2026.43.0"
+    "version": "2026.43.1"
   },
   "RedotPay": {
     "keys": [
@@ -69,7 +69,7 @@
     "keys": [
       "Splitwise"
     ],
-    "version": "26.9.1"
+    "version": "26.10.2"
   },
   "Stremio": {
     "keys": [
@@ -87,13 +87,13 @@
     "keys": [
       "Truecaller"
     ],
-    "version": "26.41.5"
+    "version": "26.42.5"
   },
   "Twitter": {
     "keys": [
       "Twitter"
     ],
-    "version": "12.37.2-prod.01"
+    "version": "12.38.0-prod.01"
   },
   "WARP": {
     "keys": [
