@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-27T22:35:19Z"
+    "publishedAt": "2026-10-28T22:51:27Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -94,16 +94,16 @@
       "subVariant": null,
       "packageName": "com.oasisfeng.greenify",
       "patchSources": [
-        "rushiranpise/patches-1.23.0.mpp"
+        "rushiranpise/patches-1.23.1.mpp"
       ],
       "changelogs": [
-        "https://github.com/rushiranpise/morphe-patches/releases/tag/v1.23.0"
+        "https://github.com/rushiranpise/morphe-patches/releases/tag/v1.23.1"
       ],
       "appliedPatches": [
         "Unlock Donation"
       ],
-      "originBuild": "260091",
-      "publishedAt": "2026-10-24T06:14:32Z",
+      "originBuild": "260095",
+      "publishedAt": "2026-10-28T22:51:07Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "5.1.1",
       "experimental": false
@@ -183,16 +183,16 @@
       "subVariant": null,
       "packageName": "com.Splitwise.SplitwiseMobile",
       "patchSources": [
-        "rushiranpise/patches-1.23.0.mpp"
+        "rushiranpise/patches-1.23.1.mpp"
       ],
       "changelogs": [
-        "https://github.com/rushiranpise/morphe-patches/releases/tag/v1.23.0"
+        "https://github.com/rushiranpise/morphe-patches/releases/tag/v1.23.1"
       ],
       "appliedPatches": [
         "Unlock Pro"
       ],
-      "originBuild": "260091",
-      "publishedAt": "2026-10-24T06:14:32Z",
+      "originBuild": "260095",
+      "publishedAt": "2026-10-28T22:51:07Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "26.7.3",
       "experimental": false
@@ -339,8 +339,8 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260092",
-      "publishedAt": "2026-10-26T15:19:41Z",
+      "originBuild": "260095",
+      "publishedAt": "2026-10-28T22:51:07Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "12.19.1-release.0",
       "experimental": false
@@ -451,8 +451,8 @@
         "Neutralize third-party SDKs",
         "Truecaller Premium"
       ],
-      "originBuild": "260092",
-      "publishedAt": "2026-10-26T15:19:41Z",
+      "originBuild": "260095",
+      "publishedAt": "2026-10-28T22:51:07Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "26.10.6",
       "experimental": false
@@ -682,8 +682,8 @@
         "Unlock developer options",
         "View story mentions"
       ],
-      "originBuild": "260094",
-      "publishedAt": "2026-10-27T22:34:51Z",
+      "originBuild": "260095",
+      "publishedAt": "2026-10-28T22:51:07Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "447.0.0.55.81",
       "experimental": false
@@ -743,16 +743,16 @@
       "subVariant": null,
       "packageName": "com.adobe.scan.android",
       "patchSources": [
-        "rushiranpise/patches-1.23.0.mpp"
+        "rushiranpise/patches-1.23.1.mpp"
       ],
       "changelogs": [
-        "https://github.com/rushiranpise/morphe-patches/releases/tag/v1.23.0"
+        "https://github.com/rushiranpise/morphe-patches/releases/tag/v1.23.1"
       ],
       "appliedPatches": [
         "Unlock Premium"
       ],
-      "originBuild": "260092",
-      "publishedAt": "2026-10-26T15:19:41Z",
+      "originBuild": "260095",
+      "publishedAt": "2026-10-28T22:51:07Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "26.08.01",
       "experimental": false
@@ -849,8 +849,8 @@
         "Spoof signature",
         "Start as guest"
       ],
-      "originBuild": "260094",
-      "publishedAt": "2026-10-27T22:34:51Z",
+      "originBuild": "260095",
+      "publishedAt": "2026-10-28T22:51:07Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "2026.42.0",
       "experimental": true
@@ -896,6 +896,34 @@
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": true
+    },
+    "warp-morphe-v6.38.11-arm64-v8a.apk": {
+      "name": "warp-morphe",
+      "version": "6.38.11",
+      "appKey": "warp",
+      "appName": "WARP",
+      "arch": "arm64",
+      "fileType": "APK",
+      "brandKey": "morphe",
+      "brandName": "Morphe",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "com.cloudflare.onedotonedotonedotone",
+      "patchSources": [
+        "rushiranpise/patches-1.23.1.mpp"
+      ],
+      "changelogs": [
+        "https://github.com/rushiranpise/morphe-patches/releases/tag/v1.23.1"
+      ],
+      "appliedPatches": [
+        "Disable Analytics / Telemetry",
+        "Spoof WARP+ Unlimited UI"
+      ],
+      "originBuild": "260095",
+      "publishedAt": "2026-10-28T22:51:07Z",
+      "apkSource": "apkmirror",
+      "recommendedVersion": "6.38.11",
+      "experimental": false
     }
   }
 }
