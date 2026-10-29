@@ -39,7 +39,7 @@
     "keys": [
       "Instagram"
     ],
-    "version": "454.0.0.0.66"
+    "version": "454.0.0.1.77"
   },
   "Mix-Archive": {
     "keys": [
@@ -57,7 +57,7 @@
     "keys": [
       "Reddit"
     ],
-    "version": "2026.43.1"
+    "version": "2026.44.0"
   },
   "RedotPay": {
     "keys": [
@@ -93,7 +93,7 @@
     "keys": [
       "Twitter"
     ],
-    "version": "12.38.0-prod.01"
+    "version": "12.38.1-prod.01"
   },
   "WARP": {
     "keys": [
@@ -105,13 +105,13 @@
     "keys": [
       "Xodo"
     ],
-    "version": "11.3.1"
+    "version": "11.3.2"
   },
   "Oxygen-Customizer": {
     "keys": [
       "Oxygen-Customizer"
     ],
-    "version": "2070"
+    "version": "2073"
   },
   "WhatsApp": {
     "keys": [
