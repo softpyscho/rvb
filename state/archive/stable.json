@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-28T22:51:27Z"
+    "publishedAt": "2026-10-29T22:59:47Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -339,8 +339,8 @@
         "Show sensitive media",
         "Support external downloader"
       ],
-      "originBuild": "260095",
-      "publishedAt": "2026-10-28T22:51:07Z",
+      "originBuild": "260096",
+      "publishedAt": "2026-10-29T22:59:26Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "12.19.1-release.0",
       "experimental": false
@@ -394,8 +394,8 @@
       "appliedPatches": [
         "Enable Pro"
       ],
-      "originBuild": "260091",
-      "publishedAt": "2026-10-24T06:14:32Z",
+      "originBuild": "260096",
+      "publishedAt": "2026-10-29T22:59:26Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "11.2.0",
       "experimental": false
@@ -682,8 +682,8 @@
         "Unlock developer options",
         "View story mentions"
       ],
-      "originBuild": "260095",
-      "publishedAt": "2026-10-28T22:51:07Z",
+      "originBuild": "260096",
+      "publishedAt": "2026-10-29T22:59:26Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "447.0.0.55.81",
       "experimental": false
@@ -849,8 +849,8 @@
         "Spoof signature",
         "Start as guest"
       ],
-      "originBuild": "260095",
-      "publishedAt": "2026-10-28T22:51:07Z",
+      "originBuild": "260096",
+      "publishedAt": "2026-10-29T22:59:26Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "2026.42.0",
       "experimental": true
@@ -924,6 +924,27 @@
       "apkSource": "apkmirror",
       "recommendedVersion": "6.38.11",
       "experimental": false
+    },
+    "oxygen-customizer-vnightly-210-2073-all.apk": {
+      "name": "oxygen-customizer",
+      "version": "nightly-210-2073",
+      "appKey": "oxygencustomizer",
+      "appName": "Oxygen Customizer",
+      "arch": "all",
+      "fileType": "APK",
+      "brandKey": "mirror",
+      "brandName": "Mirror",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "it.dhd.oxygencustomizer",
+      "patchSources": [],
+      "changelogs": [],
+      "appliedPatches": [],
+      "originBuild": "260096",
+      "publishedAt": "2026-10-29T22:59:26Z",
+      "apkSource": "actions",
+      "recommendedVersion": null,
+      "resigned": false
     }
   }
 }
