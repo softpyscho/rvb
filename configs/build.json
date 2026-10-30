@@ -10,8 +10,7 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/paget96/battery-guru-health-saver/",
     "uptodown-dlurl": "https://battery-guru.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/battery-guru/com.paget96.batteryguru",
-    "enabled": false
+    "apkpure-dlurl": "https://apkpure.com/battery-guru/com.paget96.batteryguru"
   },
   "Xodo": {
     "arch": "arm64-v8a",
@@ -23,7 +22,8 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/apryse-software-inc/xodo-pdf-reader-editor",
     "uptodown-dlurl": "https://xodo-docs.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/xodo-pdf-reader-editor/com.xodo.pdf.reader"
+    "apkpure-dlurl": "https://apkpure.com/xodo-pdf-reader-editor/com.xodo.pdf.reader",
+    "enabled": false
   },
   "Amazon-Prime-Video": {
     "arch": "arm64-v8a",
@@ -116,7 +116,8 @@
     "app-name": "Oxygen Customizer",
     "pkg-name": "it.dhd.oxygencustomizer",
     "actions-dlurl": "https://github.com/DHD2280/Oxygen-Customizer/actions/workflows/build_debug.yml",
-    "actions-artifact": "Dev \\(#[0-9]+\\)$"
+    "actions-artifact": "Dev \\(#[0-9]+\\)$",
+    "enabled": false
   },
   "WhatsApp": {
     "arch": "arm64-v8a",
@@ -181,7 +182,8 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/x-corp/twitter",
     "uptodown-dlurl": "https://twitter.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/twitter/com.twitter.android"
+    "apkpure-dlurl": "https://apkpure.com/twitter/com.twitter.android",
+    "enabled": false
   },
   "Instagram": {
     "arch": "arm64-v8a",
