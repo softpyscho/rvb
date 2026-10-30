@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-10-29T22:59:47Z"
+    "publishedAt": "2026-10-30T22:38:22Z"
   },
   "files": {
     "alarmy-morphe-v26.32.1-arm64-v8a.apk": {
@@ -478,8 +478,8 @@
       "appliedPatches": [
         "Unlock PRO"
       ],
-      "originBuild": "260092",
-      "publishedAt": "2026-10-26T15:19:41Z",
+      "originBuild": "260097",
+      "publishedAt": "2026-10-30T22:38:04Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "2.5.0.6",
       "experimental": false
@@ -682,8 +682,8 @@
         "Unlock developer options",
         "View story mentions"
       ],
-      "originBuild": "260096",
-      "publishedAt": "2026-10-29T22:59:26Z",
+      "originBuild": "260097",
+      "publishedAt": "2026-10-30T22:38:04Z",
       "apkSource": "apkmirror",
       "recommendedVersion": "447.0.0.55.81",
       "experimental": false
@@ -756,27 +756,6 @@
       "apkSource": "apkmirror",
       "recommendedVersion": "26.08.01",
       "experimental": false
-    },
-    "oxygen-customizer-vnightly-210-2068-all.apk": {
-      "name": "oxygen-customizer",
-      "version": "nightly-210-2068",
-      "appKey": "oxygencustomizer",
-      "appName": "Oxygen Customizer",
-      "arch": "all",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "it.dhd.oxygencustomizer",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260091",
-      "publishedAt": "2026-10-24T06:14:32Z",
-      "apkSource": "actions",
-      "recommendedVersion": null,
-      "resigned": false
     },
     "oxygen-customizer-vnightly-210-2070-all.apk": {
       "name": "oxygen-customizer",
@@ -945,6 +924,62 @@
       "apkSource": "actions",
       "recommendedVersion": null,
       "resigned": false
+    },
+    "reddit-morphe-v2026.44.0-arm64-v8a.apk": {
+      "name": "reddit-morphe",
+      "version": "2026.44.0",
+      "appKey": "reddit",
+      "appName": "Reddit",
+      "arch": "arm64",
+      "fileType": "APK",
+      "brandKey": "morphe",
+      "brandName": "Morphe",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "com.reddit.frontpage",
+      "patchSources": [
+        "MorpheApp/patches-2.0.0.mpp"
+      ],
+      "changelogs": [
+        "https://github.com/MorpheApp/morphe-patches/releases/tag/v2.0.0"
+      ],
+      "appliedPatches": [
+        "App icon",
+        "Copy text",
+        "Custom branding name for Reddit",
+        "Custom font",
+        "Customize post layout",
+        "Disable modern home",
+        "Disable screenshot popup",
+        "Download location",
+        "Feed media max height",
+        "Force system font",
+        "Full width feed media",
+        "Hide Ask button",
+        "Hide Trending shelves",
+        "Hide ads",
+        "Hide communities shelf",
+        "Hide media viewer components",
+        "Hide navigation buttons",
+        "Hide sidebar components",
+        "Keep feed position",
+        "Media viewer black background",
+        "Media viewer fade",
+        "Open links directly",
+        "Open links externally",
+        "Redgifs audio",
+        "Remember collapsed comments",
+        "Remove subreddit dialog",
+        "Sanitize sharing links",
+        "Show flairs in home feed",
+        "Spoof signature",
+        "Start as guest"
+      ],
+      "originBuild": "260097",
+      "publishedAt": "2026-10-30T22:38:04Z",
+      "apkSource": "apkmirror",
+      "recommendedVersion": "2026.44.0",
+      "experimental": true
     }
   }
 }
