@@ -58,16 +58,6 @@ apkpure-dlurl = "https://apkpure.com/amazon-prime-video/com.amazon.avod.thirdpar
 # release of their own. `mirror = true` skips the patcher entirely: the engine downloads the
 # stock APK, checks package/signature/arch like any other build, and publishes it as-is.
 # No patch source is involved, so none is set here.
-[Bitget]
-mirror = true
-brand = "Mirror"
-version = "latest"
-app-name = "Bitget"
-pkg-name = "com.bitget.exchange"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-crypto/"
-uptodown-dlurl = "https://bitget.en.uptodown.com/android"
-apkpure-dlurl = "https://apkpure.com/bitget-buy-sell-crypto/com.bitget.exchange"
-
 [Stremio]
 mirror = true
 brand = "Mirror"
@@ -103,16 +93,6 @@ pkg-name = "com.mixplorer.addon.archive"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/hootan-parsa/mix-archive/"
 uptodown-dlurl = "https://mix-archive.en.uptodown.com/android"
 apkpure-dlurl = "https://apkpure.com/mix-archive/com.mixplorer.addon.archive"
-
-[RedotPay]
-mirror = true
-brand = "Mirror"
-version = "latest"
-app-name = "RedotPay"
-pkg-name = "com.redotpay"
-# direct-dlurl = "https://www.redotpay.com/app-download" is not carried over (a web page, see Stremio).
-uptodown-dlurl = "https://redotpay.en.uptodown.com/android"
-apkpure-dlurl = "https://apkpure.com/redotpay/com.redotpay"
 
 [Duck-Detector]
 mirror = true

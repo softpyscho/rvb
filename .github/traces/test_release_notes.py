@@ -100,7 +100,7 @@ class Obtainium(unittest.TestCase):
         it with the installed app; a patched app may have had its versionName rewritten."""
         specs = {s["key"]: s for s in obtainium.specs_from_configs(str(CONFIG_PATCHES))}
         det = lambda key: json.loads(obtainium.entry_for_spec(specs[key], REPO)["additionalSettings"])["versionDetection"]
-        self.assertIs(det("Bitget"), True)
+        self.assertIs(det("Mixplorer"), True)
         self.assertIs(det("Oxygen-Customizer"), True)
         self.assertIs(det("Duck-Detector"), True)
         self.assertIs(det("Reddit"), False)   # controls: patched apps
@@ -426,9 +426,9 @@ class AppsSection(unittest.TestCase):
     def test_cells(self):
         data = {"reddit-morphe": dict(self.RECORD, version="2026.39.0", applied=["Hide ads", "App icon", "hide ads 2"]),
                 "twitter-morphe": dict(self.RECORD, version="12.19.1-release.0", recommended="12.19.1-release.0", applied=["Only one"], apk_source="apkmirror"),
-                "bitget": {"version": "2.94.3", "applied": [], "has_record": True, "apk_source": "apkmirror"}}
+                "mixplorer": {"version": "2.94.3", "applied": [], "has_record": True, "apk_source": "apkmirror"}}
         md = self.section(data)
-        row = {k: self.row(md, k) for k in ("Reddit", "Twitter", "Truecaller", "Bitget", "Duck-Detector")}
+        row = {k: self.row(md, k) for k in ("Reddit", "Twitter", "Truecaller", "Mixplorer", "Duck-Detector")}
         # patched app with a build: the patches' recommendation and the built version side by side
         self.assertIn("recommended-v2026.39.0-FF4500", row["Reddit"])
         self.assertIn("built-v2026.39.0-FF4500", row["Reddit"])
@@ -450,13 +450,13 @@ class AppsSection(unittest.TestCase):
         self.assertIn("*(pending)*", row["Truecaller"], "APK Source")
         self.assertIn("*(Pending first build)*", row["Truecaller"])
         # stock mirror: one version, a source, no patches column at all
-        self.assertIn("version-v2.94.3-", row["Bitget"])
-        self.assertNotIn("recommended", row["Bitget"], "nothing to recommend for an unpatched APK")
-        self.assertIn("[APKMirror](", row["Bitget"])
-        self.assertNotIn("Stock Mirror", row["Bitget"])
+        self.assertIn("version-v2.94.3-", row["Mixplorer"])
+        self.assertNotIn("recommended", row["Mixplorer"], "nothing to recommend for an unpatched APK")
+        self.assertIn("[APKMirror](", row["Mixplorer"])
+        self.assertNotIn("Stock Mirror", row["Mixplorer"])
         # an app that cannot be a Play listing - a bad package id, or only a GitHub release as its
         # source - links to where the file comes from instead; one with a store source keeps Play
-        self.assertIn("play.google.com/store/apps/details?id=com.bitget.exchange", row["Bitget"])
+        self.assertIn("play.google.com/store/apps/details?id=com.mixplorer", row["Mixplorer"])
         self.assertNotIn("play.google.com", row["Duck-Detector"])
         self.assertIn("(https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly)", row["Duck-Detector"])
 
@@ -589,7 +589,7 @@ class PatchedChannel(unittest.TestCase):
         self.assertIsNone(data["c"]["experimental"], "an entry from before it was recorded has none")
 
     def test_the_mirror_table_has_no_channel_column(self):
-        md = obtainium.render_apps_section([self.SPECS["Bitget"]], REPO, {})
+        md = obtainium.render_apps_section([self.SPECS["Mixplorer"]], REPO, {})
         self.assertIn("| App | Version | APK Source | Signature | Obtainium |", md)
         self.assertNotIn("| Channel |", md.split("Stock Mirrors")[1], "mirrors have no patch channel to show")
 
@@ -615,28 +615,28 @@ class MirrorSignature(unittest.TestCase):
         return obtainium.signature_cell(spec, {spec["prefix"]: entry} if entry is not None else {})
 
     def test_the_cell_reports_only_what_the_build_recorded(self):
-        self.assertEqual(self.cell("Bitget", {"resigned": False}), "✅ original")
-        self.assertEqual(self.cell("Bitget", {"resigned": True}), "⚠️ re-signed")
-        self.assertEqual(self.cell("Bitget", {"resigned": None}), "*(not recorded)*", "built before it was recorded: unknown, not 'original'")
-        self.assertEqual(self.cell("Bitget", None), "*(pending)*")
+        self.assertEqual(self.cell("Mixplorer", {"resigned": False}), "✅ original")
+        self.assertEqual(self.cell("Mixplorer", {"resigned": True}), "⚠️ re-signed")
+        self.assertEqual(self.cell("Mixplorer", {"resigned": None}), "*(not recorded)*", "built before it was recorded: unknown, not 'original'")
+        self.assertEqual(self.cell("Mixplorer", None), "*(pending)*")
 
     def test_an_app_that_may_be_re_signed_says_so_even_when_it_was_not(self):
         self.assertTrue(self.SPECS["Stremio"]["allow_resign"])
-        self.assertFalse(self.SPECS["Bitget"]["allow_resign"], "control: it is an explicit opt-in per app")
+        self.assertFalse(self.SPECS["Mixplorer"]["allow_resign"], "control: it is an explicit opt-in per app")
         self.assertIn("re-sign allowed", self.cell("Stremio", {"resigned": False}))
-        self.assertNotIn("re-sign allowed", self.cell("Bitget", {"resigned": False}))
+        self.assertNotIn("re-sign allowed", self.cell("Mixplorer", {"resigned": False}))
 
     def test_the_mirror_table_carries_a_signature_cell_per_row(self):
-        specs = [self.SPECS["Bitget"], self.SPECS["Stremio"]]
-        data = {self.SPECS["Bitget"]["prefix"]: {"version": "2.94.4", "resigned": False, "apk_source": "uptodown"},
+        specs = [self.SPECS["Mixplorer"], self.SPECS["Stremio"]]
+        data = {self.SPECS["Mixplorer"]["prefix"]: {"version": "2.94.4", "resigned": False, "apk_source": "uptodown"},
                 self.SPECS["Stremio"]["prefix"]: {"version": "2.4.0", "resigned": True, "apk_source": "apkmirror"}}
         md = obtainium.render_apps_section(specs, REPO, data)
-        bitget = next(l for l in md.splitlines() if l.startswith("| [![Bitget]"))
+        mixplorer = next(l for l in md.splitlines() if l.startswith("| [![Mixplorer]"))
         stremio = next(l for l in md.splitlines() if l.startswith("| [![Stremio]"))
-        self.assertIn("✅ original", bitget)
-        self.assertNotIn("re-signed", bitget)
+        self.assertIn("✅ original", mixplorer)
+        self.assertNotIn("re-signed", mixplorer)
         self.assertIn("⚠️ re-signed", stremio)
-        self.assertEqual(bitget.count("|"), stremio.count("|"), "every mirror row has the same cells")
+        self.assertEqual(mixplorer.count("|"), stremio.count("|"), "every mirror row has the same cells")
 
     def test_the_manifest_loader_keeps_the_flag_and_old_entries_have_none(self):
         with tempfile.TemporaryDirectory() as d:
@@ -661,7 +661,7 @@ class SeedConfig(unittest.TestCase):
     def test_every_configured_app_is_buildable_on_paper(self):
         import compile_patch_configs
         stable = compile_patch_configs.compile_configs(str(CONFIG_PATCHES))  # exits on a duplicate app key
-        self.assertEqual(len(stable), 21)
+        self.assertEqual(len(stable), 19)
         patch_keys = ("patches-source", "cli-source", "included-patches", "excluded-patches", "exclusive-patches",
                       "inclusive-patches", "patcher-args", "patched-pkg-name", "include-stock")
         for pool in (stable,):
@@ -687,13 +687,14 @@ class SeedConfig(unittest.TestCase):
                 self.assertNotIn("apkpure-dlurl", app, key)
             else:
                 self.assertIn(f"/{app['pkg-name']}", app.get("apkpure-dlurl", ""), f"{key}: apkpure-dlurl names its package")
-        self.assertNotIn("WhatsApp-Business", stable, "dropped: no source offers a plain APK")
+        for gone in ("WhatsApp-Business", "Bitget", "RedotPay"):
+            self.assertNotIn(gone, stable, "dropped: the stores offer no plain APK of it")
         # the WhatsApp mirror follows WaEnhancer, and name both stores so one can cover the other
         for key, pkg in (("WhatsApp", "com.whatsapp"),):
             self.assertEqual(stable[key]["version"], "waenhancer", key)
             self.assertEqual(stable[key]["pkg-name"], pkg, key)
             self.assertTrue(stable[key]["apkmirror-dlurl"] and stable[key]["uptodown-dlurl"], f"{key}: both stores")
-        self.assertEqual(stable["Bitget"]["version"], "latest", "control: other mirrors are not pinned to WaEnhancer")
+        self.assertEqual(stable["Mixplorer"]["version"], "latest", "control: other mirrors are not pinned to WaEnhancer")
         self.assertEqual(stable["Reddit"]["included-patches"], "'Custom branding name for Reddit'")
 
     def test_generated_documents_are_in_sync_with_the_config(self):

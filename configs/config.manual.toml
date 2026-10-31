@@ -4,29 +4,10 @@
 #   git commit -am "chore(config): ..." && git push
 # and run Manual CI.
 #
-# Currently: Bitget, RedotPay and Alarmy, which the last clean full build could not rebuild because
-# Uptodown answered HTTP 410 for them (APKMirror serves Bitget only as a split bundle, which a mirror
-# will not re-sign, and has no Alarmy 26.32.1). Same sources and settings as the real configs. Keys
-# sit on each app because build.sh takes no file-level `version` from a TOML it reads directly.
+# Currently: Alarmy, as an example of a patched app. Replace it with whatever you want to try. Keys sit
+# on each app because build.sh takes no file-level `version` from a TOML it reads directly.
 brand = "Morphe"
 arch = "arm64-v8a"
-
-[Bitget]
-mirror = true
-brand = "Mirror"
-version = "latest"
-app-name = "Bitget"
-pkg-name = "com.bitget.exchange"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-crypto/"
-uptodown-dlurl = "https://bitget.en.uptodown.com/android"
-
-[RedotPay]
-mirror = true
-brand = "Mirror"
-version = "latest"
-app-name = "RedotPay"
-pkg-name = "com.redotpay"
-uptodown-dlurl = "https://redotpay.en.uptodown.com/android"
 
 [Alarmy]
 patches-source = "rabilrbl/fluffy-patches"
