@@ -10,7 +10,8 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/paget96/battery-guru-health-saver/",
     "uptodown-dlurl": "https://battery-guru.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/battery-guru/com.paget96.batteryguru"
+    "apkpure-dlurl": "https://apkpure.com/battery-guru/com.paget96.batteryguru",
+    "enabled": false
   },
   "Xodo": {
     "arch": "arm64-v8a",
@@ -35,18 +36,6 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/amazon-mobile-llc/amazon-prime-video/",
     "apkpure-dlurl": "https://apkpure.com/amazon-prime-video/com.amazon.avod.thirdpartyclient",
-    "enabled": false
-  },
-  "Bitget": {
-    "arch": "arm64-v8a",
-    "brand": "Mirror",
-    "mirror": true,
-    "version": "latest",
-    "app-name": "Bitget",
-    "pkg-name": "com.bitget.exchange",
-    "apkmirror-dlurl": "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-crypto/",
-    "uptodown-dlurl": "https://bitget.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/bitget-buy-sell-crypto/com.bitget.exchange",
     "enabled": false
   },
   "Stremio": {
@@ -86,17 +75,6 @@
     "apkpure-dlurl": "https://apkpure.com/mix-archive/com.mixplorer.addon.archive",
     "enabled": false
   },
-  "RedotPay": {
-    "arch": "arm64-v8a",
-    "brand": "Mirror",
-    "mirror": true,
-    "version": "latest",
-    "app-name": "RedotPay",
-    "pkg-name": "com.redotpay",
-    "uptodown-dlurl": "https://redotpay.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/redotpay/com.redotpay",
-    "enabled": false
-  },
   "Duck-Detector": {
     "arch": "all",
     "brand": "Mirror",
@@ -104,9 +82,10 @@
     "app-name": "Duck Detector",
     "pkg-name": "com.eltavine.duckdetector",
     "keep-filename": true,
-    "version": "nightly",
-    "github-dlurl": "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly",
-    "enabled": false
+    "version": "latest",
+    "github-dlurl": "https://github.com/eltavine/Duck-Detector-Refactoring",
+    "github-release-regex": "^nightly-",
+    "github-newest": true
   },
   "Oxygen-Customizer": {
     "arch": "all",
@@ -143,7 +122,8 @@
     "uptodown-dlurl": "https://reddit-official-app.en.uptodown.com/android",
     "apkpure-dlurl": "https://apkpure.com/reddit/com.reddit.frontpage",
     "included-patches": "'Custom branding name for Reddit'",
-    "patcher-args": "-OappName='Reddit'"
+    "patcher-args": "-OappName='Reddit'",
+    "enabled": false
   },
   "Truecaller": {
     "arch": "arm64-v8a",
@@ -196,7 +176,8 @@
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/instagram/instagram-instagram",
     "uptodown-dlurl": "https://instagram.en.uptodown.com/android",
     "github-dlurl": "https://github.com/softpyscho/apkforge/releases/tag/com.instagram.android",
-    "apkpure-dlurl": "https://apkpure.com/instagram/com.instagram.android"
+    "apkpure-dlurl": "https://apkpure.com/instagram/com.instagram.android",
+    "enabled": false
   },
   "Alarmy": {
     "arch": "arm64-v8a",
