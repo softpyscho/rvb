@@ -404,7 +404,7 @@ Patch sources and their release versions in `state/patch_sources.json` are **100
 The CI workflow automatically detects when a new version of an app is released on APKMirror, Uptodown, or Archive.org.
 
 ### How it Works
-1. **Version Fetching**: During the CI run, it reads all enabled apps from `configs/config.toml` and queries the URLs (`uptodown-dlurl`, `apkmirror-dlurl`, etc.).
+1. **Version Fetching**: During the CI run, it reads all enabled apps from `configs/config.toml` and queries the URLs (`uptodown-dlurl`, `apkmirror-dlurl`, etc.) of the apps whose output follows the store: mirrors and patched apps with `version = "latest"`. A patched app on `auto` (the default), `exp` or a pinned version is built at the version its patch bundle supports, so a store update cannot change the result and is not watched; such an app is rebuilt when its patch source publishes a release.
 2. **Comparison**: It checks the newly fetched versions against the currently stored versions in `state/app_versions.json`.
 3. **Triggering**: If a new version is detected, the app is added to a temporary `active_apps.json` list, and the CI is triggered to build it.
 ### Tracking File

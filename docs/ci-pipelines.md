@@ -34,7 +34,7 @@ step's output is the next step's input:
 |---|---|---|
 | Compile Base Configs | `compile_patch_configs.py` | every enabled app of `configs/config.toml`, into `config.json` |
 | Sync Patch Sources | `sync_patch_sources.py` | discovers all `(patches-source, host)` pairs, lists releases on GitHub/GitLab/Codeberg, rewrites `state/patch_sources.json`, prunes sources no config uses, emits `TRIGGER_PATCHES`/`TRIGGER_BLOCKED` and writes `changed_sources.json` |
-| Fetch App Versions | `ci_fetch_app_versions.sh` | scrapes current store versions (honours `"_check_only_listed"` in `state/app_versions.json`); a `version = "waenhancer"` app is asked APKMirror first, then Uptodown, for the newest build the latest WaEnhancer release supports, so a WaEnhancer release moves the recorded version and triggers its mirror build |
+| Fetch App Versions | `ci_fetch_app_versions.sh` | scrapes current store versions, but only for apps whose output follows the store: mirrors and patched `version = "latest"`/`"beta"` apps. A patched app on `auto`, `exp` or a pinned version builds what its patch bundle supports, so it reports the version already on record (a placeholder `patch-driven` once, for an app with no record, so it is built when added) and is rebuilt by patch releases instead (honours `"_check_only_listed"` in `state/app_versions.json`); a `version = "waenhancer"` app is asked APKMirror first, then Uptodown, for the newest build the latest WaEnhancer release supports, so a WaEnhancer release moves the recorded version and triggers its mirror build |
 | Compare App Versions | `compare` step | `TRIGGER_APP_UPDATE` when a tracked app moved |
 | Classify triggers | `ci_trigger_flags.sh` | the questions everyone else asks: `SOURCES_CHANGED`, `ANYTHING_CHANGED` |
 | Check Patch App Updates | `ci_check_app_patches.py` | only when `SOURCES_CHANGED`: downloads the changed bundles and hashes them (`state/patch_file_hashes.json`) to find which apps the new patches actually cover |
@@ -61,7 +61,7 @@ Two design rules worth preserving:
 | Event | Flags | Effect |
 |---|---|---|
 | A patch source publishes a (non-pre-)release | `TRIGGER_PATCHES` | `configs/build.json` regenerates and builds |
-| An app's own version changed in a tracked store | `TRIGGER_APP_UPDATE` | membership is reconsidered |
+| A watched app's own version changed in its store (mirrors, `version = "latest"`), or an app was added | `TRIGGER_APP_UPDATE` | membership is reconsidered |
 | A source is blocked or unblocked (`404`/`451`/`403` from the forge) | `TRIGGER_BLOCKED` | regenerates membership, so frozen sources drop out and recovered ones return |
 | Nothing moved | all `0` | no config write, no notification, no build |
 

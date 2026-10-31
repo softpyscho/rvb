@@ -59,11 +59,31 @@ while IFS='|' read -r group app; do
             ($a["actions-dlurl"] // ""),
             ($a["actions-artifact"] // ""),
             ($a.version // ""),
-            ($a["pkg-name"] // "")
+            ($a["pkg-name"] // ""),
+            ($a.mirror // false | tostring | ascii_downcase)
         ' "${CONFIG_INPUTS[@]}"
     )
     version_mode="${_urls[7]:-}"
     pkg_name="${_urls[8]:-}"
+    mirror_flag="${_urls[9]:-false}"
+
+    # A store's newest version only matters to an app whose output follows it: a mirror (the stock
+    # APK is the file), or a patched app with `version = "latest"`/"beta". A patched app on `auto`,
+    # `exp` or a pinned version builds the version its patch bundle supports, so a store update
+    # cannot change what is built - watching it only rebuilt the same file every time the store
+    # moved. Such an app is rebuilt when its patch source moves (ci_check_app_patches.py) or when
+    # it is new. Here it reports the version already on record, so the compare step sees no
+    # change, and a first-time app reports a placeholder once, so it is built when added.
+    watch_store=false
+    if [ "$mirror_flag" = true ]; then watch_store=true; fi
+    case "$version_mode" in latest | beta) watch_store=true ;; esac
+    if [ "$watch_store" != true ]; then
+        recorded=$(jq -r --arg g "$group" '.[$g].version // empty' state/app_versions.json 2>/dev/null || true)
+        echo "Not watched in the app store (patched, version = '${version_mode:-auto}'): its patch bundle decides the version. Recorded: ${recorded:-none}"
+        jq -n --arg grp "$group" --arg ver "${recorded:-patch-driven}" '{($grp): $ver}' >> fetched_app_versions.jsonl
+        echo "::endgroup::"
+        continue
+    fi
     actions_url="${_urls[5]:-}"
     # get_actions_resp reads its artifact regex from the engine's per-app args
     declare -A args=([actions_artifact]="${_urls[6]:-}")

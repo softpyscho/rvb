@@ -44,7 +44,7 @@ written by CI. Regenerate the README/Obtainium documents after adding or removin
 (`test_release_notes.py` fails while they are stale).
 
 Your change takes effect on the next watcher run (daily at 00:00 IST): the pool configs
-are regenerated from your TOML and the affected app gets built. To verify
+are regenerated from your TOML and the affected app gets built (a new app is built on its first run; a patched app on `auto` is afterwards rebuilt only when its patch source moves). To verify
 immediately instead of waiting, run **Manual CI** (`workflow_dispatch`): `all` builds every enabled app
 of `configs/config.toml`, or pick `manual` (`configs/config.manual.toml`) — a hand-built scratch config. Tick `clean` to ignore every cached stock APK and download all of them again.
 **Build** (`build.yml`) can also be dispatched directly with the same choices;

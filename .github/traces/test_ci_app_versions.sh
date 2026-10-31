@@ -24,9 +24,9 @@ chmod +x "$WORK/stub/sleep"
 echo '{}' > "$WORK/state/app_versions.json"
 cat > "$WORK/config.json" <<'JSON'
 {"patches-version": "stable",
- "Implicit":   {"uptodown-dlurl": "https://x/implicit"},
- "Explicit":   {"enabled": true,  "uptodown-dlurl": "https://x/explicit"},
- "Switched":   {"enabled": false, "uptodown-dlurl": "https://x/off"}}
+ "Implicit":   {"mirror": true, "uptodown-dlurl": "https://x/implicit"},
+ "Explicit":   {"mirror": true, "enabled": true,  "uptodown-dlurl": "https://x/explicit"},
+ "Switched":   {"mirror": true, "enabled": false, "uptodown-dlurl": "https://x/off"}}
 JSON
 
 ( cd "$WORK" && PATH="$WORK/stub:$PATH" bash .github/scripts/ci_fetch_app_versions.sh > run.log 2>&1 ) \
@@ -61,10 +61,10 @@ waenhancer_vers() {
 STUB
 echo '{}' > "$WA/state/app_versions.json"
 cat > "$WA/config.json" <<'JSON'
-{"patches-version": "stable", "mirror": true, "version": "latest",
- "WA":    {"version": "waenhancer", "pkg-name": "com.whatsapp",
+{"patches-version": "stable", "version": "latest",
+ "WA":    {"mirror": true, "version": "waenhancer", "pkg-name": "com.whatsapp",
            "uptodown-dlurl": "https://x/wa-up", "apkmirror-dlurl": "https://x/wa-apkm"},
- "Plain": {"uptodown-dlurl": "https://x/plain-up", "apkmirror-dlurl": "https://x/plain-apkm"}}
+ "Plain": {"mirror": true, "uptodown-dlurl": "https://x/plain-up", "apkmirror-dlurl": "https://x/plain-apkm"}}
 JSON
 wa_watch() { # env WA_APKM WA_UP WA_RC; leaves fetched_app_versions.json and $WA_LOG
 	export WA_LOG="$WA/order.log"; : > "$WA_LOG"
@@ -90,6 +90,54 @@ WA_APKM='' WA_UP='' WA_RC=0 wa_watch
 WA_APKM=$'2.26.40.72' WA_UP=$'2.26.40.5' WA_RC=1 wa_watch
 [ "$(wa_ver WA)" = "-" ] || fail "waenhancer: an unreadable support list must record nothing, got '$(wa_ver WA)'"
 [ "$(cat "$WA_LOG")" = "apkmirror com.whatsapp" ] || fail "waenhancer: an unreadable list ends the app, no other source is tried: $(tr '\n' ';' < "$WA_LOG")"
+
+# A patched app's output follows its patch bundle, not the store: only mirrors and `version = "latest"`
+# apps are watched in the store. Here the store reports 9.9.9 for everything.
+PA="$WORK/pa"
+mkdir -p "$PA/scripts" "$PA/state" "$PA/.github"
+ln -s "$REPO_ROOT/.github/scripts" "$PA/.github/scripts"
+cat > "$PA/scripts/utils.sh" <<'STUB'
+set_prebuilts() { :; }
+get_uptodown_resp() { :; }
+get_uptodown_vers() { echo "9.9.9"; }
+get_highest_ver() { tee | head -1; }
+STUB
+cat > "$PA/config.json" <<'JSON'
+{"patches-version": "stable",
+ "AutoApp":   {"version": "auto", "uptodown-dlurl": "https://x/a"},
+ "BareApp":   {"uptodown-dlurl": "https://x/b"},
+ "ExpApp":    {"version": "exp", "uptodown-dlurl": "https://x/c"},
+ "PinnedApp": {"version": "1.2.3", "uptodown-dlurl": "https://x/d"},
+ "NewApp":    {"version": "auto", "uptodown-dlurl": "https://x/e"},
+ "LatestApp": {"version": "latest", "uptodown-dlurl": "https://x/f"},
+ "MirrorApp": {"mirror": true, "version": "latest", "uptodown-dlurl": "https://x/g"}}
+JSON
+cat > "$PA/state/app_versions.json" <<'JSON'
+{"AutoApp":   {"keys": ["AutoApp"],   "version": "1.0"},
+ "BareApp":   {"keys": ["BareApp"],   "version": "1.0"},
+ "ExpApp":    {"keys": ["ExpApp"],    "version": "1.0"},
+ "PinnedApp": {"keys": ["PinnedApp"], "version": "1.0"},
+ "LatestApp": {"keys": ["LatestApp"], "version": "1.0"},
+ "MirrorApp": {"keys": ["MirrorApp"], "version": "1.0"}}
+JSON
+( cd "$PA" && PATH="$WORK/stub:$PATH" bash .github/scripts/ci_fetch_app_versions.sh > run.log 2>&1 ) \
+	|| fail "patched-app watch: fetch failed: $(tail -5 "$PA/run.log")"
+pv() { jq -r --arg k "$1" '.[$k] // "-"' "$PA/fetched_app_versions.json"; }
+for k in AutoApp BareApp ExpApp PinnedApp; do
+	[ "$(pv $k)" = "1.0" ] || fail "$k: a patched app must report its recorded version, not the store's, got '$(pv $k)'"
+done
+[ "$(pv NewApp)" = "patch-driven" ] || fail "an app with no record reports a placeholder once so it is built when added, got '$(pv NewApp)'"
+# controls: the apps that follow the store do report the store's version
+[ "$(pv LatestApp)" = "9.9.9" ] || fail "a patched 'latest' app must follow the store, got '$(pv LatestApp)'"
+[ "$(pv MirrorApp)" = "9.9.9" ] || fail "a mirror must follow the store, got '$(pv MirrorApp)'"
+# end to end through the compare step: only the apps that follow the store (and the new one) trigger
+( cd "$PA" && GITHUB_OUTPUT="$PA/out" bash .github/scripts/ci_compare_app_versions.sh > cmp.log 2>&1 ) || fail "compare failed: $(tail -3 "$PA/cmp.log")"
+[ "$(jq -c 'sort' "$PA/active_apps.json")" = '["LatestApp","MirrorApp","NewApp"]' ] || fail "only store-following and new apps are queued, got $(jq -c . "$PA/active_apps.json")"
+# second run: the placeholder is on record now, so the new app is not queued again
+rm -f "$PA/active_apps.json"
+( cd "$PA" && PATH="$WORK/stub:$PATH" bash .github/scripts/ci_fetch_app_versions.sh > run.log 2>&1 ) || fail "second fetch failed"
+( cd "$PA" && GITHUB_OUTPUT="$PA/out" bash .github/scripts/ci_compare_app_versions.sh > cmp.log 2>&1 ) || fail "second compare failed"
+[ "$(jq -c 'sort' "$PA/active_apps.json")" = '[]' ] || fail "nothing moved on the second run, got $(jq -c . "$PA/active_apps.json")"
 
 # The same default in patchers.py: does this pool need the Bouncy Castle keystore? An Xposed app
 # that never writes `enabled` is enabled; an explicit false is the control that says no.
