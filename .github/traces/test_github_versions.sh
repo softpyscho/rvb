@@ -43,6 +43,34 @@ __GITHUB_TAG__=com.instagram.android __GITHUB_RESP__=$assets
 unset pkg_name
 [ "$(get_github_vers)" = "com.instagram.android" ] || fail "without a package name the tag must be reported"
 
+# `github-newest`: a repo that tags every nightly (Duck Detector: nightly-<date>-<sha>, one APK and one
+# AAR each, plus a rolling `update` release for its own bookkeeping). The newest release whose name
+# matches github-release-regex is the one build; a listing of all of them is not.
+RELEASES='[
+ {"tag_name":"nightly-2026-10-24-bbbbbbbb","name":"nightly-2026-10-24-bbbbbbbb","draft":true,"assets":[{"name":"Duck.Detector-nightly-2026-10-24-bbbbbbbb.apk"}]},
+ {"tag_name":"update","name":"update","draft":false,"assets":[{"name":"update.json"}]},
+ {"tag_name":"nightly-2026-10-23-a5b72479","name":"nightly-2026-10-23-a5b72479","draft":false,"prerelease":true,
+  "assets":[{"name":"Duck.Detector-nightly-2026-10-23-a5b72479.apk"},{"name":"duckdetector-sdk-nightly-2026-10-23-a5b72479.aar"},{"name":"update.json"}]},
+ {"tag_name":"nightly-2026-10-22-e0a57418","name":"nightly-2026-10-22-e0a57418","draft":false,"prerelease":true,
+  "assets":[{"name":"Duck.Detector-nightly-2026-10-22-e0a57418.apk"}]}]'
+gh_req() { printf '%s' "$RELEASES"; }
+DUCK=https://github.com/o/Duck-Detector
+declare -A args=([github_release_regex]='^nightly-' [github_newest]=true)
+pkg_name=com.eltavine.duckdetector table=Duck
+get_github_resp "$DUCK" || fail "github-newest: the repo url must resolve"
+[ "$__GITHUB_TAG__" = "nightly-2026-10-23-a5b72479" ] || fail "github-newest must take the newest published matching release (not the draft, not 'update'), got '$__GITHUB_TAG__'"
+[ "$__GITHUB_RESP__" = "Duck.Detector-nightly-2026-10-23-a5b72479.apk" ] || fail "only that release's APK is offered (no AAR, no manifest), got '$__GITHUB_RESP__'"
+[ "$__GITHUB_URL__" = "https://github.com/o/Duck-Detector/releases/download/nightly-2026-10-23-a5b72479" ] || fail "download base is that tag, got '$__GITHUB_URL__'"
+[ "$(get_github_vers)" = "nightly-2026-10-23-a5b72479" ] || fail "the version is that tag, got '$(get_github_vers)'"
+# a regex that matches nothing is an error, never a fallback to some other release
+__DL_RESP_CACHE__=(); declare -A args=([github_release_regex]='^never-' [github_newest]=true)
+get_github_resp "$DUCK" 2>/dev/null && fail "github-newest with a regex that matches nothing must fail, got tag '$__GITHUB_TAG__'"
+# control: without github-newest the same regex still lists every matching release (unchanged behaviour)
+__DL_RESP_CACHE__=(); declare -A args=([github_release_regex]='^nightly-')
+get_github_resp "$DUCK" || fail "control: the listing mode must still resolve"
+[ "$(grep -c . <<<"$__GITHUB_TAG__")" = 3 ] || fail "control: without github-newest all matching releases are listed, got: $(tr '\n' ' ' <<<"$__GITHUB_TAG__")"
+unset -f gh_req; unset args RELEASES DUCK table; __DL_RESP_CACHE__=()
+
 # the archive source reads the same names the same way (it now shares the parser)
 __ARCHIVE_RESP__=$assets
 [ "$(get_archive_vers | head -1)" = "428.0.0.1" ] || fail "archive versions"

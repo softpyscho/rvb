@@ -458,7 +458,7 @@ class AppsSection(unittest.TestCase):
         # source - links to where the file comes from instead; one with a store source keeps Play
         self.assertIn("play.google.com/store/apps/details?id=com.mixplorer", row["Mixplorer"])
         self.assertNotIn("play.google.com", row["Duck-Detector"])
-        self.assertIn("(https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly)", row["Duck-Detector"])
+        self.assertIn("(https://github.com/eltavine/Duck-Detector-Refactoring)", row["Duck-Detector"])
 
     def test_the_source_cell_cites_only_the_source_used(self):
         used = {"instagram-morphe": dict(self.RECORD, version="447.0", recommended="447.0", applied=["x"], apk_source="apkmirror")}
@@ -695,6 +695,9 @@ class SeedConfig(unittest.TestCase):
             self.assertEqual(stable[key]["pkg-name"], pkg, key)
             self.assertTrue(stable[key]["apkmirror-dlurl"] and stable[key]["uptodown-dlurl"], f"{key}: both stores")
         self.assertEqual(stable["Mixplorer"]["version"], "latest", "control: other mirrors are not pinned to WaEnhancer")
+        duck = stable["Duck-Detector"]
+        self.assertEqual((duck["version"], duck["github-newest"], duck["github-release-regex"]), ("latest", True, "^nightly-"))
+        self.assertNotIn("/releases/tag/", duck["github-dlurl"], "upstream's rolling nightly tag is gone: follow the newest release")
         self.assertEqual(stable["Reddit"]["included-patches"], "'Custom branding name for Reddit'")
 
     def test_generated_documents_are_in_sync_with_the_config(self):

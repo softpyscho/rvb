@@ -78,6 +78,13 @@ for w in beta both; do
 	grep -q "no beta channel any more" <<<"$out" || fail "build.sh should explain ($w): $(tail -2 <<<"$out")"
 done
 
+# github-newest: a boolean, and meaningless (so refused) without the regex that says which releases count
+printf 'patches-source = "o/r"\n[App]\nmirror = true\npkg-name = "a.b"\ngithub-dlurl = "https://github.com/o/r"\ngithub-newest = true\n' > engine.toml
+out=$(cd "$REPO_ROOT" && timeout 120 bash scripts/build.sh "$WORK/engine.toml" 2>&1) && fail "github-newest without github-release-regex must be refused"
+grep -q "github-newest needs github-release-regex" <<<"$out" || fail "should explain: $(tail -2 <<<"$out")"
+printf 'patches-source = "o/r"\n[App]\nmirror = true\npkg-name = "a.b"\ngithub-dlurl = "https://github.com/o/r"\ngithub-release-regex = "^n"\ngithub-newest = "yes"\n' > engine.toml
+out=$(cd "$REPO_ROOT" && timeout 120 bash scripts/build.sh "$WORK/engine.toml" 2>&1) && fail "a non-boolean github-newest must be refused"
+
 # no enabled app at all is an error, not an empty build
 printf 'patches-source = "x/y"\n[Off]\npkg-name="c"\nenabled = false\n' > configs/config.toml
 : > "$WORK/out"; prep all && fail "no apps at all must fail"

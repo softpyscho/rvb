@@ -341,6 +341,11 @@ for table_name in $(toml_get_table_names); do
 	app_args[dpi]=$(toml_get "$t" dpi) || app_args[dpi]="$DEF_DPI"
 	app_args[github_regex]=$(toml_get "$t" github-regex) || app_args[github_regex]=""
 	app_args[github_release_regex]=$(toml_get "$t" github-release-regex) || app_args[github_release_regex]=""
+	app_args[github_newest]=$(toml_get "$t" github-newest) || app_args[github_newest]=false
+	vtf "${app_args[github_newest]}" "github-newest"
+	if [ "${app_args[github_newest]}" = true ] && [ -z "${app_args[github_release_regex]}" ]; then
+		abort "ERROR: github-newest needs github-release-regex: without it every release would qualify (including the repo's own bookkeeping releases)"
+	fi
 	app_args[actions_artifact]=$(toml_get "$t" actions-artifact) || app_args[actions_artifact]=""
 	table_name_f=${table_name,,}
 	table_name_f=${table_name_f// /-}

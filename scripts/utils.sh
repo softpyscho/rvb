@@ -2992,7 +2992,18 @@ get_github_resp() {
 		fi
 	fi
 
-	if [ "$tag" = "latest" ]; then
+	if [ "$tag" = "latest" ] && [ "${args[github_newest]:-false}" = true ]; then
+		# One release per build (a repo that tags every nightly): the newest published release whose
+		# name matches github-release-regex. A regex that matches nothing is an error here, not a
+		# fallback to "every release" as in the listing below, which would pick a bookkeeping release.
+		resp=$(jq -e -c --arg re "${args[github_release_regex]:-}" \
+			'[.[] | select(.draft != true and ((.name // "") | test($re; "i")))][0:1] | select(length > 0)' <<<"$resp") || {
+			epr "No release of ${repo} matches github-release-regex '${args[github_release_regex]:-}'"
+			return 1
+		}
+		tag=$(jq -r '.[0].tag_name' <<<"$resp")
+		__GITHUB_RESP__=$(jq -r '.[0].assets[]? | select(.name | test("\\.(apk|apkm|xapk|apks)$")) | .name' <<<"$resp")
+	elif [ "$tag" = "latest" ]; then
 		local jq_filter=""
 		if [ -n "${args[github_release_regex]:-}" ]; then
 			jq_filter="[.[] | select((.name // \"\") | test(\"${args[github_release_regex]}\"; \"i\"))]"

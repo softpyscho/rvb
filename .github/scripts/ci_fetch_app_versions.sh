@@ -60,7 +60,9 @@ while IFS='|' read -r group app; do
             ($a["actions-artifact"] // ""),
             ($a.version // ""),
             ($a["pkg-name"] // ""),
-            ($a.mirror // false | tostring | ascii_downcase)
+            ($a.mirror // false | tostring | ascii_downcase),
+            ($a["github-release-regex"] // ""),
+            ($a["github-newest"] // false | tostring | ascii_downcase)
         ' "${CONFIG_INPUTS[@]}"
     )
     version_mode="${_urls[7]:-}"
@@ -86,7 +88,7 @@ while IFS='|' read -r group app; do
     fi
     actions_url="${_urls[5]:-}"
     # get_actions_resp reads its artifact regex from the engine's per-app args
-    declare -A args=([actions_artifact]="${_urls[6]:-}")
+    declare -A args=([actions_artifact]="${_urls[6]:-}" [github_release_regex]="${_urls[10]:-}" [github_newest]="${_urls[11]:-false}")
     uptodown_url="${_urls[0]:-}"
     apkmirror_url="${_urls[1]:-}"
     apkpure_url="${_urls[2]:-}"

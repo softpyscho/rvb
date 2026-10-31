@@ -43,9 +43,10 @@ watcher run builds the whole configured list as numbered releases plus the rolli
 app on demand, dispatch **Build** or **Manual CI** with `config_file: all`. To try one app end to
 end first, edit `configs/config.manual.toml` and dispatch **Manual CI** with that file.
 
-One thing the first run will not do, by design: a mirrored app that follows a
-rolling tag (Duck Detector's `nightly`) never looks "updated" to the watcher, because the tag name never
-changes — to refresh it, put its table in `configs/config.manual.toml` and dispatch **Manual CI**.
+One thing the first run will not do, by design: a mirrored app that follows a rolling tag (one whose
+name never changes) never looks "updated" to the watcher — to refresh it, put its table in
+`configs/config.manual.toml` and dispatch **Manual CI**. (Duck Detector tags every nightly, so
+`github-newest` follows it.)
 
 Sources that block GitHub-hosted runners (Cloudflare challenges on APKMirror/Uptodown) fail per
 app and are skipped; the rest of the run is unaffected. A pinned stock APK you host yourself is the

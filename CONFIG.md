@@ -111,6 +111,10 @@ github-dlurl = "https://github.com/developer/app"
 # regex used to filter releases when querying a repo url without a fixed tag (e.g. multi-channel repos).
 # if omitted, the script automatically checks if table, brand, or variant targets a channel (beta, nightly, alpha, canary) or filters for stable releases.
 github-release-regex = "^Beta"
+# with a repo url and github-release-regex: use only the newest published release that matches (a repo that
+# tags every nightly, with bookkeeping releases of its own), instead of listing every match. A regex that
+# matches nothing is an error, and github-newest without github-release-regex is rejected. default: false
+github-newest = true
 # regex used to pick the exact apk file from the github release assets. supports {version} and {arch} string interpolation.
 # you can define a generic regex, or map architectures to specific regexes using 'arch: regex | arch2: regex2'.
 github-regex = "arm64-v8a: 'MyApp-arm64-v{version}\\.apk' | arm-v7a: 'MyApp-arm-v{version}\\.apk'"
@@ -186,9 +190,11 @@ apkmirror-dlurl = "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-cryp
 app-name = "Duck Detector"
 pkg-name = "com.eltavine.duckdetector"
 keep-filename = true     # a nightly has no version number to put in a name: the asset keeps its own
-version = "nightly"
+version = "latest"
 arch = "all"
-github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring/releases/tag/nightly"
+github-dlurl = "https://github.com/eltavine/Duck-Detector-Refactoring"
+github-release-regex = "^nightly-"
+github-newest = true     # a repo that tags every nightly: take only the newest matching release
 ```
 
 - **Rejected, not ignored:** `patches-source`, `cli-source`, `included-patches`, `excluded-patches`,
