@@ -149,8 +149,7 @@
     "version": "auto",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/ticktick-limited/ticktick-to-do-list-with-reminder-day-planner/",
     "uptodown-dlurl": "https://ticktick.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/ticktick-to-do-list-calendar/com.ticktick.task",
-    "enabled": false
+    "apkpure-dlurl": "https://apkpure.com/ticktick-to-do-list-calendar/com.ticktick.task"
   },
   "Twitter": {
     "arch": "arm64-v8a",
