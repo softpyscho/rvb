@@ -48,7 +48,8 @@
     "allow-resign": true,
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/stremio/stremio-2/",
     "uptodown-dlurl": "https://stremio-one.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/stremio/com.stremio.one"
+    "apkpure-dlurl": "https://apkpure.com/stremio/com.stremio.one",
+    "enabled": false
   },
   "Mixplorer": {
     "arch": "arm64-v8a",
@@ -84,8 +85,7 @@
     "version": "latest",
     "github-dlurl": "https://github.com/eltavine/Duck-Detector-Refactoring",
     "github-release-regex": "^nightly-",
-    "github-newest": true,
-    "enabled": false
+    "github-newest": true
   },
   "Oxygen-Customizer": {
     "arch": "all",
@@ -95,8 +95,7 @@
     "app-name": "Oxygen Customizer",
     "pkg-name": "it.dhd.oxygencustomizer",
     "actions-dlurl": "https://github.com/DHD2280/Oxygen-Customizer/actions/workflows/build_debug.yml",
-    "actions-artifact": "Dev \\(#[0-9]+\\)$",
-    "enabled": false
+    "actions-artifact": "Dev \\(#[0-9]+\\)$"
   },
   "WhatsApp": {
     "arch": "arm64-v8a",
@@ -117,7 +116,7 @@
     "pkg-name": "com.reddit.frontpage",
     "badge-color": "FF4500",
     "badge-icon": "reddit",
-    "version": "exp",
+    "version": "2026.40.0",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/redditinc/reddit",
     "uptodown-dlurl": "https://reddit-official-app.en.uptodown.com/android",
     "apkpure-dlurl": "https://apkpure.com/reddit/com.reddit.frontpage",
