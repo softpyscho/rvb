@@ -119,6 +119,9 @@ github-newest = true
 # you can define a generic regex, or map architectures to specific regexes using 'arch: regex | arch2: regex2'.
 github-regex = "arm64-v8a: 'MyApp-arm64-v{version}\\.apk' | arm-v7a: 'MyApp-arm-v{version}\\.apk'"
 # direct download url. the url must have point to an apk file with name format shown in this example
+# (<package>-<version>-....apk). A mirror (mirror = true) may also take a file name without a version,
+# such as "app-latest.apk": the second '-' field is then only a label, and the file is published under
+# the versionName the APK reports. Give pkg-name for such a name; there is no package in it to read.
 direct-dlurl = "https://website/com.google.android.youtube-20.40.45-all.apk"
 
 module-prop-name = "some-app-module"                       # module prop name. default: "<app>-<author>"

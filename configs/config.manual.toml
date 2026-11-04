@@ -30,5 +30,7 @@ uptodown-dlurl = "https://bitget.en.uptodown.com/android"
 version = "latest"
 app-name = "RedotPay"
 pkg-name = "com.redotpay"
-# redotpay.com links redotpay-latest.apk, whose name has no version for the direct source to read.
+# The vendor's own APK from redotpay.com/app-download. Its name carries no version ("latest"); a mirror
+# publishes under the versionName the APK itself reports, so that is enough.
+direct-dlurl = "https://rp-static-apne1.s3.ap-northeast-1.amazonaws.com/app/redotpay-latest.apk"
 uptodown-dlurl = "https://redotpay.en.uptodown.com/android"
