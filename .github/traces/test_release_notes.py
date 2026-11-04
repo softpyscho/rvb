@@ -570,8 +570,8 @@ class PatchedChannel(unittest.TestCase):
     def test_an_unrecorded_build_is_not_passed_off_as_stable(self):
         self.assertEqual(self.cell("Reddit", {"experimental": None}), "*(not recorded)*")
 
-    def test_reddit_is_configured_experimental_on_purpose(self):
-        self.assertEqual(self.SPECS["Reddit"]["version_mode"], "exp")
+    def test_reddit_is_pinned_to_a_stable_version(self):
+        self.assertRegex(self.SPECS["Reddit"]["version_mode"], r"^\d+(\.\d+)+$")
         self.assertEqual(self.SPECS["Twitter"]["version_mode"], "auto", "control: the others follow the stable list")
 
     def test_the_loader_reads_the_flag_from_the_entry(self):

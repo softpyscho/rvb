@@ -147,11 +147,10 @@ patches-source = "MorpheApp/morphe-patches"
 pkg-name = "com.reddit.frontpage"
 badge-color = "FF4500"
 badge-icon = "reddit"
-# Experimental on purpose: the patches flag Reddit's newest builds (2026.39.0 - 2026.41.0) as
-# experimental and their stable targets stop at 2026.24.0. Naming `exp` makes that choice visible
-# here (and in the README's Channel column) instead of leaving it to `auto`, which only reached
-# an experimental version because `included-patches` is set below.
-version = "latest"
+# Pinned to the newest version morphe-patches v2.0.0 lists as stable (list-versions without -x);
+# 2026.42.0 - 2026.44.0 are experimental. `auto` cannot pick it: with `included-patches` set it
+# reads that patch's compatible list, which includes experimental versions. Bump by hand.
+version = "2026.40.0"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit"
 uptodown-dlurl = "https://reddit-official-app.en.uptodown.com/android"
 apkpure-dlurl = "https://apkpure.com/reddit/com.reddit.frontpage"
