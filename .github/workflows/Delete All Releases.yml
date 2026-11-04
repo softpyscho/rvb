@@ -7,6 +7,10 @@ jobs:
     permissions:
       contents: write # Required permission to delete releases
     steps:
+      # The action runs git to find the repository; without a checkout it fails before deleting anything.
+      - name: Checkout
+        uses: actions/checkout@v7
+
       - name: Delete all releases
         uses: jluo1996/delete-releases-action@v1
         with:
