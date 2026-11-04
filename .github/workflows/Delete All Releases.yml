@@ -1,0 +1,14 @@
+name: Delete All Releases
+on: workflow_dispatch # Allows you to trigger it manually via the Actions tab
+
+jobs:
+  clean-up:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required permission to delete releases
+    steps:
+      - name: Delete all releases
+        uses: jluo1996/delete-releases-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          remove-tags: true # Set to false if you want to keep the git tags
