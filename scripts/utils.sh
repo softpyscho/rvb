@@ -3420,7 +3420,15 @@ patch_apk() {
 		fi
 	fi
 
-	local base_cmd="java -jar '$stage_jar' patch '$stock_input' -t '$tmp_dir' -o '$patched_apk' --keystore=$RVB_KEYSTORE \
+	# morphe-desktop >=2.0.0 stages a bundle input into -t via a symlink whose
+	# target is the path as given; a relative path dangles from inside -t and the
+	# merge fails with "No such directory". Hand it an absolute path.
+	local abs_input=$stock_input
+	if [[ $abs_input != /* ]]; then
+		abs_input="${CWD}/${abs_input}"
+	fi
+
+	local base_cmd="java -jar '$stage_jar' patch '$abs_input' -t '$tmp_dir' -o '$patched_apk' --keystore=$RVB_KEYSTORE \
 --keystore-entry-password=$RVB_KEYSTORE_PASS --keystore-password=$RVB_KEYSTORE_PASS --signer=$RVB_KEY_ALIAS --keystore-entry-alias=$RVB_KEY_ALIAS"
 
 	# Morphe writes a machine-readable summary of the run (-r): which patches applied,
