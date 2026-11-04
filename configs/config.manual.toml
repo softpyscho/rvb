@@ -21,8 +21,10 @@ direct-dlurl = "https://dl.strem.io/android/v2.3.2-android/com.stremio.one-2.3.2
 version = "latest"
 app-name = "Bitget"
 pkg-name = "com.bitget.exchange"
-# bitget.com/download builds its APK link in the browser from an API, so there is no fixed URL to
-# give the direct source; the stores are tried instead.
+# The vendor's own APK behind bitget.com/download's "Android 1" button: static.bitget.com + the
+# androidLink from /v1/mix/public/getH5DownloadConfig + the app version + ".apk". The version is in
+# the URL, so bump it by hand. The stores only serve split bundles, which a mirror will not re-sign.
+direct-dlurl = "https://static.bitget.com/apps/android/bitget-ant7-3.0.1.apk"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/bg-limited/bitget-buy-sell-crypto/"
 uptodown-dlurl = "https://bitget.en.uptodown.com/android"
 
