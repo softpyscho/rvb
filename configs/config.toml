@@ -151,7 +151,7 @@ badge-icon = "reddit"
 # experimental and their stable targets stop at 2026.24.0. Naming `exp` makes that choice visible
 # here (and in the README's Channel column) instead of leaving it to `auto`, which only reached
 # an experimental version because `included-patches` is set below.
-version = "exp"
+version = "latest"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit"
 uptodown-dlurl = "https://reddit-official-app.en.uptodown.com/android"
 apkpure-dlurl = "https://apkpure.com/reddit/com.reddit.frontpage"
