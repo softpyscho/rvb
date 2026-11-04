@@ -4,14 +4,19 @@
 #   git commit -am "chore(config): ..." && git push
 # and run Manual CI.
 #
-# Currently: Alarmy, as an example of a patched app. Replace it with whatever you want to try. Keys sit
+# Currently: Reddit on its newest stable target. Replace it with whatever you want to try. Keys sit
 # on each app because build.sh takes no file-level `version` from a TOML it reads directly.
 brand = "Morphe"
 arch = "arm64-v8a"
 
-[Alarmy]
-patches-source = "rabilrbl/fluffy-patches"
-pkg-name = "droom.sleepIfUCan"
-version = "auto"
-apkmirror-dlurl = "https://www.apkmirror.com/apk/sleep-tracker-alarm-clock-by-delightroom/alarmy-challenge-alarm-clock/"
-uptodown-dlurl = "https://alarmy.en.uptodown.com/android"
+[Reddit]
+patches-source = "MorpheApp/morphe-patches"
+pkg-name = "com.reddit.frontpage"
+# Pinned to the newest version the patches list as stable (list-versions without -x).
+# `auto` would reach an experimental build here because included-patches is set.
+version = "2026.40.0"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit"
+uptodown-dlurl = "https://reddit-official-app.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.com/reddit/com.reddit.frontpage"
+included-patches = "'Custom branding name for Reddit'"
+patcher-args = "-OappName='Reddit'"
