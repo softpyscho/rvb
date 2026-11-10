@@ -3,8 +3,8 @@
     "blocked": false,
     "host": "github",
     "repo": "MorpheApp/morphe-patches",
-    "stable": "v2.1.0",
-    "stable_date": "2026-11-06T14:15:16Z"
+    "stable": "v2.2.0",
+    "stable_date": "2026-11-10T14:41:45Z"
   },
   "Paresh-Maheshwari/paresh-patches": {
     "blocked": false,
@@ -24,8 +24,8 @@
     "blocked": false,
     "host": "github",
     "repo": "crimera/piko",
-    "stable": "v3.11.0",
-    "stable_date": "2026-11-09T10:54:44Z"
+    "stable": "v3.11.1",
+    "stable_date": "2026-11-10T12:59:39Z"
   },
   "hoo-dles/morphe-patches": {
     "blocked": false,
