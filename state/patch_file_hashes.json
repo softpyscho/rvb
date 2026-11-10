@@ -12,8 +12,9 @@
       "shared": "af8e6b25a156bf0a8dd0cc8a238f9f09"
     },
     "stable": {
-      "com.twitter.android": "b8ef463a3395befffaaf196a91f1ab8f",
-      "shared": "af8e6b25a156bf0a8dd0cc8a238f9f09"
+      "com.instagram.android": "1c2a54273e2b97a1731c2118fdec2aa7",
+      "com.twitter.android": "defec6088d45e9604dc18ccf727e6ece",
+      "shared": "faf1c83762cbbcef469538d89f47784d"
     }
   },
   "hoo-dles/morphe-patches": {
