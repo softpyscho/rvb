@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-11-10T23:40:52Z"
+    "publishedAt": "2026-11-12T00:56:12Z"
   },
   "files": {
     "stremio-v2.3.2-arm64-v8a.apk": {
@@ -822,6 +822,27 @@
       "originBuild": "260010",
       "publishedAt": "2026-11-10T01:44:30Z",
       "apkSource": "actions",
+      "recommendedVersion": null,
+      "resigned": false
+    },
+    "Duck.Detector-nightly-2026-11-11-98fa279f.apk": {
+      "name": "duck-detector",
+      "version": "nightly-2026-11-11-98fa279f",
+      "appKey": "duckdetector",
+      "appName": "Duck Detector",
+      "arch": "all",
+      "fileType": "APK",
+      "brandKey": "mirror",
+      "brandName": "Mirror",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "com.eltavine.duckdetector",
+      "patchSources": [],
+      "changelogs": [],
+      "appliedPatches": [],
+      "originBuild": "260012",
+      "publishedAt": "2026-11-12T00:56:05Z",
+      "apkSource": "github",
       "recommendedVersion": null,
       "resigned": false
     }
