@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-11-12T00:56:12Z"
+    "publishedAt": "2026-11-12T23:45:58Z"
   },
   "files": {
     "stremio-v2.3.2-arm64-v8a.apk": {
@@ -671,27 +671,6 @@
       "recommendedVersion": "11.2.0",
       "experimental": false
     },
-    "Duck.Detector-nightly-2026-11-07-d60597ca.apk": {
-      "name": "duck-detector",
-      "version": "nightly-2026-11-07-d60597ca",
-      "appKey": "duckdetector",
-      "appName": "Duck Detector",
-      "arch": "all",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "com.eltavine.duckdetector",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260008",
-      "publishedAt": "2026-11-07T22:10:16Z",
-      "apkSource": "github",
-      "recommendedVersion": null,
-      "resigned": false
-    },
     "oxygen-customizer-vnightly-210-2082-all.apk": {
       "name": "oxygen-customizer",
       "version": "nightly-210-2082",
@@ -842,6 +821,27 @@
       "appliedPatches": [],
       "originBuild": "260012",
       "publishedAt": "2026-11-12T00:56:05Z",
+      "apkSource": "github",
+      "recommendedVersion": null,
+      "resigned": false
+    },
+    "Duck.Detector-nightly-2026-11-12-1c9e3605.apk": {
+      "name": "duck-detector",
+      "version": "nightly-2026-11-12-1c9e3605",
+      "appKey": "duckdetector",
+      "appName": "Duck Detector",
+      "arch": "all",
+      "fileType": "APK",
+      "brandKey": "mirror",
+      "brandName": "Mirror",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "com.eltavine.duckdetector",
+      "patchSources": [],
+      "changelogs": [],
+      "appliedPatches": [],
+      "originBuild": "260013",
+      "publishedAt": "2026-11-12T23:45:52Z",
       "apkSource": "github",
       "recommendedVersion": null,
       "resigned": false
