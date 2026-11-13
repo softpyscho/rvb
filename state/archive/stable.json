@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-11-12T23:45:58Z"
+    "publishedAt": "2026-11-13T23:47:33Z"
   },
   "files": {
     "stremio-v2.3.2-arm64-v8a.apk": {
@@ -321,8 +321,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260005",
-      "publishedAt": "2026-11-04T15:36:50Z",
+      "originBuild": "260014",
+      "publishedAt": "2026-11-13T23:47:26Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -804,27 +804,6 @@
       "recommendedVersion": null,
       "resigned": false
     },
-    "Duck.Detector-nightly-2026-11-11-98fa279f.apk": {
-      "name": "duck-detector",
-      "version": "nightly-2026-11-11-98fa279f",
-      "appKey": "duckdetector",
-      "appName": "Duck Detector",
-      "arch": "all",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "com.eltavine.duckdetector",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260012",
-      "publishedAt": "2026-11-12T00:56:05Z",
-      "apkSource": "github",
-      "recommendedVersion": null,
-      "resigned": false
-    },
     "Duck.Detector-nightly-2026-11-12-1c9e3605.apk": {
       "name": "duck-detector",
       "version": "nightly-2026-11-12-1c9e3605",
@@ -842,6 +821,27 @@
       "appliedPatches": [],
       "originBuild": "260013",
       "publishedAt": "2026-11-12T23:45:52Z",
+      "apkSource": "github",
+      "recommendedVersion": null,
+      "resigned": false
+    },
+    "Duck.Detector-nightly-2026-11-13-ec98379c.apk": {
+      "name": "duck-detector",
+      "version": "nightly-2026-11-13-ec98379c",
+      "appKey": "duckdetector",
+      "appName": "Duck Detector",
+      "arch": "all",
+      "fileType": "APK",
+      "brandKey": "mirror",
+      "brandName": "Mirror",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "com.eltavine.duckdetector",
+      "patchSources": [],
+      "changelogs": [],
+      "appliedPatches": [],
+      "originBuild": "260014",
+      "publishedAt": "2026-11-13T23:47:26Z",
       "apkSource": "github",
       "recommendedVersion": null,
       "resigned": false
