@@ -84,7 +84,8 @@
     "version": "latest",
     "github-dlurl": "https://github.com/eltavine/Duck-Detector-Refactoring",
     "github-release-regex": "^nightly-",
-    "github-newest": true
+    "github-newest": true,
+    "enabled": false
   },
   "Oxygen-Customizer": {
     "arch": "all",
