@@ -28,7 +28,7 @@
     "stable_date": "2026-11-10T12:59:39Z"
   },
   "hoo-dles/morphe-patches": {
-    "blocked": false,
+    "blocked": true,
     "host": "github",
     "repo": "hoo-dles/morphe-patches",
     "stable": "v1.47.0",
