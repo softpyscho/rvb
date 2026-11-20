@@ -27,7 +27,7 @@
     "keys": [
       "Duck-Detector"
     ],
-    "version": "nightly-2026-11-13-ec98379c"
+    "version": "nightly-2026-11-18-c6b2ee77"
   },
   "Greenify": {
     "keys": [
@@ -51,7 +51,7 @@
     "keys": [
       "Mixplorer"
     ],
-    "version": "6.71.15-API29"
+    "version": "6.71.15"
   },
   "Reddit": {
     "keys": [
@@ -111,13 +111,13 @@
     "keys": [
       "Oxygen-Customizer"
     ],
-    "version": "2110"
+    "version": "2172"
   },
   "WhatsApp": {
     "keys": [
       "WhatsApp"
     ],
-    "version": "2.26.44.90"
+    "version": "2.26.45.100"
   },
   "WhatsApp-Business": {
     "keys": [
