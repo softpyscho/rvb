@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-11-20T00:47:58Z"
+    "publishedAt": "2026-11-21T00:06:59Z"
   },
   "files": {
     "stremio-v2.3.2-arm64-v8a.apk": {
@@ -321,8 +321,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260018",
-      "publishedAt": "2026-11-20T00:47:42Z",
+      "originBuild": "260019",
+      "publishedAt": "2026-11-21T00:06:48Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -762,48 +762,6 @@
       "recommendedVersion": "452.1.0.53.64",
       "experimental": false
     },
-    "Duck.Detector-nightly-2026-11-13-ec98379c.apk": {
-      "name": "duck-detector",
-      "version": "nightly-2026-11-13-ec98379c",
-      "appKey": "duckdetector",
-      "appName": "Duck Detector",
-      "arch": "all",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "com.eltavine.duckdetector",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260014",
-      "publishedAt": "2026-11-13T23:47:26Z",
-      "apkSource": "github",
-      "recommendedVersion": null,
-      "resigned": false
-    },
-    "oxygen-customizer-vnightly-212-2102-all.apk": {
-      "name": "oxygen-customizer",
-      "version": "nightly-212-2102",
-      "appKey": "oxygencustomizer",
-      "appName": "Oxygen Customizer",
-      "arch": "all",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "it.dhd.oxygencustomizer",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260016",
-      "publishedAt": "2026-11-15T23:04:05Z",
-      "apkSource": "actions",
-      "recommendedVersion": null,
-      "resigned": false
-    },
     "oxygen-customizer-vnightly-212-2110-all.apk": {
       "name": "oxygen-customizer",
       "version": "nightly-212-2110",
@@ -885,6 +843,27 @@
       "originBuild": "260018",
       "publishedAt": "2026-11-20T00:47:42Z",
       "apkSource": "apkmirror",
+      "recommendedVersion": null,
+      "resigned": false
+    },
+    "oxygen-customizer-vnightly-213-2199-all.apk": {
+      "name": "oxygen-customizer",
+      "version": "nightly-213-2199",
+      "appKey": "oxygencustomizer",
+      "appName": "Oxygen Customizer",
+      "arch": "all",
+      "fileType": "APK",
+      "brandKey": "mirror",
+      "brandName": "Mirror",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "it.dhd.oxygencustomizer",
+      "patchSources": [],
+      "changelogs": [],
+      "appliedPatches": [],
+      "originBuild": "260019",
+      "publishedAt": "2026-11-21T00:06:48Z",
+      "apkSource": "actions",
       "recommendedVersion": null,
       "resigned": false
     }
