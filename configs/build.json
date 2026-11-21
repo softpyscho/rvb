@@ -60,7 +60,8 @@
     "pkg-name": "com.mixplorer",
     "apkmirror-dlurl": "https://www.apkmirror.com/apk/hootan-parsa/mixplorer-hootanparsa/",
     "uptodown-dlurl": "https://mixplorer.en.uptodown.com/android",
-    "apkpure-dlurl": "https://apkpure.com/mixplorer/com.mixplorer"
+    "apkpure-dlurl": "https://apkpure.com/mixplorer/com.mixplorer",
+    "enabled": false
   },
   "Mix-Archive": {
     "arch": "arm64-v8a",
@@ -84,8 +85,7 @@
     "version": "latest",
     "github-dlurl": "https://github.com/eltavine/Duck-Detector-Refactoring",
     "github-release-regex": "^nightly-",
-    "github-newest": true,
-    "enabled": false
+    "github-newest": true
   },
   "Oxygen-Customizer": {
     "arch": "all",
@@ -95,7 +95,8 @@
     "app-name": "Oxygen Customizer",
     "pkg-name": "it.dhd.oxygencustomizer",
     "actions-dlurl": "https://github.com/DHD2280/Oxygen-Customizer/actions/workflows/build_debug.yml",
-    "actions-artifact": "Dev \\(#[0-9]+\\)$"
+    "actions-artifact": "Dev \\(#[0-9]+\\)$",
+    "enabled": false
   },
   "WhatsApp": {
     "arch": "arm64-v8a",
