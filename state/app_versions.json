@@ -27,7 +27,7 @@
     "keys": [
       "Duck-Detector"
     ],
-    "version": "nightly-2026-11-22-ba8ea3c4"
+    "version": "nightly-2026-11-24-40a2dc4a"
   },
   "Greenify": {
     "keys": [
@@ -75,7 +75,7 @@
     "keys": [
       "Stremio"
     ],
-    "version": "2.5.1"
+    "version": "2.6.0"
   },
   "TickTick": {
     "keys": [
@@ -117,7 +117,7 @@
     "keys": [
       "WhatsApp"
     ],
-    "version": "2.26.45.100"
+    "version": "2.26.44.92"
   },
   "WhatsApp-Business": {
     "keys": [
