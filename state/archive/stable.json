@@ -4,30 +4,9 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-11-24T04:04:33Z"
+    "publishedAt": "2026-11-25T02:42:58Z"
   },
   "files": {
-    "stremio-v2.3.2-arm64-v8a.apk": {
-      "name": "stremio",
-      "version": "2.3.2",
-      "appKey": "stremio",
-      "appName": "Stremio",
-      "arch": "arm64",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "com.stremio.one",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260004",
-      "publishedAt": "2026-11-04T15:18:14Z",
-      "apkSource": "direct",
-      "recommendedVersion": null,
-      "resigned": false
-    },
     "redotpay-v3.14.4-arm64-v8a.apk": {
       "name": "redotpay",
       "version": "3.14.4",
@@ -623,27 +602,6 @@
       "recommendedVersion": "6.38.11",
       "experimental": false
     },
-    "whatsapp-v2.26.41.78-arm64-v8a.apk": {
-      "name": "whatsapp",
-      "version": "2.26.41.78",
-      "appKey": "whatsapp",
-      "appName": "WhatsApp",
-      "arch": "arm64",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "com.whatsapp",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260005",
-      "publishedAt": "2026-11-04T15:36:50Z",
-      "apkSource": "apkmirror",
-      "recommendedVersion": null,
-      "resigned": false
-    },
     "xodo-morphe-v11.2.0-arm64-v8a.apk": {
       "name": "xodo-morphe",
       "version": "11.2.0",
@@ -825,27 +783,6 @@
       "recommendedVersion": null,
       "resigned": false
     },
-    "Duck.Detector-nightly-2026-11-22-ba8ea3c4.apk": {
-      "name": "duck-detector",
-      "version": "nightly-2026-11-22-ba8ea3c4",
-      "appKey": "duckdetector",
-      "appName": "Duck Detector",
-      "arch": "all",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "com.eltavine.duckdetector",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260021",
-      "publishedAt": "2026-11-22T23:43:49Z",
-      "apkSource": "github",
-      "recommendedVersion": null,
-      "resigned": false
-    },
     "Duck.Detector-nightly-2026-11-24-40a2dc4a.apk": {
       "name": "duck-detector",
       "version": "nightly-2026-11-24-40a2dc4a",
@@ -906,6 +843,27 @@
       "originBuild": "260022",
       "publishedAt": "2026-11-24T04:04:13Z",
       "apkSource": "apkmirror",
+      "recommendedVersion": null,
+      "resigned": false
+    },
+    "Duck.Detector-nightly-2026-11-24-cd5ffb3e.apk": {
+      "name": "duck-detector",
+      "version": "nightly-2026-11-24-cd5ffb3e",
+      "appKey": "duckdetector",
+      "appName": "Duck Detector",
+      "arch": "all",
+      "fileType": "APK",
+      "brandKey": "mirror",
+      "brandName": "Mirror",
+      "variant": null,
+      "subVariant": null,
+      "packageName": "com.eltavine.duckdetector",
+      "patchSources": [],
+      "changelogs": [],
+      "appliedPatches": [],
+      "originBuild": "260023",
+      "publishedAt": "2026-11-25T02:42:53Z",
+      "apkSource": "github",
       "recommendedVersion": null,
       "resigned": false
     }
