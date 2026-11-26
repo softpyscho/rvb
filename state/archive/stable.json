@@ -4,7 +4,7 @@
   "meta": {
     "build": "stable",
     "channel": "stable",
-    "publishedAt": "2026-11-25T02:42:58Z"
+    "publishedAt": "2026-11-26T01:55:50Z"
   },
   "files": {
     "redotpay-v3.14.4-arm64-v8a.apk": {
@@ -756,8 +756,8 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260018",
-      "publishedAt": "2026-11-20T00:47:42Z",
+      "originBuild": "260024",
+      "publishedAt": "2026-11-26T01:55:37Z",
       "apkSource": "apkmirror",
       "recommendedVersion": null,
       "resigned": false
@@ -783,27 +783,6 @@
       "recommendedVersion": null,
       "resigned": false
     },
-    "Duck.Detector-nightly-2026-11-24-40a2dc4a.apk": {
-      "name": "duck-detector",
-      "version": "nightly-2026-11-24-40a2dc4a",
-      "appKey": "duckdetector",
-      "appName": "Duck Detector",
-      "arch": "all",
-      "fileType": "APK",
-      "brandKey": "mirror",
-      "brandName": "Mirror",
-      "variant": null,
-      "subVariant": null,
-      "packageName": "com.eltavine.duckdetector",
-      "patchSources": [],
-      "changelogs": [],
-      "appliedPatches": [],
-      "originBuild": "260022",
-      "publishedAt": "2026-11-24T04:04:13Z",
-      "apkSource": "github",
-      "recommendedVersion": null,
-      "resigned": false
-    },
     "stremio-v2.6.0-arm64-v8a.apk": {
       "name": "stremio",
       "version": "2.6.0",
@@ -819,11 +798,11 @@
       "patchSources": [],
       "changelogs": [],
       "appliedPatches": [],
-      "originBuild": "260022",
-      "publishedAt": "2026-11-24T04:04:13Z",
-      "apkSource": "apkmirror",
+      "originBuild": "260024",
+      "publishedAt": "2026-11-26T01:55:37Z",
+      "apkSource": "uptodown",
       "recommendedVersion": null,
-      "resigned": true
+      "resigned": false
     },
     "whatsapp-v2.26.44.92-arm64-v8a.apk": {
       "name": "whatsapp",
